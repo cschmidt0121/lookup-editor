@@ -105,13 +105,12 @@ namespace = null;
 user = null;
 </script>
 
-<div id="topSection">
-	% if is_new:
-	<h1>${title_new}</h1>
-	% else:
-	<h1>${title_edit}</h1>
-	% endif
-</div>
+% if is_new:
+<h1>${title_new}</h1>
+% else:
+<h1>${title_edit}</h1>
+% endif
+
 
 %if lookup_name:
 <h2>${lookup_name}</h2>
