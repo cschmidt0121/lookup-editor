@@ -139,7 +139,41 @@ function saveLookup(){
 	// Use a delay so that the event loop is able to change the button text before the work begins
 	setTimeout( doSaveLookup, 100);
 }
+
+function getApps(){
 	
+	/*
+	if( this.apps !== null ){
+		return this.apps;
+	}*/
+	
+    $.ajax({
+        type: "GET",
+        url: Splunk.util.make_url("/splunkd/services/apps/local?output_mode=json&count=-1"),
+        async: true,
+        success: function(data) {
+        	var apps = [];
+        	
+        	for(var c = 0; c < data.entry.length; c++){
+        		apps.push(data.entry[c]['name']);
+        		
+        		var selected = "";
+        		
+        		if(data.entry[c]['name'] == "lookup_editor"){
+        			selected = "selected";
+        		}
+        		
+        		$('#lookup_file_namespace').append("<option value='" + data.entry[c]['name'] + "' " + selected + ">" + data.entry[c]['content']['label'] + "</option>");
+        	}
+        	
+            //this.apps = apps;
+        }
+    });
+	
+}
+
+getApps();
+
 function doSaveLookup(){
 	
 	var handsontable = new_jquery("#dataTable").data('handsontable');

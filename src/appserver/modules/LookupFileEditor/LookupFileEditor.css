@@ -12,6 +12,10 @@
 	
 }
 
+#lookup_file_namespace{
+	height: 27px;
+}
+
 .SplunkModule.LookupFileEditor > h1{
 	margin-bottom: 16px;
 }
