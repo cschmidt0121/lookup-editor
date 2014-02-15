@@ -2,7 +2,11 @@
 	margin-top: 32px;
 }
 
+
+.SplunkModule.LookupFileLister > h1{
+	margin-bottom: 16px;
+}
+
 #new_lookup{
-	margin-top: 16px;
 	margin-bottom: 16px;
 }
