@@ -119,17 +119,23 @@ user = null;
 %endif
 
 % if is_new:
-<div id="item-lookup-file" class="widget">
+<div id="item-lookup-file" class="widget fieldsetWrapper multiColumnFieldset">
+	<div>
         <label for="lookup_file" class="">Lookup file name</label>
         <div>
             <div id="lookup_file_namespace_file" class="widgeterror"></div>
             <input type="text" name="lookup_file" id="lookup_file_input" >            
         </div>
-        <label for="namespace" class="">Namespace</label>
+        <p class="exampleText"><em>Should generally end with a ".csv" extension</em></p>
+	</div>
+	<div>
+        <label for="namespace" class="">App namespace</label>
         <div>
             <div id="lookup_file_namespace_error" class="widgeterror"></div>
             <input type="text" name="namespace" id="lookup_file_namespace" >            
         </div>
+        <p class="exampleText"><em>This indicates in which app the lookup file will reside</em></p>
+	</div>
 </div>
 % endif
 
