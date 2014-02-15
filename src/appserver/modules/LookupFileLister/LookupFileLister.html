@@ -58,7 +58,7 @@ function populate_lookups(data){
 		$("#lookup_list_tbody").append("<tr>");
 		$("#lookup_list_tbody").append("<td><a href='" + "${edit_view}?path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
 		$("#lookup_list_tbody").append("<td>" + data.entry[c].acl["app"] + "</td>");
-		$("#lookup_list_tbody").append("<td><a href='/en-US/custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
+		$("#lookup_list_tbody").append("<td><a href='" + Splunk.util.make_url('/custom/lookup_editor/lookup_edit/get_original_lookup_file') + "?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
 		$("#lookup_list_tbody").append("</tr>");
 	}
 }
