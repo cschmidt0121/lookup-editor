@@ -20,6 +20,11 @@
 	margin-bottom: 16px;
 }
 
+.warning_dialog{
+	margin-top: 32px;
+	display: none;
+}
+
 .padlock{
 	background: url(/static/img/skins/default/managerIcons/icon_access.png) no-repeat 0px 0;
 	display: inline;

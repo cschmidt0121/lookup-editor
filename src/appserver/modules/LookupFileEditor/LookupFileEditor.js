@@ -299,6 +299,11 @@ function setupHandlers(){
 
 $(document).ready( setupHandlers );
 
+function showWarningDialog(text){
+	$("#warning_dialog_text").text(text);
+	$("#warning_dialog").show();
+}
+
 function loadLookupContents(lookup_file, namespace, user, header_only){
     url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_contents", 
                   {"lookup_file":lookup_file,
@@ -318,11 +323,11 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 		  complete: function(jqXHR, textStatus){
 			  if( jqXHR.status == 404){
 				  console.info('Lookup file was not found');
-				  alert("The lookup could not be loaded from the server as the file does not appear to exist. This can happen if you have not run setup yet.");
+				  showWarningDialog("The requested lookup file does not exist");
 			  }
 			  else if( jqXHR.status == 403){
 				  console.info('Inadequate permissions');
-				  alert("You do not have permission to view lookup files (you need the 'edit_lookups' capability)");
+				  showWarningDialog("You do not have permission to view lookup files (you need the 'edit_lookups' capability)");
 			  }
 			  
 			  // Hide the loading message

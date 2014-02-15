@@ -77,13 +77,11 @@ except splunk.AuthorizationFailed:
 <%namespace name="helpers" file="//view/_helpers.html" import="*"/>
 
 % if insufficient_permissions:
-
   <div class="no_permissions_dialog" id="no_permissions">
   	<div class="padlock"></div>
     <div class="dialog_message">You do not have the necessary capability required to edit lookup files. Please contact your Splunk administrator.</div>
   </div>
 % else:
-
 <script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.min.js'])}"></script>
 <script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.handsontable.full.js'])}"></script>
 <script>
@@ -152,6 +150,15 @@ user = null;
 <style>
 @import url("${make_url(['/static/css/admin.css'])}"); 
 </style>
+
+<table class="splTable splTable-list warning_dialog" id="warning_dialog">
+	<tbody>
+		<tr>
+            <td class="empty_results" id="warning_dialog_text">The requested lookup file does not exist.</td>
+        </tr>
+    </tbody>
+</table>
+
 <div id="tableEditor">
 	<div id="dataTable" style="width: 100%"></div>
 	
