@@ -1,0 +1,54 @@
+
+
+<h1>Lookup Files</h1>
+
+<a id="new_lookup" class="splButton-primary">
+	<span>New</span>
+</a>
+
+<div id="lookup_list">
+<table class="splTable">
+	<tr>
+		<th>Lookup</th>      
+		<th>Namespace</th>
+        <th>Actions</th>
+	</tr>
+	<tbody id="lookup_list_tbody">
+	</tbody>
+</table>
+</div>
+
+
+<script language="javascript">
+
+$("#new_lookup").click(function(){ document.location="lookup_edit"; });
+
+function populate_lookups(data){
+	
+	if( data.entry.length == 0 ){
+		$("#lookup_list").append("No lookup files exist");
+		$("#lookup_list").append("To make a new lookup file...");
+	}
+	
+	for( var c = 0; c < data.entry.length; c++){
+		$("#lookup_list_tbody").append("<td><a href='" + "lookup_edit?path=" + data.entry[c].content["eai:appName"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
+		$("#lookup_list_tbody").append("<td>" + data.entry[c].content["eai:appName"] + "</td>");
+		$("#lookup_list_tbody").append("<td><a href='/en-US/custom/SA-ThreatIntelligence/lookupeditor/load?export=1&namespace=" + data.entry[c].content["eai:appName"] + "&path=" + data.entry[c].content["eai:appName"] + "/" + data.entry[c].name + "'>Export</a></td>");
+	}
+}
+
+function get_lookups(){
+	
+	var uri = Splunk.util.make_url('/splunkd/services/data/lookup-table-files');
+    
+    $.getJSON(uri, {
+    				'count'       : '-1',
+    				'output_mode' : 'json'
+    				})
+    				.done(populate_lookups)
+    				.fail(function(){ alert("Unable to get the lookups list");});
+}
+$(document).ready( function() { get_lookups();})
+
+
+</script>
