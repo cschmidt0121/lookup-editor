@@ -1,10 +1,25 @@
+<%page args="module"/>
+<%# Copyright (C) 2009-2012 Splunk Inc. All Rights Reserved.
 
+# Get the module params
+edit_view  = module['params'].get('editView' , "lookup_edit")
+new_view = module['params'].get('newView', "lookup_new")
+
+%>
 
 <h1>Lookup Files</h1>
 
 <a id="new_lookup" class="splButton-primary">
 	<span>New</span>
 </a>
+
+<table class="splTable splTable-list warning_dialog" id="warning_dialog">
+	<tbody>
+		<tr>
+            <td class="empty_results" id="warning_dialog_text">The requested lookup file does not exist.</td>
+        </tr>
+    </tbody>
+</table>
 
 <div id="lookup_list">
 <table class="splTable">
@@ -21,18 +36,27 @@
 
 <script language="javascript">
 
-$("#new_lookup").click(function(){ document.location="lookup_edit"; });
+$("#new_lookup").click(function(){ document.location="${edit_view}"; });
+
+function showWarningDialog(text){
+	$("#warning_dialog_text").html(text);
+	$("#warning_dialog").show();
+}
 
 function populate_lookups(data){
 	
+	// If the list of lookups is empty, then show a warning
 	if( data.entry.length == 0 ){
-		$("#lookup_list").append("No lookup files exist");
-		$("#lookup_list").append("To make a new lookup file...");
+		showWarningDialog("No lookup files exist; <a href='${new_view}'>create one now</a>");
 	}
 	
+	// Show the table of lookups since we have at least one
+	$("#lookup_list").show();
+	
+	// Add each lookup file
 	for( var c = 0; c < data.entry.length; c++){
 		$("#lookup_list_tbody").append("<tr>");
-		$("#lookup_list_tbody").append("<td><a href='" + "lookup_edit?path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
+		$("#lookup_list_tbody").append("<td><a href='" + "${edit_view}?path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
 		$("#lookup_list_tbody").append("<td>" + data.entry[c].acl["app"] + "</td>");
 		$("#lookup_list_tbody").append("<td><a href='/en-US/custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
 		$("#lookup_list_tbody").append("</tr>");

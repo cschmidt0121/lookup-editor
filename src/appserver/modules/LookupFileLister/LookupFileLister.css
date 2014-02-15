@@ -1,7 +1,12 @@
 #lookup_list{
 	margin-top: 32px;
+	display: none;
 }
 
+.warning_dialog{
+	margin-top: 32px;
+	display: none;
+}
 
 .SplunkModule.LookupFileLister > h1{
 	margin-bottom: 16px;
