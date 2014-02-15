@@ -131,6 +131,15 @@ class LookupEditor(controllers.BaseController):
         temp_file_name = temp_file_handle.name
         destination_full_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_file])
         
+        # Make the lookups directory if it does not exist
+        destination_lookups_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups'])
+        try:
+            os.umask(0) # http://bytes.com/topic/python/answers/572176-os-mkdir-mode
+            os.mkdir(destination_lookups_path, 0755)
+        except OSError:
+            # The directory already existed, no need to create it
+            pass
+        
         # Write out the new file to a temporary location
         try:
             if temp_file_handle is not None and os.path.isfile(temp_file_name):
@@ -150,6 +159,9 @@ class LookupEditor(controllers.BaseController):
         if not os.path.exists(destination_full_path):
             shutil.move(temp_file_name, destination_full_path)
             logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
+            
+            # If the file is new, then make sure that the list is reloaded so that the editors notice the change
+            lookupfiles.SplunkLookupTableFile.reload()
             
         # Edit the existing lookup otherwise
         else:

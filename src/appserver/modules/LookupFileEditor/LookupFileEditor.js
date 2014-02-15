@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009-2012 Splunk Inc. All Rights Reserved.
+ * Copyright (C) 2009-2014 Splunk Inc. All Rights Reserved.
  */
 
 function validate (data) {
@@ -142,36 +142,30 @@ function saveLookup(){
 
 function getApps(){
 	
-	/*
-	if( this.apps !== null ){
-		return this.apps;
-	}*/
-	
     $.ajax({
         type: "GET",
         url: Splunk.util.make_url("/splunkd/services/apps/local?output_mode=json&count=-1"),
         async: true,
         success: function(data) {
-        	var apps = [];
         	
         	for(var c = 0; c < data.entry.length; c++){
-        		apps.push(data.entry[c]['name']);
         		
+        		// Determine if the app if the lookup editor itself (this will be the default)
         		var selected = "";
         		
         		if(data.entry[c]['name'] == "lookup_editor"){
         			selected = "selected";
         		}
         		
+        		// Add the app to the list
         		$('#lookup_file_namespace').append("<option value='" + data.entry[c]['name'] + "' " + selected + ">" + data.entry[c]['content']['label'] + "</option>");
         	}
-        	
-            //this.apps = apps;
         }
     });
 	
 }
 
+// Start populating the list of apps
 getApps();
 
 function doSaveLookup(){
@@ -331,7 +325,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 				  alert("You do not have permission to view lookup files (you need the 'edit_lookups' capability)");
 			  }
 			  
-			  
+			  // Hide the loading message
 			  $(".table-loading-message").hide();
 		  },
 		  error: function(jqXHR, textStatus, errorThrown){
