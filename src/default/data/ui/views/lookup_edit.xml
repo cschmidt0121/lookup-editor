@@ -9,14 +9,6 @@
     <param name="clearOnJobDispatch">False</param>
     <param name="maxSize">2</param>
   </module>
-  <module name="BreadCrumb" layoutPanel="viewHeader">
-    <param name="options">
-      <list>
-        <param name="view">lookup_list</param>
-        <param name="label">Lookup Files</param>
-      </list>
-    </param>
-  </module>
   <module name="LookupFileEditor" layoutPanel="panel_row1_col1">
     <param name="listView">lookup_list</param>
   </module>
