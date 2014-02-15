@@ -336,7 +336,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 		  error: function(jqXHR, textStatus, errorThrown){
 			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
 				  console.info('Lookup file could not be loaded');
-				  alert("The lookup could not be loaded from the server");
+				  showWarningDialog("The lookup could not be loaded from the server");
 			  }
 		  }
 	});
@@ -385,6 +385,7 @@ Splunk.Module.LookupFileEditor = $.klass(Splunk.Module, {
             // The Ajax request failed, print an exception
             } catch(e) {
                 alert(e);
+                showWarningDialog("An exception occurred: " + e);
             }
 
             return false;
