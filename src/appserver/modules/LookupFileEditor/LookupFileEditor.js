@@ -2,6 +2,11 @@
  * Copyright (C) 2009-2014 Splunk Inc. All Rights Reserved.
  */
 
+function showWarningDialog(text){
+	$("#warning_dialog_text").text(text);
+	$("#warning_dialog").show();
+}
+
 function validate (data) {
 	
 	// If the cell is the first row, then ensure that the new value is not blank
@@ -298,11 +303,6 @@ function setupHandlers(){
 }
 
 $(document).ready( setupHandlers );
-
-function showWarningDialog(text){
-	$("#warning_dialog_text").text(text);
-	$("#warning_dialog").show();
-}
 
 function loadLookupContents(lookup_file, namespace, user, header_only){
     url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_contents", 
