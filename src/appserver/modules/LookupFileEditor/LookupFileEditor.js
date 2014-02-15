@@ -12,7 +12,7 @@ function validate (data) {
 
 function lookupRenderer(instance, td, row, col, prop, value, cellProperties) {
 	
-	Handsontable.TextCell.renderer.apply(this, arguments);
+	Handsontable.renderers.TextRenderer.apply(this, arguments);
 
 	if(!value || value === '') {
 		td.className = 'cellEmpty';
@@ -85,17 +85,11 @@ function setupTable( data ){
 	  stretchH: 'all',
 	  manualColumnResize: true,
 	  manualColumnMove: true,
-	  onBeforeChange: validate/*,
+	  onBeforeChange: validate,
 	  
 	  cells: function (row, col, prop) {
-		    var cellProperties = {};
-		    
-		    cellProperties.type = {
-		      renderer: lookupRenderer
-		    };
-		    
-		    return cellProperties;
-	  }*/
+		  this.renderer = lookupRenderer;
+	  }
 	  
 	});
 }
@@ -239,7 +233,7 @@ function showDefaultContent(){
 	            ["2012", 2, 2422, 5399, 776, 4151]
 	          ];
 	
-	setupTable(data);
+	setupTable(null);
 	$("#tableEditor").show();
 
 }
