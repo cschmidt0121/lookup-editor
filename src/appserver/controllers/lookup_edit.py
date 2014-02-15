@@ -168,7 +168,7 @@ class LookupEditor(controllers.BaseController):
         """
         Provides the contents of a lookup file.
         """
-        
+    
         try:
             
             with self.get_lookup( lookup_file, namespace, None ) as f:
