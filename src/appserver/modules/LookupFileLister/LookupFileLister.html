@@ -31,9 +31,11 @@ function populate_lookups(data){
 	}
 	
 	for( var c = 0; c < data.entry.length; c++){
+		$("#lookup_list_tbody").append("<tr>");
 		$("#lookup_list_tbody").append("<td><a href='" + "lookup_edit?path=" + data.entry[c].content["eai:appName"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
 		$("#lookup_list_tbody").append("<td>" + data.entry[c].content["eai:appName"] + "</td>");
 		$("#lookup_list_tbody").append("<td><a href='/en-US/custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=" + data.entry[c].content["eai:appName"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
+		$("#lookup_list_tbody").append("</tr>");
 	}
 }
 
