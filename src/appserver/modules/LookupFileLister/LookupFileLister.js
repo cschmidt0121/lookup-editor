@@ -1,12 +1,3 @@
-
-
-/*
-/services/data/lookup-table-files
-
-
-var uri = Splunk.util.make_url('/splunkd/search/jobs/', sid,(search.job.isDone()) ? '/results' : '/results_preview');
-*/
-
 Splunk.Module.LookupFileLister = $.klass(Splunk.Module, {
 	
     initialize: function($super,container) {

@@ -1,6 +1,6 @@
 <view template="dashboard.html" isDashboard="false">
   
-  <label>New Lookup File</label>
+  <label>Create New Lookup File</label>
   
   <module name="AccountBar" layoutPanel="appHeader"/>
   <module name="AppBar" layoutPanel="navigationHeader"/>

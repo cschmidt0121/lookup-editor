@@ -25,7 +25,8 @@ new_view = module['params'].get('newView', "lookup_new")
 <table class="splTable">
 	<tr>
 		<th>Lookup</th>      
-		<th>Namespace</th>
+		<th>App</th>
+		<th>Owner</th>
         <th>Actions</th>
 	</tr>
 	<tbody id="lookup_list_tbody">
@@ -38,11 +39,21 @@ new_view = module['params'].get('newView', "lookup_new")
 
 $("#new_lookup").click(function(){ document.location="${edit_view}"; });
 
+/**
+ * Show a warning dialog.
+ * 
+ * @param text The message to be displayed
+ */
 function showWarningDialog(text){
 	$("#warning_dialog_text").html(text);
 	$("#warning_dialog").show();
 }
 
+/**
+ * Populate the list of lookups
+ *
+ * @param data The list of lookups that was retrieved from the server
+ */
 function populate_lookups(data){
 	
 	// If the list of lookups is empty, then show a warning
@@ -53,28 +64,53 @@ function populate_lookups(data){
 	// Show the table of lookups since we have at least one
 	$("#lookup_list").show();
 	
-	// Add each lookup file
+	// Add each lookup file as a row
 	for( var c = 0; c < data.entry.length; c++){
 		$("#lookup_list_tbody").append("<tr>");
-		$("#lookup_list_tbody").append("<td><a href='" + "${edit_view}?path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
+		// TODO improve handling of arguments
+		$("#lookup_list_tbody").append("<td><a href='" + "${edit_view}?owner=" + data.entry[c].author + "&path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
 		$("#lookup_list_tbody").append("<td>" + data.entry[c].acl["app"] + "</td>");
+		
+		if( data.entry[c].author == "nobody"){
+			owner = "No owner";
+		}
+		else{
+			owner = data.entry[c].author;
+		}
+	
+		$("#lookup_list_tbody").append("<td>" + owner + "</td>");
 		$("#lookup_list_tbody").append("<td><a href='" + Splunk.util.make_url('/custom/lookup_editor/lookup_edit/get_original_lookup_file') + "?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
 		$("#lookup_list_tbody").append("</tr>");
 	}
 }
 
+/**
+ * Get the list of lookups from the server and populate the list.
+ */
 function get_lookups(){
 	
-	var uri = Splunk.util.make_url('/splunkd/services/data/lookup-table-files');
+	//var uri = Splunk.util.make_url('/splunkd/services/data/lookup-table-files');
+	var user = "luke"; // TODO get current user
+	var app = "lookup_editor"; // TODO get current app
+	
+	var uri = Splunk.util.make_url('/splunkd/servicesNS/' + user + '/' + app + '/data/lookup-table-files');
     
     $.getJSON(uri, {
     				'count'       : '-1',
     				'output_mode' : 'json'
     				})
+    				
+    				// When done, populate the list
     				.done(populate_lookups)
+    				
+    				// If we failed, then stop
     				.fail(function(){ alert("Unable to get the lookups list");});
 }
-$(document).ready( function() { get_lookups();})
+
+// When the document is ready, start populating the list
+$(document).ready( function() {
+	get_lookups();
+})
 
 
 </script>

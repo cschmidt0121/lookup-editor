@@ -1,6 +1,7 @@
 #lookup_list{
 	margin-top: 32px;
 	display: none;
+	clear: both;
 }
 
 .warning_dialog{

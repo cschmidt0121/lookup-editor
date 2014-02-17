@@ -51,9 +51,15 @@ logger = setup_logger(logging.INFO)
 from splunk.models.base import SplunkAppObjModel
 from splunk.models.field import BoolField, Field
 
+"""
+Represents an exception when the user did not have sufficient permissions.
+"""
 class PermissionDeniedException(Exception):
     pass
 
+"""
+Provides a model for retreiving the list of apps from Splunk.
+"""
 class App(SplunkAppObjModel):
     ''' Represents a Splunk app '''
     
@@ -63,6 +69,9 @@ class App(SplunkAppObjModel):
     label         = Field()
     
 def isEmpty( row ):
+    """
+    Determines if the given row in a lookup is empty. This is done in order to prune rows that are empty.
+    """
     
     for e in row:
         if e is not None and len(e.strip()) > 0:
@@ -71,14 +80,20 @@ def isEmpty( row ):
     return True
 
 class LookupEditor(controllers.BaseController):
-    '''Lookup Editor Controller'''
+    '''
+    Lookup Editor Controller
+    '''
  
     @staticmethod
     def getCapabilities4User(user=None, session_key=None):
+        """
+        Get the capabilities for the given user.
+        """
+        
         roles = []
         capabilities = []
         
-        ## Get user info              
+        # Get user info              
         if user is not None:
             logger.info('Retrieving role(s) for current user: %s' % (user))
             userDict = entity.getEntities('authentication/users/%s' % (user), count=-1, sessionKey=session_key)
@@ -90,7 +105,7 @@ class LookupEditor(controllers.BaseController):
                             logger.info('Successfully retrieved role(s) for user: %s' % (user))
                             roles = val
              
-        ## Get capabilities
+        # Get capabilities
         for role in roles:
             logger.info('Retrieving capabilities for current user: %s' % (user))
             roleDict = entity.getEntities('authorization/roles/%s' % (role), count=-1, sessionKey=session_key)
@@ -165,7 +180,13 @@ class LookupEditor(controllers.BaseController):
             
         # Edit the existing lookup otherwise
         else:
-            lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner="nobody", key=session_key)
+            
+            if "owner" in kwargs:
+                owner = kwargs["owner"]
+            else:
+                owner = "nobody"
+            
+            lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner=owner, key=session_key)
             logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
      
     def render_error_json(self, msg):

@@ -2,11 +2,22 @@
  * Copyright (C) 2009-2014 Splunk Inc. All Rights Reserved.
  */
 
+/**
+ * Show a warning dialog.
+ * 
+ * @param text The message to be displayed
+ */
 function showWarningDialog(text){
 	$("#warning_dialog_text").text(text);
 	$("#warning_dialog").show();
 }
 
+/**
+ * Validate that the lookup contents are a valid file
+ * 
+ * @param data The data (array of array) representing the table
+ * @returns {Boolean}
+ */
 function validate (data) {
 	
 	// If the cell is the first row, then ensure that the new value is not blank
@@ -15,17 +26,31 @@ function validate (data) {
 	}
 }
 
+/**
+ * A renderer for lookup file contents.
+ * 
+ * @param instance
+ * @param td
+ * @param row
+ * @param col
+ * @param prop
+ * @param value
+ * @param cellProperties
+ */
 function lookupRenderer(instance, td, row, col, prop, value, cellProperties) {
 	
 	Handsontable.renderers.TextRenderer.apply(this, arguments);
 
-	if(!value || value === '') {
+	if( (!value || value === '') && row === 0) {
+		td.className = 'cellEmptyHeader';
+	}
+	else if(!value || value === '') {
 		td.className = 'cellEmpty';
 	}
 	else if (parseFloat(value) < 0) { //if row contains negative number
 		td.className = 'cellNegative';
 	}
-	else if( String(value).substring(0, 7) == "http://"){
+	else if( String(value).substring(0, 7) == "http://" || String(value).substring(0, 8) == "https://"){
 		td.className = 'cellHREF';
 	}
 	else if (parseFloat(value) > 0) { //if row contains positive number
@@ -34,28 +59,28 @@ function lookupRenderer(instance, td, row, col, prop, value, cellProperties) {
 	else if(row === 0) {
 		td.className = 'cellHeader';
 	}
-	else if(value === 'true') {
+	else if(value !== null && value.toLowerCase() === 'true') {
 		td.className = 'cellTrue';
 	}
-	else if(value === 'false') {
+	else if(value !== null && value.toLowerCase() ==='false') {
 		td.className = 'cellFalse';
 	}
-	else if(value === 'unknown') {
+	else if(value !== null && value.toLowerCase() === 'unknown') {
 		td.className = 'cellUrgencyUnknown';
 	}
-	else if(value === 'informational') {
+	else if(value !== null && value.toLowerCase() === 'informational') {
 		td.className = 'cellUrgencyInformational';
 	}
-	else if(value === 'low') {
+	else if(value !== null && value.toLowerCase() === 'low') {
 		td.className = 'cellUrgencyLow';
 	}
-	else if(value === 'medium') {
+	else if(value !== null && value.toLowerCase() === 'medium') {
 		td.className = 'cellUrgencyMedium';
 	}
-	else if(value === 'high') {
+	else if(value !== null && value.toLowerCase() === 'high') {
 		td.className = 'cellUrgencyHigh';
 	}
-	else if(value === 'critical') {
+	else if(value !== null && value.toLowerCase() === 'critical') {
 		td.className = 'cellUrgencyCritical';
 	}
 	else {
@@ -68,6 +93,11 @@ function lookupRenderer(instance, td, row, col, prop, value, cellProperties) {
 	
 }
 
+/**
+ * Render the given data as a table.
+ * 
+ * @param data The data (array of array) representing the table
+ */
 function setupTable( data ){
 	
 	if (data === null){
@@ -92,13 +122,34 @@ function setupTable( data ){
 	  manualColumnMove: true,
 	  onBeforeChange: validate,
 	  
-	  cells: function (row, col, prop) {
+	  cells: function(row, col, prop) {
 		  this.renderer = lookupRenderer;
+	  },
+	
+	  // Don't allow removal of all columns
+	  afterRemoveCol: function(index, amount){
+		  if(this.countCols() == 0){
+			  alert("You must have at least one cell to have a valid lookup");
+			  //loadLookupContents( lookup_file, namespace, user, true );
+			  setupTable( [ [""] ] );
+		  }
+	  },
+	  
+	  // Don't allow removal of all rows
+	  afterRemoveRow: function(index, amount){
+		  if(index == 0){
+			  alert("You must have at least one cell to have a valid lookup");
+			  setupTable( [ [""] ] );
+			  //loadLookupContents( lookup_file, namespace, user, true );
+		  }
 	  }
 	  
 	});
 }
 
+/**
+ * Go to the list page.
+ */
 function gotoToList(){
 
 	if( $('#returnto').length > 0 && $('#returnto').val() ){
@@ -106,6 +157,11 @@ function gotoToList(){
 	}
 }
 
+/**
+ * Get the table contents as an array.
+ * 
+ * @returns {Array}
+ */
 function getTableAsJSON(){
 	
 	var data = [];
@@ -126,6 +182,9 @@ function getTableAsJSON(){
 	return data;
 }
 
+/**
+ * Show a message indicating that the save was completed successfully.
+ */
 function saveSuccess(){
 	console.log("Lookup file saved successfully");
 
@@ -138,6 +197,9 @@ function saveSuccess(){
 	//gotoToList();
 }
 
+/**
+ * Save the lookup contents.
+ */
 function saveLookup(){
 	$("#save > span").text("Saving...");
 	
@@ -145,6 +207,9 @@ function saveLookup(){
 	setTimeout( doSaveLookup, 100);
 }
 
+/**
+ * Get a list of apps and populate the namespace selection form.
+ */
 function getApps(){
 	
     $.ajax({
@@ -153,6 +218,7 @@ function getApps(){
         async: true,
         success: function(data) {
         	
+        	// For each app, add it to the selection box
         	for(var c = 0; c < data.entry.length; c++){
         		
         		// Determine if the app if the lookup editor itself (this will be the default)
@@ -173,25 +239,52 @@ function getApps(){
 // Start populating the list of apps
 getApps();
 
+/**
+ * Show a dialog indicating that the lookup table contents are invalid.
+ * 
+ * @param text The text to display describing why the content is invalid.
+ */
+function showValidationFailureMessage(text){
+	$("#item-data-table > div > .widgeterror").text(text);
+	$("#item-data-table > div > .widgeterror").show();
+	$("#save > span").text("Save");
+	alert(text);
+}
+
+/**
+ * Perform the operation to save the lookup
+ * 
+ * @returns {Boolean}
+ */
 function doSaveLookup(){
 	
+	// Get a reference to the handsontable plugin
 	var handsontable = new_jquery("#dataTable").data('handsontable');
+	
+	// Get the row data
 	row_data = handsontable.getData();
 	
+	// Convert the data to JSON
 	json = JSON.stringify(row_data);
 	
-	data = {
+	// Make the arguments
+	var data = {
 			lookup_file : lookup_file,
 			namespace   : namespace,
 			contents    : json
 	};
+
+	// If a user was defined, then pass the name as a parameter
+	if(user !== null){
+		data["owner"] = user;
+	}
 	
-	// Get the lookup file name
+	// Get the lookup file name from the form if we are making a new lookup
 	if (data["lookup_file"] === ""|| data["lookup_file"] === null){
 		data["lookup_file"] = $("#lookup_file_input").val();
 	}
 
-	// Make sure that the file name was included
+	// Make sure that the file name was included; stop if it was not
 	if (data["lookup_file"] === ""){
 		$("#lookup_file_namespace_file").text("Please define a file name");
 		$("#lookup_file_namespace_file").show();
@@ -199,12 +292,12 @@ function doSaveLookup(){
 		return false;
 	}
 	
-	// Get the namespace from the form
+	// Get the namespace from the form if we are making a new lookup
 	if (data["namespace"] === "" || data["namespace"] === null){
 		data["namespace"] = $("#lookup_file_namespace").val();
 	}
 
-	// Make sure that the namespace was included
+	// Make sure that the namespace was included; stop if it was not
 	if (data["namespace"] === ""){
 		$("#lookup_file_namespace_error").text("Please define a namespace");
 		$("#lookup_file_namespace_error").show();
@@ -212,33 +305,32 @@ function doSaveLookup(){
 		return false;
 	}
 
-	// Make sure at least a header exists
-	if(row_data.length === 0){
-		$("#item-data-table > div > .widgeterror").text("Lookup files must contain at least one row (the header)");
-		$("#item-data-table > div > .widgeterror").show();
+	// Make sure at least a header exists; stop if not enough content is present
+	if(row_data.length === 0){		
+		showValidationFailureMessage("Lookup files must contain at least one row (the header)");
 		loadLookupContents( lookup_file, namespace, user, true );
-		$("#save > span").text("Save");
-		alert("Lookup files must contain at least one row (the header)");
 		return false;
 	}
 	
 	// Make sure the headers are not empty.
 	// If the editor is allowed to add extra columns then ignore the last row since this for adding a new column thus is allowed
 	for( i = 0; i < row_data[0].length; i++){
+		
+		// Determine if this row has an empty header cell
 		if( row_data[0][i] === "" ){
-			$("#item-data-table > div > .widgeterror").text("The header rows cannot be empty");
-			$("#item-data-table > div > .widgeterror").show();
-			alert("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
+			showValidationFailureMessage("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
 			return false;
 		}
 	}
 	
+	// Perform the request to save the lookups
 	$.ajax( Splunk.util.make_url('/custom/lookup_editor/lookup_edit/save'),
 			{
 				uri:  Splunk.util.make_url('/custom/lookup_editor/lookup_edit/save'),
 				type: 'POST',
 				data: data,
 				
+				// Get the Splunk form key
 				beforeSend: function(xhr) {
 					xhr.setRequestHeader('X-Splunk-Form-Key', $('input[name=splunk_form_key]').val());
 				},
@@ -257,6 +349,9 @@ function doSaveLookup(){
 	
 }
 
+/**
+ * Show the default content for empty lookups (typically used for new lookup files).
+ */
 function showDefaultContent(){
 	var data = [
 	            ["Column1", "Column2", "Column3", "Column4", "Column5", "Column6"],
@@ -272,6 +367,9 @@ function showDefaultContent(){
 
 }
 
+/**
+ * Setup the editor by loading the content from the server or inserting the default content.
+ */
 function setupView(){
 	
 	// If this is a new lookup file, then show the form for making a new one
@@ -283,6 +381,9 @@ function setupView(){
 	}
 }
 
+/**
+ * Setup the click handlers for performing operations requested by the user.
+ */
 function setupHandlers(){
 	$("#save").click( saveLookup );
 	$("#cancel").click( gotoToList );
@@ -302,24 +403,47 @@ function setupHandlers(){
 	}
 }
 
+// When the document is ready, get the handlers configured.
 $(document).ready( setupHandlers );
 
+/**
+ * Load the lookup file contents from the server and populate the editor.
+ * 
+ * @param lookup_file The name of the lookup file
+ * @param namespace The app where the lookup file exists
+ * @param user The user that owns the file (in the case of user-based lookups)
+ * @param header_only Indicates if only the header row should be retrieved
+ */
 function loadLookupContents(lookup_file, namespace, user, header_only){
-    url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_contents", 
-                  {"lookup_file":lookup_file,
-                   "namespace":namespace,
-                   "header_only":header_only});
 	
+	var data = {"lookup_file":lookup_file,
+            	"namespace":namespace,
+            	"header_only":header_only};
+	
+	// If a user was defined, then pass the name as a parameter
+	if(user !== null){
+		data["owner"] = user;
+	}
+	
+	// Make the URL
+    url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_contents", data);
+	
+    // Switch to the newer version of jquery
 	$ = new_jquery;
 	
+	// Perform the call
 	$.ajax({
 		  url: url,
 		  cache: false,
+		  
+		  // On success, populate the table
 		  success: function(data) {
 			  console.info('JSON of lookup table was successfully loaded');
 			  setupTable( data );
 			  $("#tableEditor").show();
 		  },
+		  
+		  // Handle cases where the file could not be found or the user did not have permissions
 		  complete: function(jqXHR, textStatus){
 			  if( jqXHR.status == 404){
 				  console.info('Lookup file was not found');
@@ -333,6 +457,8 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 			  // Hide the loading message
 			  $(".table-loading-message").hide();
 		  },
+		  
+		  // Handle errors
 		  error: function(jqXHR, textStatus, errorThrown){
 			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
 				  console.info('Lookup file could not be loaded');
@@ -341,9 +467,13 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 		  }
 	});
 
+	// Switch back to the old version of jQuery
 	$ = old_jquery;
 }
 
+/**
+ * Below is the Javascript class associated with the core editor class.
+ */
 Splunk.Module.LookupFileEditor = $.klass(Splunk.Module, {
 	
     initialize: function($super,container) {
@@ -395,6 +525,9 @@ Splunk.Module.LookupFileEditor = $.klass(Splunk.Module, {
         return retVal;
     },
     
+    /**
+     * Include a stub for handling submissions (which is unused because this module doesn't handle search results)
+     */
     handleSubmitCallback: function() {
     	var messenger = Splunk.Messenger.System.getInstance();
     	messenger.send('info', "splunk.lookup_editor", "Action succeeded");

@@ -51,9 +51,12 @@
 
 .handsontable td.cellEmpty{
 	background: #F8F8F8;
-	/* Pattern from http://www.patternify.com/
+}
+
+.handsontable td.cellEmptyHeader{
+	/* Pattern from http://www.patternify.com/ */
 	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAT0lEQVQYV2P8v3nmfwYc4HdPOlyGEZdCZEWsJTMZsCpEVwQyFkMhNkUYCnEpQlGITxFcISFFYIW/7BngwQPyHS4AV4hPEchGsEJCikC2AAAsFDi53F9I+QAAAABJRU5ErkJggg==);
-	*/
+	
 }
 
 .cellNegative{

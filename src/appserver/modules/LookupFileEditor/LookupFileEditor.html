@@ -24,6 +24,7 @@ messages = []
 namespace        = args.get("namespace", None)
 lookup_file      = args.get("lookup_file", None)
 lookup_name      = args.get("lookup_name", None)
+owner            = args.get("owner", None)
 path_description = args.get("path", None)
 
 if path_description is not None:
@@ -100,7 +101,12 @@ namespace = "${namespace}";
 namespace = null;
 % endif
 
+% if owner and owner != "nobody":
+user = "${owner}";
+% else:
 user = null;
+% endif
+
 </script>
 
 % if is_new:
@@ -127,7 +133,7 @@ user = null;
         <p class="exampleText"><em>Generally ends with ".csv"</em></p>
 	</div>
 	<div>
-        <label for="namespace" class="">App namespace</label>
+        <label for="namespace" class="">App</label>
         <div>
             <div id="lookup_file_namespace_error" class="widgeterror"></div>
             
@@ -135,7 +141,7 @@ user = null;
 			</select>
             
         </div>
-        <p class="exampleText"><em>Indicates the app where the lookup file will reside</em></p>
+        <p class="exampleText"><em>Specifies the app where the lookup file will reside</em></p>
 	</div>
 </div>
 % endif
