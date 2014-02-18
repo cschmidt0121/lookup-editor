@@ -186,7 +186,12 @@ class LookupEditor(controllers.BaseController):
             else:
                 owner = "nobody"
             
-            lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner=owner, key=session_key)
+            try:
+                lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner=owner, key=session_key)
+            except AuthorizationFailed as e:
+                cherrypy.response.status = 403
+                return self.render_error_json(_(str(e)))
+                
             logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
      
     def render_error_json(self, msg):

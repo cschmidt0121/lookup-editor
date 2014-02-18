@@ -337,10 +337,27 @@ function doSaveLookup(){
 				
 				success: saveSuccess,
 				
+				// Handle cases where the file could not be found or the user did not have permissions
+				complete: function(jqXHR, textStatus){
+					var messenger = Splunk.Messenger.System.getInstance();
+					
+					if(jqXHR.status == 404){
+						console.info('Lookup file was not found');
+						messenger.send('error', "splunk.lookup-editor", "This lookup file could not be found");
+					}
+					else if(jqXHR.status == 403){
+						console.info('Inadequate permissions');
+						messenger.send('error', "splunk.lookup-editor", "You do not have permission to edit this lookup file");
+					}
+					else if(jqXHR.status == 500){
+				    	messenger.send('error', "splunk.lookup-editor", "The lookup file could not be saved");
+					}
+					
+					$("#save > span").text("Save");
+				},
+				
 				error: function(jqXHR,textStatus,errorThrown) {
 					console.log("Lookup file not saved");
-					alert("The lookup file could not be saved");
-					$("#save > span").text("Save");
 				} 
 			}
 	);
@@ -451,7 +468,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 			  }
 			  else if( jqXHR.status == 403){
 				  console.info('Inadequate permissions');
-				  showWarningDialog("You do not have permission to view lookup files (you need the 'edit_lookups' capability)");
+				  showWarningDialog("You do not have permission to view this lookup file");
 			  }
 			  
 			  // Hide the loading message
