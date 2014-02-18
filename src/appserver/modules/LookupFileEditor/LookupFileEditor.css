@@ -3,6 +3,11 @@
 	overflow: auto;
 }
 
+input[type=text]{
+	display: block;
+	clear:both;
+}
+
 #tableEditor{
 	/* display:none; */
 }

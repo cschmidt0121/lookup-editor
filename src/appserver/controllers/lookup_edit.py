@@ -5,6 +5,7 @@ import json
 import shutil
 import csv
 import cherrypy
+import re
 
 from splunk import AuthorizationFailed as AuthorizationFailed
 import splunk.appserver.mrsparkle.controllers as controllers
@@ -135,6 +136,13 @@ class LookupEditor(controllers.BaseController):
         
         # Check capabilities
         LookupEditor.check_capabilities(lookup_file, user, session_key)
+        
+        # Ensure that the file name is valid
+        allowed_path = re.compile("^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$", re.IGNORECASE)
+        
+        if not allowed_path.match(lookup_file):
+            cherrypy.response.status = 400
+            return self.render_error_json(_("The lookup filename contains disallowed characters"))
         
         # Parse the JSON
         parsed_contents = json.loads(contents)

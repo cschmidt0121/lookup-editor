@@ -279,6 +279,10 @@ function doSaveLookup(){
 		data["owner"] = user;
 	}
 	
+	// Hide the warnings. We will repost them if the input is still invalid
+	$("#lookup_file_error").hide();
+	$("#lookup_namespace_error").hide();
+	
 	// Get the lookup file name from the form if we are making a new lookup
 	if (data["lookup_file"] === ""|| data["lookup_file"] === null){
 		data["lookup_file"] = $("#lookup_file_input").val();
@@ -286,12 +290,20 @@ function doSaveLookup(){
 
 	// Make sure that the file name was included; stop if it was not
 	if (data["lookup_file"] === ""){
-		$("#lookup_file_namespace_file").text("Please define a file name");
-		$("#lookup_file_namespace_file").show();
+		$("#lookup_file_error").text("Please define a file name");
+		$("#lookup_file_error").show();
 		$("#save > span").text("Save");
 		return false;
 	}
 	
+	// Make sure that the file name is valid; stop if it is not
+	if( !data["lookup_file"].match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) ){
+		$("#lookup_file_error").text("The file name contains invalid characters");
+		$("#lookup_file_error").show();
+		$("#save > span").text("Save");
+		return false;
+	}
+		
 	// Get the namespace from the form if we are making a new lookup
 	if (data["namespace"] === "" || data["namespace"] === null){
 		data["namespace"] = $("#lookup_file_namespace").val();
@@ -299,8 +311,8 @@ function doSaveLookup(){
 
 	// Make sure that the namespace was included; stop if it was not
 	if (data["namespace"] === ""){
-		$("#lookup_file_namespace_error").text("Please define a namespace");
-		$("#lookup_file_namespace_error").show();
+		$("#lookup_namespace_error").text("Please define a namespace");
+		$("#lookup_namespace_error").show();
 		$("#save > span").text("Save");
 		return false;
 	}
@@ -348,6 +360,10 @@ function doSaveLookup(){
 					else if(jqXHR.status == 403){
 						console.info('Inadequate permissions');
 						messenger.send('error', "splunk.lookup-editor", "You do not have permission to edit this lookup file");
+					}
+					else if(jqXHR.status == 400){
+						console.info('Invalid input');
+						messenger.send('error', "splunk.lookup-editor", "This lookup file could not be saved because the input is invalid");
 					}
 					else if(jqXHR.status == 500){
 				    	messenger.send('error', "splunk.lookup-editor", "The lookup file could not be saved");
