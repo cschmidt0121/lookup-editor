@@ -437,7 +437,12 @@ function setupHandlers(){
 }
 
 // When the document is ready, get the handlers configured.
-$(document).ready( setupHandlers );
+$(document).ready(
+		function(){
+			addStylesheet('/static/app/lookup_editor/css/lib/jquery.handsontable.full.css'); //This is necessary for 5.0
+			setupHandlers();
+		}
+);
 
 /**
  * Load the lookup file contents from the server and populate the editor.
