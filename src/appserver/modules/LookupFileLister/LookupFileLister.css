@@ -19,3 +19,7 @@
 #new_lookup{
 	margin-bottom: 16px;
 }
+
+.dataTables_wrapper#lookup_content_table_wrapper{
+	top: -42px;
+}
