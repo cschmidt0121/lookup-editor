@@ -12,5 +12,6 @@
 
   <module name="LookupFileLister" layoutPanel="panel_row1_col1">
     <param name="editView">lookup_edit</param>
+    <param name="newView">lookup_new</param>
   </module>
 </view>

@@ -39,7 +39,7 @@ new_view = module['params'].get('newView', "lookup_new")
 <script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.dataTables.min.js'])}"></script>
 <script language="javascript">
 
-$("#new_lookup").click(function(){ document.location="${edit_view}"; });
+$("#new_lookup").click(function(){ document.location="${new_view}"; });
 
 /**
  * Show a warning dialog.
@@ -60,7 +60,8 @@ function populate_lookups(data){
 	
 	// If the list of lookups is empty, then show a warning
 	if( data.entry.length == 0 ){
-		showWarningDialog("No lookup files exist; <a href='${new_view}'>create one now</a>");
+		showWarningDialog('No lookup files exist; <a href="${new_view}">create one now</a>');
+		return;
 	}
 	
 	// Show the table of lookups since we have at least one
