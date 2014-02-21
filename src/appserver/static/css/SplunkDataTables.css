@@ -51,6 +51,15 @@ a.paginate_button:hover, a.paginate_active:hover {
 	display:none;
 }
 
+.next.paginate_button:after{
+	content: "  \00BB";
+}
+
+.previous.paginate_button:before{
+	content: "\00AB  " ;
+}
+
+
 table.dataTable td {
 	padding: 5px 10px;
 }
