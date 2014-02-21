@@ -22,19 +22,21 @@ new_view = module['params'].get('newView', "lookup_new")
 </table>
 
 <div id="lookup_list">
-<table class="splTable">
+<table id="lookup_content_table" class="splTable">
+	<thead>
 	<tr>
 		<th>Lookup</th>      
 		<th>App</th>
 		<th>Owner</th>
         <th>Actions</th>
 	</tr>
-	<tbody id="lookup_list_tbody">
+	</thead>
+	<tbody>
 	</tbody>
 </table>
 </div>
 
-
+<script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.dataTables.min.js'])}"></script>
 <script language="javascript">
 
 $("#new_lookup").click(function(){ document.location="${edit_view}"; });
@@ -66,10 +68,13 @@ function populate_lookups(data){
 	
 	// Add each lookup file as a row
 	for( var c = 0; c < data.entry.length; c++){
-		$("#lookup_list_tbody").append("<tr>");
+		$("#lookup_content_table > tbody").append("<tr>");
+		
+		tr = $("#lookup_content_table > tbody > tr:last-child");
 		// TODO improve handling of arguments
-		$("#lookup_list_tbody").append("<td><a href='" + "${edit_view}?owner=" + data.entry[c].author + "&path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
-		$("#lookup_list_tbody").append("<td>" + data.entry[c].acl["app"] + "</td>");
+		tr.append("<td><a href='" + "${edit_view}?owner=" + data.entry[c].author + "&path=" + data.entry[c].acl["app"] + "/" + data.entry[c].name + "'>" + data.entry[c].name + "</a></td>");
+		tr.append("<td>" + data.entry[c].acl["app"] + "</td>");
+		//$("#lookup_list_tbody").append("</tr>");
 		
 		if( data.entry[c].author == "nobody"){
 			owner = "No owner";
@@ -78,10 +83,21 @@ function populate_lookups(data){
 			owner = data.entry[c].author;
 		}
 	
-		$("#lookup_list_tbody").append("<td>" + owner + "</td>");
-		$("#lookup_list_tbody").append("<td><a href='" + Splunk.util.make_url('/custom/lookup_editor/lookup_edit/get_original_lookup_file') + "?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
-		$("#lookup_list_tbody").append("</tr>");
+		tr.append("<td>" + owner + "</td>");
+		tr.append("<td><a href='" + Splunk.util.make_url('/custom/lookup_editor/lookup_edit/get_original_lookup_file') + "?namespace=" + data.entry[c].acl["app"] + "&lookup_file=" + data.entry[c].name + "'>Export</a></td>");
+		tr.append("</tr>");
 	}
+	
+	$('#lookup_content_table').dataTable({
+        "bPaginate": true,
+        "bLengthChange": false,
+        "bFilter": true,
+        "bSort": false,
+        "bInfo": false,
+        "bAutoWidth": false,
+        "sPaginationType": "full_numbers"
+    } );
+	
 }
 
 /**

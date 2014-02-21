@@ -1,3 +1,6 @@
+@import url('/static/app/lookup_editor/css/lib/jquery.dataTables.css');
+@import url('/static/app/lookup_editor/css/SplunkDataTables.css');
+
 #lookup_list{
 	margin-top: 32px;
 	display: none;
