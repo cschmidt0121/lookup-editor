@@ -44,6 +44,10 @@ input[type=text]{
 	padding-top: 12px;
 }
 
+.moreEditingOptions.exampleText{
+	margin-bottom: 8px;
+}
+
 /**
  * Cell renderers
  */
