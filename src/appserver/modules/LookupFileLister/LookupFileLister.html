@@ -105,9 +105,8 @@ function populate_lookups(data){
  */
 function get_lookups(){
 	
-	//var uri = Splunk.util.make_url('/splunkd/services/data/lookup-table-files');
-	var user = "luke"; // TODO get current user
-	var app = "lookup_editor"; // TODO get current app
+	var user = Splunk.util.getConfigValue("USERNAME");
+	var app = Splunk.util.getCurrentApp();
 	
 	var uri = Splunk.util.make_url('/splunkd/servicesNS/' + user + '/' + app + '/data/lookup-table-files');
     
