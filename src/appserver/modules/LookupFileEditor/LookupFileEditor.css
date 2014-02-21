@@ -1,4 +1,4 @@
-@import url('/static/app/lookup_editor/css/lib/jquery.handsontable.full.css');
+@import url('/en-US/static/app/lookup_editor/css/lib/jquery.handsontable.full.css');
 
 #dataTable{
 	height: 400px;
