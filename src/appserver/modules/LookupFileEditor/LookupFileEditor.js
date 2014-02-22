@@ -8,7 +8,7 @@
  * @param text The message to be displayed
  */
 function showWarningDialog(text){
-	$("#warning_dialog_text").text(text);
+	$("#warning_dialog_text").html(text);
 	$("#warning_dialog").show();
 }
 
@@ -407,6 +407,66 @@ function showDefaultContent(){
 }
 
 /**
+ * Get meta-data about the lookup file.
+ */
+function getLookupFileInfo(lookup_file, namespace, user){
+	
+	var data = {"lookup_file":lookup_file,
+        		"namespace":namespace};
+
+	// If a user was defined, then pass the name as a parameter
+	if(user !== undefined && user !== null){
+		data["owner"] = user;
+	}
+	
+	// Make the URL
+	url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_info", data);
+	var lookup_file_info = null;
+	
+	// Perform the call
+	$.ajax({
+		  url: url,
+		  cache: false,
+		  async: false,
+		  
+		  // On success, populate the table
+		  success: function(data) {
+			  console.info('Lookup table info obtained successfully');
+			  lookup_file_info = data;
+		  },
+		  
+		  // Handle errors
+		  error: function(jqXHR, textStatus, errorThrown){
+			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
+				  console.info('Lookup file info could not be identified');
+			  }
+		  }
+	});
+	
+	return lookup_file_info;
+	
+}
+
+function round(value){
+	return Math.round(value*100)/100;
+}
+
+function humanReadableFileSize(filesize){
+	if(filesize > (1024 * 1024 * 1024)){
+		return "" + round(filesize / (1024 * 1024 * 1024)) + " GB";
+	}
+	else if(filesize > (1024 * 1024)){
+		return "" + round(filesize / (1024 * 1024)) + " MB";
+	}
+	else if(filesize > (1024)){
+		return "" + round(filesize / 1024) + " KB";
+	}
+	else{
+		return "" + filesize + " bytes";
+	}
+}
+
+/**
  * Setup the editor by loading the content from the server or inserting the default content.
  */
 function setupView(){
@@ -416,7 +476,24 @@ function setupView(){
 		showDefaultContent();
 	}
 	else{
-		loadLookupContents( lookup_file, namespace, user, false );
+		
+		// Get information about the lookup file
+		lookup_file_info = getLookupFileInfo(lookup_file, namespace, user)
+		
+		if( lookup_file_info['is_too_big_for_editing'] ){
+			
+			$(".table-loading-message").hide();
+			
+			showWarningDialog('This lookup file is too big (' + humanReadableFileSize(lookup_file_info['size']) + ') to edit in the user interface. <a href="' + list_view + '">Return to the list of lookups.</a>');
+			$("#save").hide();
+			
+			// Hide the loading message
+			$(".table-loading-message").hide();
+		}
+		else{
+			loadLookupContents(lookup_file, namespace, user, false);
+		}
+		
 	}
 }
 

@@ -85,6 +85,8 @@ class LookupEditor(controllers.BaseController):
     Lookup Editor Controller
     '''
  
+    MAXIMUM_EDITABLE_SIZE = 10 * 1024 * 1024 # 10 MB
+ 
     @staticmethod
     def getCapabilities4User(user=None, session_key=None):
         """
@@ -120,7 +122,58 @@ class LookupEditor(controllers.BaseController):
             
         return capabilities     
     
-    @expose_page(must_login=True, methods=['POST', 'GET']) 
+    @expose_page(must_login=True, methods=['GET']) 
+    def get_lookup_info(self, lookup_file, namespace="lookup_editor", owner=None, **kwargs):
+        """
+        Get information about a lookup file
+        """
+
+        logger.info("Retrieving information about a lookup file...")
+        
+        user = cherrypy.session['user']['name']
+        session_key = cherrypy.session.get('sessionKey')
+        
+        # Ensure that the file name is valid
+        if not self.is_file_name_valid(lookup_file):
+            cherrypy.response.status = 400
+            return self.render_error_json(_("The lookup filename contains disallowed characters"))
+        
+        # Get a reference to the file
+        full_lookup_filename = self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv=True)
+        
+        # Below is the description of the file
+        desc = {}
+        
+        # Fill out information about this file
+        desc['filename'] = full_lookup_filename
+        
+        # Get the size of the file
+        try:
+            file_size = os.path.getsize(full_lookup_filename)
+            desc['size'] = file_size
+            desc['is_too_big_for_editing'] = (file_size > LookupEditor.MAXIMUM_EDITABLE_SIZE)
+            
+        except os.error:
+            cherrypy.response.status = 400
+            return self.render_error_json(_("The lookup file could not be opened"))
+        
+        # Return the information
+        return self.render_json(desc)
+        
+        
+    def is_file_name_valid(self, lookup_file):     
+        """
+        Indicate if the lookup file is valid (doesn't contain invalid characters such as "..").
+        """
+         
+        allowed_path = re.compile("^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$", re.IGNORECASE)
+        
+        if not allowed_path.match(lookup_file):
+            return False
+        else:
+            return True
+        
+    @expose_page(must_login=True, methods=['POST']) 
     def save(self, lookup_file, contents, namespace, **kwargs):
         """
         Save the contents of a lookup file
@@ -138,9 +191,7 @@ class LookupEditor(controllers.BaseController):
         LookupEditor.check_capabilities(lookup_file, user, session_key)
         
         # Ensure that the file name is valid
-        allowed_path = re.compile("^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$", re.IGNORECASE)
-        
-        if not allowed_path.match(lookup_file):
+        if not self.is_file_name_valid(lookup_file):
             cherrypy.response.status = 400
             return self.render_error_json(_("The lookup filename contains disallowed characters"))
         
@@ -246,6 +297,25 @@ class LookupEditor(controllers.BaseController):
         if False:
             raise PermissionDeniedException(signature)
     
+    def resolve_lookup_filename(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True):
+        """
+        Resolve the lookup filename.
+        """
+        
+        if owner is not None:
+            # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
+            lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
+            lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
+        else:
+            lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
+            lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
+            
+        # Get the file path
+        if get_default_csv and not os.path.exists(lookup_path) and os.path.exists(lookup_path_default):
+            return lookup_path_default
+        else:
+            return lookup_path
+            
     def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True ):
         """
         Get a file handle to the associated lookup file.
@@ -260,23 +330,8 @@ class LookupEditor(controllers.BaseController):
         # Check capabilities
         LookupEditor.check_capabilities(lookup_file, user, session_key)
         
-        # Get the file path
-        # Strip pathing information so that people cannot use ".." to get to files they should not be able to access
-        lookup_file = os.path.basename(lookup_file)
-        
-        if owner is not None:
-            # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
-            lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
-            lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
-        else:
-            lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
-            lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
-        
-        # Open the file
-        if get_default_csv and not os.path.exists(lookup_path) and os.path.exists(lookup_path_default):
-            return open(lookup_path_default, 'rb')
-        else:
-            return open(lookup_path, 'rb')
+        # Get the file handle
+        return open(self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv), 'rb')
 
     @expose_page(must_login=True, methods=['GET']) 
     def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, **kwargs):
@@ -315,5 +370,4 @@ class LookupEditor(controllers.BaseController):
         
     @expose_page(must_login=True, methods=['GET']) 
     def get_lookup_header(self, lookup_file, namespace="lookup_editor", owner=None, **kwargs):
-        pass
         pass

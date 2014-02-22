@@ -51,6 +51,7 @@ else:
 # Get the module params
 title_new  = module['params'].get('titleNew' , "New Lookup Table File")
 title_edit = module['params'].get('titleEdit', "Edit Lookup Table File")
+list_view  = module['params'].get('listView' , "lookup_list")
 
 if title_new is None or title_new == '':
 	title_new = "New Lookup File"
@@ -106,6 +107,12 @@ namespace = null;
 user = "${owner}";
 % else:
 user = null;
+% endif
+
+% if list_view:
+list_view = "${list_view}";
+% else:
+list_view = null;
 % endif
 
 </script>
