@@ -258,6 +258,9 @@ function showValidationFailureMessage(text){
  */
 function doSaveLookup(){
 	
+	// Started recording the time so that we figure out how long it took to save the lookup file
+	var populateStart = new Date().getTime();
+	
 	// Get a reference to the handsontable plugin
 	var handsontable = new_jquery("#dataTable").data('handsontable');
 	
@@ -352,6 +355,9 @@ function doSaveLookup(){
 				// Handle cases where the file could not be found or the user did not have permissions
 				complete: function(jqXHR, textStatus){
 					var messenger = Splunk.Messenger.System.getInstance();
+					
+					var elapsed = new Date().getTime()-populateStart;
+					console.info("Lookup save operation completed in " + elapsed + "ms");
 					
 					if(jqXHR.status == 404){
 						console.info('Lookup file was not found');
@@ -469,6 +475,9 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
     // Switch to the newer version of jquery
 	$ = new_jquery;
 	
+	// Started recording the time so that we figure out how long it took to load the lookup file
+	var populateStart = new Date().getTime();
+	
 	// Perform the call
 	$.ajax({
 		  url: url,
@@ -479,6 +488,9 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 			  console.info('JSON of lookup table was successfully loaded');
 			  setupTable( data );
 			  $("#tableEditor").show();
+			  
+			  var elapsed = new Date().getTime()-populateStart;
+			  console.info("Lookup loaded and rendered in " + elapsed + "ms");
 		  },
 		  
 		  // Handle cases where the file could not be found or the user did not have permissions
