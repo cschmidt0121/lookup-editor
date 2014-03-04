@@ -94,6 +94,32 @@ function lookupRenderer(instance, td, row, col, prop, value, cellProperties) {
 }
 
 /**
+ * Older versions of Splunk ship with a version of jQuery that doesn't work with the HandsOnTable plugin. Thus, we have to use
+ * a newer version of jQuery. This only applies to older versions of Splunk so the swapping will be ignored on newer Splunk
+ * hosts (6.0+).
+ */
+function switchToNewJquery(){
+	if(typeof new_jquery !== 'undefined' && typeof old_jquery !== 'undefined'){
+		$ = new_jquery;
+	}
+}
+
+function switchToOldJquery(){
+	if(typeof new_jquery !== 'undefined' && typeof old_jquery !== 'undefined'){
+		$ = old_jquery;
+	}
+}
+
+function getNewJquery(){
+	if(typeof new_jquery !== 'undefined' && typeof old_jquery !== 'undefined'){
+		return new_jquery;
+	}
+	else{
+		return $;
+	}
+}
+
+/**
  * Render the given data as a table.
  * 
  * @param data The data (array of array) representing the table
@@ -107,7 +133,7 @@ function setupTable( data ){
 		];
 	}
 	
-	new_jquery("#dataTable").handsontable({
+	getNewJquery()("#dataTable").handsontable({
 	  data: data,
 	  startRows: 1,
 	  startCols: 1,
@@ -262,7 +288,7 @@ function doSaveLookup(){
 	var populateStart = new Date().getTime();
 	
 	// Get a reference to the handsontable plugin
-	var handsontable = new_jquery("#dataTable").data('handsontable');
+	var handsontable = getNewJquery()("#dataTable").data('handsontable');
 	
 	// Get the row data
 	row_data = handsontable.getData();
@@ -522,7 +548,7 @@ function setupHandlers(){
 // When the document is ready, get the handlers configured.
 $(document).ready(
 		function(){
-			addStylesheet('/static/app/lookup_editor/css/lib/jquery.handsontable.full.css'); //This is necessary for 5.0
+			addStylesheet('/static/app/lookup_editor/css/lib/jquery.handsontable.full.css'); //This is necessary for Splunk 5.0.x support
 			setupHandlers();
 		}
 );
@@ -550,7 +576,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
     url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_contents", data);
 	
     // Switch to the newer version of jquery
-	$ = new_jquery;
+    switchToNewJquery();
 	
 	// Started recording the time so that we figure out how long it took to load the lookup file
 	var populateStart = new Date().getTime();
@@ -595,7 +621,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 	});
 
 	// Switch back to the old version of jQuery
-	$ = old_jquery;
+	switchToOldJquery();
 }
 
 /**

@@ -14,3 +14,9 @@ function addStylesheet( filename ){
         $("head").append( link );
     }
 }
+
+function addJavascript( filename ){
+    var script = $("<script>");
+    script.attr({type: 'text/javascript', src: filename});
+    $("head").append( script );
+}
