@@ -302,6 +302,13 @@ class LookupEditor(controllers.BaseController):
         Resolve the lookup filename.
         """
         
+        # Strip out invalid characters like 
+        lookup_file = os.path.basename(lookup_file)
+        namespace = os.path.basename(namespace)
+        
+        if owner is not None:
+            owner = os.path.basename(owner)
+        
         if owner is not None:
             # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
             lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
