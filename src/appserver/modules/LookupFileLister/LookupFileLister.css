@@ -18,6 +18,8 @@
 
 #new_lookup{
 	margin-bottom: 16px;
+	z-index: 10; /* Necessary for the button to appear in front of the table in order to be clickable */
+	position: relative;
 }
 
 .dataTables_wrapper#lookup_content_table_wrapper{
