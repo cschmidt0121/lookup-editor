@@ -99,7 +99,7 @@ old_jquery = $.noConflict(true);
 // We need to delay the loading of the handsontable a little bit so that the Splunk's built-in Javascript has a chance to load (http://lukemurphey.net/issues/705)
 setTimeout(
 		function(){
-			addJavascript('/static/app/lookup_editor/js/lib/jquery.handsontable.full.js');
+			addJavascript('${make_url(['/static/app/lookup_editor/js/lib/jquery.handsontable.full.js'])}');
 		},
 		100
 );
