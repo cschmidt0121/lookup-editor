@@ -152,21 +152,39 @@ function setupTable( data ){
 		  this.renderer = lookupRenderer;
 	  },
 	
+	  beforeRemoveRow: function(index, amount){
+		  
+		  // Don't allow deletion of all cells
+		  if( (this.countRows() - amount) <= 0){
+			  alert("A valid lookup file requires at least one row.");
+			  return false;
+		  }
+		  
+		  // Warn about the header being deleted and make sure the user wants to proceed.
+		  if(index == 0){
+			  var continue_with_deletion = confirm("Are you sure you want to delete the header row?\nA valid lookup file needs at least a header.");
+			  
+			  if (!continue_with_deletion){
+				  return false;
+			  }
+		  }
+	  },
+	  
+	  beforeRemoveCol: function(index, amount){
+		  
+		  // Don't allow deletion of all cells
+		  if( (this.countCols() - amount) <= 0){
+			  alert("A valid lookup file requires at least one column.");
+			  return false;
+		  }
+	  },
+	  
 	  // Don't allow removal of all columns
 	  afterRemoveCol: function(index, amount){
 		  if(this.countCols() == 0){
 			  alert("You must have at least one cell to have a valid lookup");
 			  //loadLookupContents( lookup_file, namespace, user, true );
 			  setupTable( [ [""] ] );
-		  }
-	  },
-	  
-	  // Don't allow removal of all rows
-	  afterRemoveRow: function(index, amount){
-		  if(index == 0){
-			  alert("You must have at least one cell to have a valid lookup");
-			  setupTable( [ [""] ] );
-			  //loadLookupContents( lookup_file, namespace, user, true );
 		  }
 	  }
 	  
