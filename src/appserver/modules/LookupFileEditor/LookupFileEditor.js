@@ -142,6 +142,7 @@ function setupTable( data ){
 	  minSpareCols: 0,
 	  colHeaders: false,
 	  rowHeaders: true,
+	  fixedRowsTop: 1,
 	  
 	  stretchH: 'all',
 	  manualColumnResize: true,
