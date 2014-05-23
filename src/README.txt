@@ -45,8 +45,9 @@ Change History
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 0.7     | Fixed issue where the header and footer did not show on 6.0 due to a Javascript error                            |
 |---------|------------------------------------------------------------------------------------------------------------------|
-| 1.0     | Added support for using a proxy server                                                                           |
-|         | Updated the app to work better on Splunk 6.0                                                                     |
+| 1.0     | Fixed issue that prevented the app from working with custom root endpoints                                       |
+|         | Updated the app to work better on Splunk 6.1                                                                     |
 |---------|------------------------------------------------------------------------------------------------------------------|
-| 1.0.1   | Added warning when users attempt to delete the header row                                                        |
+| 1.1     | Added warning when users attempt to delete the header row                                                        |
+|         | Made the header row sticky such that it stays at the top of the page even when you scroll down                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
