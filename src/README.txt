@@ -1,0 +1,52 @@
+================================================
+Overview
+================================================
+
+This app provides a user-interface for editing lookup files in Splunk.
+
+
+
+================================================
+Known Limitations
+================================================
+
+1) The lookup editor is limited to editing files up to 10 MB. Files larger than this cannot be edited because it consume too much memory on some browsers.
+
+2) The lookup editor does not enforce concurrency. This means that if two users edit a lookup file at the same time, someone will lose changes.
+
+
+
+================================================
+Getting Support
+================================================
+
+Go to the following website if you need support:
+
+     http://answers.splunk.com/answers/app/1724
+
+You can access the source-code and get technical details about the app at:
+
+     https://github.com/LukeMurphey/lookup-editor
+
+
+
+================================================
+Change History
+================================================
+
++---------+------------------------------------------------------------------------------------------------------------------+
+| Version |  Changes                                                                                                         |
++---------+------------------------------------------------------------------------------------------------------------------+
+| 0.5     | Initial release                                                                                                  |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 0.6     | Added support for Splunk 5.0                                                                                     |
+|         | Added limit for large lookup files (>10 MB)                                                                      |
+|         | Fixed issues where the modular input failed to validate parameters correctly and log error messages              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 0.7     | Fixed issue where the header and footer did not show on 6.0 due to a Javascript error                            |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.0     | Added support for using a proxy server                                                                           |
+|         | Updated the app to work better on Splunk 6.0                                                                     |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.0.1   | Added warning when users attempt to delete the header row                                                        |
++---------+------------------------------------------------------------------------------------------------------------------+
