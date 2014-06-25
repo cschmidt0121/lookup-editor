@@ -50,4 +50,6 @@ Change History
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.1     | Added warning when users attempt to delete the header row                                                        |
 |         | Made the header row sticky such that it stays at the top of the page even when you scroll down                   |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.2     | Added ability to select how many entries to show on each page                                                    |
 +---------+------------------------------------------------------------------------------------------------------------------+
