@@ -157,13 +157,13 @@ function setupTable( data ){
 		  
 		  // Don't allow deletion of all cells
 		  if( (this.countRows() - amount) <= 0){
-			  alert("A valid lookup file requires at least one row.");
+			  alert("A valid lookup file requires at least one row (for the header).");
 			  return false;
 		  }
 		  
 		  // Warn about the header being deleted and make sure the user wants to proceed.
 		  if(index == 0){
-			  var continue_with_deletion = confirm("Are you sure you want to delete the header row?\nA valid lookup file needs at least a header.");
+			  var continue_with_deletion = confirm("Are you sure you want to delete the header row?\n\nNote that a valid lookup file needs at least a header.");
 			  
 			  if (!continue_with_deletion){
 				  return false;
