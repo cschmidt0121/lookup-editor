@@ -525,7 +525,10 @@ function setupView(){
 		// Get information about the lookup file
 		lookup_file_info = getLookupFileInfo(lookup_file, namespace, user)
 		
-		if( lookup_file_info['is_too_big_for_editing'] ){
+		if(lookup_file_info === null){
+			alert("Information about the lookup file could not be obtained from the server");
+		}
+		else if( lookup_file_info['is_too_big_for_editing'] ){
 			
 			$(".table-loading-message").hide();
 			
