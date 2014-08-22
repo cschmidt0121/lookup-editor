@@ -580,6 +580,8 @@ $(document).ready(
 
 /**
  * Load the selected lookup from from the history.
+ * 
+ * @param version The version of the lookup file to load (a value of null will load the latest version)
  */
 function loadBackupFile(version){
 	
