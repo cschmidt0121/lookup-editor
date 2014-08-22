@@ -52,4 +52,6 @@ Change History
 |         | Made the header row sticky such that it stays at the top of the page even when you scroll down                   |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.2     | Added ability to select how many entries to show on each page                                                    |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 1.3     | Added built-in backups of files and ability to load the previous version                                         |
 +---------+------------------------------------------------------------------------------------------------------------------+
