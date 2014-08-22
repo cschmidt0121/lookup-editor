@@ -581,12 +581,21 @@ $(document).ready(
 /**
  * Load the selected lookup from from the history.
  */
-function loadBackupFile(old_version){
+function loadBackupFile(version){
 	
-	var r = confirm("Would you like to load the previous version of the backup file?\n\nExisting unsaved changes will be overridden.");
+	// Load a default for the version
+	if( typeof version === 'undefined' ){
+		version = null;
+	}
+	
+	var r = confirm('This version the lookup file will now be loaded.\n\nUnsaved changes will be overridden.');
 	
 	if (r == true) {
-		loadLookupContents(lookup_file, namespace, user, false, old_version);
+		loadLookupContents(lookup_file, namespace, user, false, version);
+		return true;
+	}
+	else{
+		return false;
 	}
 }
 
@@ -599,7 +608,7 @@ function setupBackupsList(backups){
 	
 	// If we have some backups, then populate the select box
 	if(backups.length > 0){
-		$("#backupsList").html('<select><option value="">(current version)</option></select>');
+		$("#backupsList").html('<select><option value="">Current version</option></select>');
 		
 		for( var c = 0; c < backups.length; c++){
 			$("#backupsList > select").append('<option value="' + backups[c]['time'] + '">' + backups[c]['time_readable'] + '</option>');
@@ -610,10 +619,14 @@ function setupBackupsList(backups){
 	$("#backupsList > select").on( "change", function() {
 		
 		if( this.value ){
-			loadBackupFile(this.value);
+			if( !loadBackupFile(this.value) ){
+				$(this).val($.data(this, 'current'));
+			}
 		}
 		else{
-			loadBackupFile(undefined);
+			if( !loadBackupFile() ){
+				$(this).val($.data(this, 'current'));
+			}
 		}
 	});
 	
@@ -696,7 +709,7 @@ function loadLookupContents(lookup_file, namespace, user, header_only, version){
 	$(".table-loading-message").show();
 	
 	// Set the version parameter if we are asking for an old version
-	if( version !== undefined ){
+	if( version !== undefined && version ){
 		data.version = version;
 	}
 	
