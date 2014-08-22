@@ -599,7 +599,7 @@ function setupBackupsList(backups){
 	
 	// If we have some backups, then populate the select box
 	if(backups.length > 0){
-		$("#backupsList").html('<select><option value="">(select to load previous)</option></select>');
+		$("#backupsList").html('<select><option value="">(current version)</option></select>');
 		
 		for( var c = 0; c < backups.length; c++){
 			$("#backupsList > select").append('<option value="' + backups[c]['time'] + '">' + backups[c]['time_readable'] + '</option>');
@@ -611,6 +611,9 @@ function setupBackupsList(backups){
 		
 		if( this.value ){
 			loadBackupFile(this.value);
+		}
+		else{
+			loadBackupFile(undefined);
 		}
 	});
 	
