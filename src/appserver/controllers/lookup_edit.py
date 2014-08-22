@@ -6,6 +6,8 @@ import shutil
 import csv
 import cherrypy
 import re
+import time
+import datetime
 
 from splunk import AuthorizationFailed as AuthorizationFailed
 import splunk.appserver.mrsparkle.controllers as controllers
@@ -47,7 +49,7 @@ def setup_logger(level):
     logger.addHandler(file_handler)
     return logger
 
-logger = setup_logger(logging.INFO)
+logger = setup_logger(logging.DEBUG)
 
 from splunk.models.base import SplunkAppObjModel
 from splunk.models.field import BoolField, Field
@@ -123,7 +125,7 @@ class LookupEditor(controllers.BaseController):
         return capabilities     
     
     @expose_page(must_login=True, methods=['GET']) 
-    def get_lookup_info(self, lookup_file, namespace="lookup_editor", owner=None, **kwargs):
+    def get_lookup_info(self, lookup_file, namespace="lookup_editor", **kwargs):
         """
         Get information about a lookup file
         """
@@ -133,13 +135,17 @@ class LookupEditor(controllers.BaseController):
         user = cherrypy.session['user']['name']
         session_key = cherrypy.session.get('sessionKey')
         
+        # Load defaults (cherrypy won't let me assign defaults in the function definition)
+        owner = kwargs.get('owner', None)
+        version = kwargs.get('version', None)
+        
         # Ensure that the file name is valid
         if not self.is_file_name_valid(lookup_file):
             cherrypy.response.status = 400
             return self.render_error_json(_("The lookup filename contains disallowed characters"))
         
         # Get a reference to the file
-        full_lookup_filename = self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv=True)
+        full_lookup_filename = self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv=True, version=version)
         
         # Below is the description of the file
         desc = {}
@@ -173,6 +179,94 @@ class LookupEditor(controllers.BaseController):
         else:
             return True
         
+    def getBackupFiles(self, lookup_file, namespace, owner):
+        """
+        Get a list of backup files for a given file
+        """
+        
+        # Escape the file name so that we find the correct file
+        escaped_filename = self.escapeFilename(lookup_file)
+        
+        # Get the backup directory and determine the path to the backups
+        backup_directory = self.getBackupDirectory(lookup_file, namespace, owner)
+        
+        # Get the backups
+        backups = [ f for f in os.listdir(backup_directory) if os.path.isfile(os.path.join(backup_directory,f)) ]
+        
+        return backups
+    
+    @expose_page(must_login=True, methods=['GET']) 
+    def get_lookup_backups_list(self, lookup_file, namespace, owner=None, **kwargs):
+        
+        backups = self.getBackupFiles(lookup_file, namespace, owner)
+        
+        # Make the response
+        backups_meta = []
+        
+        for backup in backups:
+            backups_meta.append(
+                                {
+                                 'time': backup,
+                                 'time_readable' : datetime.datetime.fromtimestamp(float(backup)).strftime('%Y-%m-%d %H:%M:%S')
+                                }
+                                )
+        
+        # Sort the list
+        backups_meta = sorted(backups_meta, key=lambda x: float(x['time']), reverse=True)
+        
+        return self.render_json(backups_meta)
+        
+    def escapeFilename(self, file_name):
+        """
+        Return a file name the excludes special characters (replaced with underscores)
+        """
+        
+        return re.sub(r'[/\\?%*:|"<>]', r'_', file_name)
+    
+    def getBackupDirectory(self, lookup_file, namespace, owner=None):
+        """
+        Get the backup directory where the lookup should be stored
+        """
+        
+        if owner is None:
+            owner = 'nobody'
+        
+        # Make the backup directory, if necessary
+        backup_directory = make_splunkhome_path(['etc', 'apps', 'lookup_editor', 'lookup_file_backups', namespace, owner, self.escapeFilename(lookup_file)])
+            
+        if not os.path.exists(backup_directory):
+            os.makedirs(backup_directory)
+            
+        return backup_directory
+                
+    def backupLookupFile(self, lookup_file, namespace, owner=None):
+        """
+        Make a backup if the lookup file
+        """
+        
+        try:
+            # Get the backup directory
+            backup_directory = self.getBackupDirectory(lookup_file, namespace, owner)
+            
+            # Make the full paths
+            src = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_file])
+            dst = make_splunkhome_path([backup_directory, str(time.time())])
+    
+            # Make the backup
+            shutil.copyfile(src, dst)
+            
+            # Copy the permissions and timestamps
+            shutil.copystat(src, dst)
+            
+            logger.info('A backup of the lookup file was created, namespace=%s, lookup_file="%s", backup_file="%s"', namespace, lookup_file, dst)
+            
+            # Return the path of the backup in case the caller wants to do something with it
+            return dst
+        except:
+            logger.exception("Error when attempting to make a backup; the backup will not be made")
+            
+            return None
+        
     @expose_page(must_login=True, methods=['POST']) 
     def save(self, lookup_file, contents, namespace, **kwargs):
         """
@@ -194,6 +288,9 @@ class LookupEditor(controllers.BaseController):
         if not self.is_file_name_valid(lookup_file):
             cherrypy.response.status = 400
             return self.render_error_json(_("The lookup filename contains disallowed characters"))
+        
+        # Make a backup
+        self.backupLookupFile(lookup_file, namespace)
         
         # Parse the JSON
         parsed_contents = json.loads(contents)
@@ -297,19 +394,25 @@ class LookupEditor(controllers.BaseController):
         if False:
             raise PermissionDeniedException(signature)
     
-    def resolve_lookup_filename(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True):
+    def resolve_lookup_filename(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None):
         """
         Resolve the lookup filename.
         """
         
-        # Strip out invalid characters like 
+        # Strip out invalid characters like ".."
         lookup_file = os.path.basename(lookup_file)
         namespace = os.path.basename(namespace)
         
         if owner is not None:
             owner = os.path.basename(owner)
-        
-        if owner is not None:
+        logger.debug("Version (resolve_lookup_filename) is:" + str(version))
+        if version is not None and owner is not None:
+            lookup_path = make_splunkhome_path([self.getBackupDirectory(lookup_file, namespace, owner), version])
+            lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
+        elif version is not None:
+            lookup_path = make_splunkhome_path([self.getBackupDirectory(lookup_file, namespace, owner), version])
+            lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
+        elif owner is not None:
             # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
             lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
@@ -317,19 +420,21 @@ class LookupEditor(controllers.BaseController):
             lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
             
+        logger.debug('Resolved lookup file, file=%s', lookup_path)
+            
         # Get the file path
         if get_default_csv and not os.path.exists(lookup_path) and os.path.exists(lookup_path_default):
             return lookup_path_default
         else:
             return lookup_path
             
-    def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True ):
+    def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None):
         """
         Get a file handle to the associated lookup file.
         """
         
         logger.info("Retrieving lookup file contents...")
-        
+        logger.debug("Version is:" + str(version))
         # Get the user's name and session
         user = cherrypy.session['user']['name'] 
         session_key = cherrypy.session.get('sessionKey')
@@ -338,10 +443,10 @@ class LookupEditor(controllers.BaseController):
         LookupEditor.check_capabilities(lookup_file, user, session_key)
         
         # Get the file handle
-        return open(self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv), 'rb')
+        return open(self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv, version), 'rb')
 
     @expose_page(must_login=True, methods=['GET']) 
-    def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, **kwargs):
+    def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, version=None, **kwargs):
         """
         Provides the contents of a lookup file as JSON.
         """
@@ -352,7 +457,8 @@ class LookupEditor(controllers.BaseController):
             header_only = False
         
         try:
-            with self.get_lookup(lookup_file, namespace, owner) as csv_file:
+            with self.get_lookup(lookup_file, namespace, owner, version=version) as csv_file:
+                
                 csv_reader = csv.reader(csv_file)
             
                 # Convert the content to JSON

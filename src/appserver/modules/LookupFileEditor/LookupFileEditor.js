@@ -421,6 +421,9 @@ function doSaveLookup(){
 					}
 					
 					$("#save > span").text("Save");
+					
+					// Update the lookup backup list
+					loadLookupBackupsList(lookup_file, namespace);
 				},
 				
 				error: function(jqXHR,textStatus,errorThrown) {
@@ -576,18 +579,123 @@ $(document).ready(
 );
 
 /**
+ * Load the selected lookup from from the history.
+ */
+function loadBackupFile(old_version){
+	
+	var r = confirm("Would you like to load the previous version of the backup file?\n\nExisting unsaved changes will be overridden.");
+	
+	if (r == true) {
+		loadLookupContents(lookup_file, namespace, user, false, old_version);
+	}
+}
+
+/**
+ * Load the list of backup lookup files.
+ * 
+ * @param backups A list of the backups
+ */
+function setupBackupsList(backups){
+	
+	// If we have some backups, then populate the select box
+	if(backups.length > 0){
+		$("#backupsList").html('<select><option value="">(select to load previous)</option></select>');
+		
+		for( var c = 0; c < backups.length; c++){
+			$("#backupsList > select").append('<option value="' + backups[c]['time'] + '">' + backups[c]['time_readable'] + '</option>');
+		}
+	}
+	
+	// Setup the handler
+	$("#backupsList > select").on( "change", function() {
+		
+		if( this.value ){
+			loadBackupFile(this.value);
+		}
+	});
+	
+	// Show the backups controls
+	$('#backupsControls').fadeIn(100);
+}
+
+/**
+ * Load the list of backup lookup files.
+ * 
+ * @param lookup_file The name of the lookup file
+ * @param namespace The app where the lookup file exists
+ * @param user The user that owns the file (in the case of user-based lookups)
+ */
+function loadLookupBackupsList(lookup_file, namespace, user){
+	
+	var data = {"lookup_file":lookup_file,
+            	"namespace":namespace};
+	
+	// Populate the default parameter in case user wasn't provided
+	if( typeof user === 'undefined' ){
+		user = null;
+	}
+
+	// If a user was defined, then pass the name as a parameter
+	if(user !== null){
+		data["owner"] = user;
+	}
+	
+	// Make the URL
+    url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_backups_list", data);
+    
+	// Perform the call
+	$.ajax({
+		  url: url,
+		  cache: false,
+		  
+		  // On success, populate the table
+		  success: function(data) {
+			  console.info('JSON of lookup table backups was successfully loaded');
+			  setupBackupsList( data );
+			  $("#backupsList").show();
+		  },
+		  
+		  // Handle cases where the file could not be found or the user did not have permissions
+		  complete: function(jqXHR, textStatus){
+			  if( jqXHR.status == 404){
+				  console.info('No backups for this lookup file was found');
+			  }
+			  else if( jqXHR.status == 403){
+				  console.info('Inadequate permissions');
+			  }
+		  }
+	});
+
+}
+    
+
+/**
  * Load the lookup file contents from the server and populate the editor.
  * 
  * @param lookup_file The name of the lookup file
  * @param namespace The app where the lookup file exists
  * @param user The user that owns the file (in the case of user-based lookups)
  * @param header_only Indicates if only the header row should be retrieved
+ * @param version The version to get from the archived history
  */
-function loadLookupContents(lookup_file, namespace, user, header_only){
+function loadLookupContents(lookup_file, namespace, user, header_only, version){
 	
 	var data = {"lookup_file":lookup_file,
             	"namespace":namespace,
             	"header_only":header_only};
+	
+	// Set a default value for version
+	if( typeof version === 'undefined' ){
+		version = undefined;
+	}
+	
+	// Show the loading message
+	$(".table-loading-message").show();
+	
+	// Set the version parameter if we are asking for an old version
+	if( version !== undefined ){
+		data.version = version;
+	}
 	
 	// If a user was defined, then pass the name as a parameter
 	if(user !== null){
@@ -631,6 +739,12 @@ function loadLookupContents(lookup_file, namespace, user, header_only){
 			  
 			  // Hide the loading message
 			  $(".table-loading-message").hide();
+			  
+			  // Start the loading of the history
+			  if( version === undefined ){
+				  loadLookupBackupsList(lookup_file, namespace, user);
+			  }
+			  
 		  },
 		  
 		  // Handle errors

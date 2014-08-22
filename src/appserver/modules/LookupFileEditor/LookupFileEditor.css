@@ -46,6 +46,16 @@ input[type=text]{
 
 .moreEditingOptions.exampleText{
 	margin-bottom: 8px;
+	float: left;
+}
+
+#backupsControls{
+	display: none;
+	float: right;
+}
+
+#backupsList{
+	display: inline;
 }
 
 /**
@@ -138,4 +148,5 @@ input[type=text]{
 
 #item-lookup-file{
 	margin-bottom: 80px;
+	clear: both;
 }
