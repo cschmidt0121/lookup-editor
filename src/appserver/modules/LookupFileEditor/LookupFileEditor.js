@@ -618,16 +618,22 @@ function setupBackupsList(backups){
 	// Setup the handler
 	$("#backupsList > select").on( "change", function() {
 		
+		var version = null;
+		
+		// Assign a default
 		if( this.value ){
-			if( !loadBackupFile(this.value) ){
-				$(this).val($.data(this, 'current'));
-			}
+			version = this.value;
+		}
+		
+		// Load the backup version; if that doesn't succeed, then revert the value
+		if( !loadBackupFile(version) ){
+			$(this).val( $(this).data("prev") );
 		}
 		else{
-			if( !loadBackupFile() ){
-				$(this).val($.data(this, 'current'));
-			}
+			// Save the previous value
+			$(this).data("prev", this.value);
 		}
+		
 	});
 	
 	// Show the backups controls
