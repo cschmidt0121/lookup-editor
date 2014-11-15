@@ -87,6 +87,7 @@ except splunk.AuthorizationFailed:
 % if splunk.getReleaseVersion().startswith("5."):
 <script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.min.js'])}"></script>
 <script src="${make_url(['/static/app/lookup_editor/js/lib/jquery.handsontable.full.js'])}"></script>
+<script src="${make_url(['/static/app/lookup_editor/js/lib/csv.js'])}"></script>
 % endif
 <script src="${make_url(['/static/app/lookup_editor/js/resource_loader.js'])}"></script>
 <script>
@@ -100,6 +101,7 @@ old_jquery = $.noConflict(true);
 setTimeout(
 		function(){
 			addJavascript('${make_url(['/static/app/lookup_editor/js/lib/jquery.handsontable.full.js'])}');
+			addJavascript('${make_url(['/static/app/lookup_editor/js/lib/csv.js'])}');
 		},
 		100
 );
@@ -130,6 +132,10 @@ list_view = null;
 % endif
 
 </script>
+
+<div id="importFileControls">
+	Import from CSV file: <input type="file" id="importLookup"></input>
+</div>
 
 % if is_new:
 <h1>${title_new}</h1>

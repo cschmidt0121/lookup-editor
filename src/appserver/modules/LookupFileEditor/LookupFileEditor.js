@@ -554,6 +554,7 @@ function setupView(){
 function setupHandlers(){
 	$("#save").click( saveLookup );
 	$("#cancel").click( gotoToList );
+	$("#importLookup").change( loadFile );
 	
 	// Make sure that the variables that indicate which lookup to load are defined. Don't bother continuing if they weren't.
 	if (typeof lookup_file !== 'undefined' && typeof namespace !== 'undefined') {
@@ -577,6 +578,71 @@ $(document).ready(
 			setupHandlers();
 		}
 );
+
+/**
+ * Load a locally provided file in the editor.
+ */
+function loadFile(evt){
+	
+	// Show the loading message
+	$(".table-loading-message").show();
+	
+	// Stop if the browser doesn't support processing files in Javascript
+	if(!window.FileReader){
+		alert("Your browser doesn't support file reading in Javascript; thus, I cannot parse your uploaded file");
+		return false;
+	}
+	
+	// Get a reader so that we can read in the file
+	var reader = new FileReader();
+	
+	// Setup an onload handler that will process the file
+	reader.onload = function(evt) {
+		
+		// Stop if the ready state isn't "loaded"
+        if(evt.target.readyState != 2){
+        	return;
+        }
+        
+        // Stop if the file could not be processed
+        if(evt.target.error) {
+        	
+        	// Hide the loading message
+        	$(".table-loading-message").hide();
+        	
+        	// Show an error
+            alert('Error while reading file');
+            return;
+        }
+        
+        // Get the file contents
+        var filecontent = evt.target.result;
+        
+        // Import the file into the view
+    	var data = new CSV(filecontent, { }).parse();
+		setupTable(data);
+		
+		// Hide the loading message
+		$(".table-loading-message").hide();
+    };
+    
+    // Stop if no files where provided (user likely pressed cancel)
+    if( evt.target.files.length > 0 ){
+	    
+	    // Set the file name if this is a new file and a filename was not set yet
+	    if( $('#lookup_file_input').length > 0 && $('#lookup_file_input').val().length === 0 ){
+	    	$('#lookup_file_input').val( evt.target.files[0].name );
+	    }
+	    
+	    // Start the process of processing file
+	    reader.readAsText(evt.target.files[0]);
+    }
+    else{
+    	// Hide the loading message
+    	$(".table-loading-message").hide();
+    }
+	
+}
 
 /**
  * Load the selected lookup from from the history.
@@ -609,7 +675,7 @@ function loadBackupFile(version){
 function setupBackupsList(backups){
 	
 	// If we have some backups, then populate the select box
-	if(backups.length > 0){
+	if(backups.length >= 0){
 		$("#backupsList").html('<select><option value="">Current version</option></select>');
 		
 		for( var c = 0; c < backups.length; c++){
@@ -618,28 +684,30 @@ function setupBackupsList(backups){
 	}
 	
 	// Setup the handler
-	$("#backupsList > select").on( "change", function() {
+	if( $("#backupsList > select").on ){ // Don't bother if we cannot setup an on handler
+		$("#backupsList > select").on( "change", function() {
+			
+			var version = null;
+			
+			// Assign a default
+			if( this.value ){
+				version = this.value;
+			}
+			
+			// Load the backup version; if that doesn't succeed, then revert the value
+			if( !loadBackupFile(version) ){
+				$(this).val( $(this).data("prev") );
+			}
+			else{
+				// Save the previous value
+				$(this).data("prev", this.value);
+			}
+			
+		});
 		
-		var version = null;
-		
-		// Assign a default
-		if( this.value ){
-			version = this.value;
-		}
-		
-		// Load the backup version; if that doesn't succeed, then revert the value
-		if( !loadBackupFile(version) ){
-			$(this).val( $(this).data("prev") );
-		}
-		else{
-			// Save the previous value
-			$(this).data("prev", this.value);
-		}
-		
-	});
-	
-	// Show the backups controls
-	$('#backupsControls').fadeIn(100);
+		// Show the backups controls
+		$('#backupsControls').fadeIn(100);
+	}
 }
 
 /**
@@ -691,7 +759,6 @@ function loadLookupBackupsList(lookup_file, namespace, user){
 	});
 
 }
-    
 
 /**
  * Load the lookup file contents from the server and populate the editor.
