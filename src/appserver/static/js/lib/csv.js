@@ -110,7 +110,7 @@
     });
     return (detected || delimiters[0]);
   }
-  debugger;
+  
   var CSV = (function() {
     function CSV(data, options) {
       if (!options) options = {};
@@ -411,13 +411,5 @@
     }
     return new CSV(data, options).forEach(callback);
   }
-  if (typeof define === "function" && define.amd) {
-    define('CSV', [], function() {
-      return CSV;
-    });
-  } else if (typeof module === "object" && module.exports) {
-    module.exports = CSV;
-  } else if (window) {
-    window.CSV = CSV;
-  }
+  window.CSV = CSV;
 })();
