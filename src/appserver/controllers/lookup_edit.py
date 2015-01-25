@@ -189,6 +189,7 @@ class LookupEditor(controllers.BaseController):
         
         # Get the backup directory and determine the path to the backups
         backup_directory = self.getBackupDirectory(lookup_file, namespace, owner)
+        logger.info("")
         
         # Get the backups
         backups = [ f for f in os.listdir(backup_directory) if os.path.isfile(os.path.join(backup_directory,f)) ]
@@ -231,11 +232,18 @@ class LookupEditor(controllers.BaseController):
         if owner is None:
             owner = 'nobody'
         
+        # Identify the current path of the given lookup file
+        resolved_lookup_path = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_file, namespace, owner)).path
+        
+        # Determine what the backup directory should be
+        backup_directory = make_splunkhome_path([os.path.dirname(resolved_lookup_path), "lookup_file_backups", namespace, owner, self.escapeFilename(lookup_file)])
+        #backup_directory = make_splunkhome_path(['etc', 'apps', 'lookup_editor', 'lookup_file_backups', namespace, owner, self.escapeFilename(lookup_file)])
+        
         # Make the backup directory, if necessary
-        backup_directory = make_splunkhome_path(['etc', 'apps', 'lookup_editor', 'lookup_file_backups', namespace, owner, self.escapeFilename(lookup_file)])
-            
         if not os.path.exists(backup_directory):
             os.makedirs(backup_directory)
+        
+        logger.debug("Backup directory is:" + backup_directory)
             
         return backup_directory
                 
@@ -249,7 +257,7 @@ class LookupEditor(controllers.BaseController):
             backup_directory = self.getBackupDirectory(lookup_file, namespace, owner)
             
             # Make the full paths
-            src = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_file])
+            src = self.resolve_lookup_filename(lookup_file, namespace, owner)
             dst = make_splunkhome_path([backup_directory, str(time.time())])
     
             # Make the backup
@@ -277,6 +285,7 @@ class LookupEditor(controllers.BaseController):
 
         user = cherrypy.session['user']['name']
         session_key = cherrypy.session.get('sessionKey')
+        owner = kwargs.get("owner", "nobody")
         
         # Get capabilities
         capabilities = LookupEditor.getCapabilities4User(user, session_key)
@@ -290,7 +299,7 @@ class LookupEditor(controllers.BaseController):
             return self.render_error_json(_("The lookup filename contains disallowed characters"))
         
         # Make a backup
-        self.backupLookupFile(lookup_file, namespace)
+        self.backupLookupFile(lookup_file, namespace, owner)
         
         # Parse the JSON
         parsed_contents = json.loads(contents)
@@ -332,7 +341,7 @@ class LookupEditor(controllers.BaseController):
             logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
             
             # If the file is new, then make sure that the list is reloaded so that the editors notice the change
-            lookupfiles.SplunkLookupTableFile.reload()
+            lookupfiles.SplunkLookupTableFile.reload(session_key=session_key)
             
         # Edit the existing lookup otherwise
         else:
@@ -405,7 +414,10 @@ class LookupEditor(controllers.BaseController):
         
         if owner is not None:
             owner = os.path.basename(owner)
-        logger.debug("Version (resolve_lookup_filename) is:" + str(version))
+        
+        # Determine the lookup path by asking Splunk
+        resolved_lookup_path = lookupfiles.SplunkLookupTableFile.get(lookupfiles.SplunkLookupTableFile.build_id(lookup_file, namespace, owner)).path
+        
         if version is not None and owner is not None:
             lookup_path = make_splunkhome_path([self.getBackupDirectory(lookup_file, namespace, owner), version])
             lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
@@ -414,10 +426,12 @@ class LookupEditor(controllers.BaseController):
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
         elif owner is not None:
             # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
-            lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
+            lookup_path = resolved_lookup_path
+            #lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
         else:
-            lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
+            lookup_path = resolved_lookup_path
+            #lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
             
         logger.debug('Resolved lookup file, file=%s', lookup_path)

@@ -35,7 +35,7 @@ if path_description is not None:
 
 # If we got a lookup name but not a file, then get the lookup file from the transform name
 if lookup_name and not lookup_file:
-	lookup_file = getLookupFile(lookup_name, namespace, session_key)	
+	lookup_file = getLookupFile(lookup_name, namespace, session_key, owner=owner)	
 
 # Get capabilities
 capabilities = getCapabilities4User(user, session_key)

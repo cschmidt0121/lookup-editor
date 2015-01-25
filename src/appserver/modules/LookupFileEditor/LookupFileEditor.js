@@ -423,7 +423,7 @@ function doSaveLookup(){
 					$("#save > span").text("Save");
 					
 					// Update the lookup backup list
-					loadLookupBackupsList(lookup_file, namespace);
+					loadLookupBackupsList(lookup_file, namespace, user);
 				},
 				
 				error: function(jqXHR,textStatus,errorThrown) {
