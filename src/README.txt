@@ -60,4 +60,6 @@ Change History
 | 1.4.0   | Added ability to import CSV files in the editor                                                                  |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 1.4.1   | Fixed issue where some lookup files could not be loaded in some cases                                            |
+|         | Fixed minor Javascript error that occurred if the server indicated that the lookup file couldn't be saved        |
+|         | Backup file times now represent the date that the file was modified (not the date it was backed up)              |
 +---------+------------------------------------------------------------------------------------------------------------------+
