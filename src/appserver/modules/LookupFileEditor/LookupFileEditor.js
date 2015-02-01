@@ -403,27 +403,34 @@ function doSaveLookup(){
 					
 					var elapsed = new Date().getTime()-populateStart;
 					console.info("Lookup save operation completed in " + elapsed + "ms");
+					var success = true;
 					
 					if(jqXHR.status == 404){
 						console.info('Lookup file was not found');
 						messenger.send('error', "splunk.lookup-editor", "This lookup file could not be found");
+						success = false;
 					}
 					else if(jqXHR.status == 403){
 						console.info('Inadequate permissions');
 						messenger.send('error', "splunk.lookup-editor", "You do not have permission to edit this lookup file");
+						success = false;
 					}
 					else if(jqXHR.status == 400){
 						console.info('Invalid input');
 						messenger.send('error', "splunk.lookup-editor", "This lookup file could not be saved because the input is invalid");
+						success = false;
 					}
 					else if(jqXHR.status == 500){
 				    	messenger.send('error', "splunk.lookup-editor", "The lookup file could not be saved");
+				    	success = false;
 					}
 					
 					$("#save > span").text("Save");
 					
 					// Update the lookup backup list
-					loadLookupBackupsList(lookup_file, namespace, user);
+					if(success){
+						loadLookupBackupsList(lookup_file, namespace, user);
+					}
 				},
 				
 				error: function(jqXHR,textStatus,errorThrown) {
