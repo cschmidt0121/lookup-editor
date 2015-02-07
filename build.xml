@@ -35,14 +35,35 @@
         </delete>
         
     </target>
-    
+	
     <!-- ================================= 
-          target: increment_build_number
+          target: get_build_number
          ================================= -->
-	<target name="increment_build_number">
-	    <propertyfile  file="default.properties">
-	            <entry key="value.build.number" type="int" operation="+" value="1" pattern="0"/>
-	    </propertyfile>
+	<target name="get_build_number">
+		
+		<macrodef name="get_build_info">
+			<attribute name="path" default="${user.dir}" />
+			<attribute name="format" default="ct" />
+			<attribute name="outputproperty" />
+			
+			<sequential>
+			    <exec failonerror="true" executable="git" outputproperty="@{outputproperty}"> <!-- Fail on error is set to true in order to prevent a bad build number from being included -->
+					<arg value="log"/>
+			    	<arg value="-1"/>
+					<arg value="--pretty=format:%@{format}"/>
+			    	<arg value="--abbrev-commit"/>
+					<arg value="@{path}"/>
+			    </exec>
+			</sequential>
+			
+		</macrodef>
+		
+   		<!-- Run git to get the revison number and date -->
+		<get_build_info outputproperty="value.build.number" />
+		<get_build_info format="cD" outputproperty="value.build.date" />
+		
+		<echo>Revision number is: ${value.build.number} (${value.build.date})</echo>
+		
 	</target>
     
     <!-- ================================= 
@@ -70,7 +91,7 @@
     <!-- ================================= 
           target: populate_export_dir
          ================================= -->
-    <target name="populate_export_dir">
+    <target name="populate_export_dir" depends="get_build_number">
         
         <!-- Copy the files over that need substitution. This should only be
              applied to text files since Ant may corrupt binary files otherwise. -->
@@ -84,6 +105,7 @@
             <!-- Perform the substitution of the build information -->
             <filterset begintoken="${" endtoken="}"> 
                 <filter token="value.build.number" value="${value.build.number}" />
+            	<filter token="value.build.date" value="${value.build.date}" />
             </filterset>
         </copy>
         
@@ -155,6 +177,20 @@
         </exec>
     </target>
     
+	<!-- ===================================================================
+		  target: splunkweb_conf
+		 =================================================================== -->
+	<target name="splunkweb_conf" description="Configure SplunkWeb for easier web development">
+	    <mkdir dir="${value.deploy.splunk_home}/etc/system/local/"/>
+	    
+	  	<echo file="${value.deploy.splunk_home}/etc/system/local/web.conf">[settings]
+	  	enable_gzip=True
+	  	minify_js=False
+	  	minify_css=False
+	  	js_no_cache=True
+	  	</echo> 	
+	</target>
+	
     <!-- ================================= 
           target: start_splunk
          ================================= -->
@@ -180,11 +216,11 @@
          ================================= -->
     <target name="restart_splunk_web" description="Restart Splunk">
         <exec executable="${value.deploy.splunk_home}/bin/splunk">
-            <arg line="restart" />
-            <arg line="splunkweb" />
-            <arg line="--accept-license" />
-            <arg line="-auth" />
-            <arg line="admin:changeme" />
+		    <arg line="restart" />
+		    <arg line="splunkweb" />
+		    <arg line="--accept-license" />
+		    <arg line="-auth" />
+		    <arg line="admin:changeme" />
         </exec>
     </target>
 	
@@ -192,6 +228,13 @@
           target: deploy_and_refresh_splunk
          ================================= -->
     <target name="deploy_and_refresh_splunk" description="Deploys the application and forces Splunk to refresh" depends="deploy,refresh_splunk" />
+	
+	
+    <!-- ================================= 
+          target: deploy_and_restart_splunk
+         ================================= -->
+    <target name="deploy_and_restart_splunk" description="Deploys the application and restarts Splunk" depends="deploy,restart_splunk" />
+	
 	
     <!-- ================================= 
           target: refresh_splunk
@@ -223,5 +266,4 @@
     	
     </target>
 
-    
 </project>
