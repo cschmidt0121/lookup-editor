@@ -61,7 +61,7 @@ class PermissionDeniedException(Exception):
     pass
 
 """
-Provides a model for retreiving the list of apps from Splunk.
+Provides a model for retrieving the list of apps from Splunk.
 """
 class App(SplunkAppObjModel):
     ''' Represents a Splunk app '''
