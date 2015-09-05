@@ -66,6 +66,7 @@ define([
         initialize: function() {
         	this.options = _.extend({}, this.defaults, this.options);
         	
+        	// Save the options
         	this.change_dropdown_titles = this.options.change_dropdown_titles;
         	
             // Filtering options
