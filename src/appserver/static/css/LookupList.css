@@ -1,0 +1,47 @@
+.dropdown-secondary > .dropdown-toggle{
+	border-radius: 0px;
+	border: 0px;
+	background: transparent !important;
+	box-shadow: inset 0 0 0 !important;
+	color: #1e93c6;
+}
+
+.progress{
+	width: 400px;
+}
+
+.bulk-actions, .type-filter, .app-filter, .status-filter{
+	margin-top: 8px;
+	margin-left: 16px;
+}
+
+.search-query{
+	margin-top: 8px;
+	margin-left: 16px;
+}
+
+.loading-placeholder{
+	margin-left: 64px;
+}
+
+#new-content{
+	margin-right: 16px;
+}
+
+#table_wrapper > .row-fluid:first-child{
+	display: none;
+}
+
+#table_wrapper > .row-fluid {
+    margin-top: 16px;
+    margin-left: 16px;
+}
+
+#table_wrapper{
+	clear: both; /* SOLNESS-7190 */
+}
+
+#table_paginate{
+	float:right;
+	margin-right: 32px
+}

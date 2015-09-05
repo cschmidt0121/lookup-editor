@@ -1,0 +1,105 @@
+
+<div tabindex="-1" id="nothing-selected-modal" class="modal fade in hide">
+    <div class="modal-header">
+        <button type="button" class="close btn-dialog-close" data-dismiss="modal">x</button>
+        <h3 class="text-dialog-title">No Lookups Selected</h3>
+    </div>
+    <div class="modal-body form form-horizontal modal-body-scrolling">
+        No lookups were selected, please select at least one lookup.
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn btn-dialog-cancel label_from_data" data-dismiss="modal" style="display: inline;">Close</a>
+    </div>
+</div>
+
+<div id="success_message" class="hide alert alert-info">
+  <i class="icon-alert"></i><span id="success_text">The changes were successfully saved</span>
+</div>
+
+<div id="failure_message" class="hide alert alert-error">
+  <i class="icon-alert"></i><span id="error_text">Changes could not be saved</span>
+</div>
+
+<div class="selected-message-container pull-left">
+	<div id="selected-message" class="hide alert alert-info">
+	  <i class="icon-alert"></i><span id="selected-text"></span><a class="clear-selected-items" href="#">Clear selected items.</a>
+	</div>
+</div>
+
+<div id="new-content" class="btn-group create-content pull-right">
+    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+        Create a New Lookup
+        <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;">
+        <li><a href="lookup_edit?action=new&type=kv_store">KV Store lookup</a></li>
+        <li><a href="lookup_edit?action=new&type=csv">CSV lookup</a></li>
+    </ul>
+</div>
+
+<script type="text/x-template" id="lookup-list-template">
+
+<div class="btn-group type-filter pull-left dropdown-secondary">
+    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        Type
+        <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu" style="width: 120px;margin-left: -38px;margin-top: 2px;">
+		<li><a href="#">All</a></li>
+        <li><a href="#">KV Store Lookup</a></li>
+		<li><a href="#">CSV File Lookup</a></li>
+    </ul>
+</div>
+
+<div class="btn-group app-filter pull-left dropdown-secondary">
+    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+        App
+        <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;">
+		<li><a href="#">All</a></li>
+	<% for(var c=0; c < apps.length; c++) { %>
+		<li><a href="#"><%- apps[c] %></a></li>
+	<% } %>
+    </ul>
+</div>
+
+<form class="form-search pull-left">
+    <input type="text" placeholder="Filter" id="free-text-filter" class="input-large search-query">
+</form>
+
+<table cellpadding="0" cellspacing="0" border="0" class="table table-chrome display dataTable" id="table">
+    <thead>
+        <tr role="row">
+            <th>Name</th>
+            <th>Type</th>
+			<th>App</th>
+            <th>Owner</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        <% for (var i = 0; i < csv_lookups.length; i++) { %>
+        <tr data-lookup-name="<%- csv_lookups[i].name %>">
+            <td><a href="lookup_edit?owner=<%- csv_lookups[i].owner %>&path=<%- csv_lookups[i].namespace %>/<%- csv_lookups[i].name %>"><%- csv_lookups[i].name %></a></td>
+            <td>CSV File Lookup</td>
+			<td><%- csv_lookups[i].namespace %></td>
+			<td><%- csv_lookups[i].owner %></td>
+			<td><a href="../../../custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=<%- csv_lookups[i].namespace %>&lookup_file=<%- csv_lookups[i].name %>">Export</a></td>
+        </tr>
+		<% } %>
+    </tbody>
+</table>
+
+</script>
+
+<div id="content">
+    <div class="loading-placeholder">
+        Retrieving lookups...
+                
+		<div class="progress">
+		  <div class="bar" style="width: 0%;"></div>
+		</div>
+    </div>
+</div>
