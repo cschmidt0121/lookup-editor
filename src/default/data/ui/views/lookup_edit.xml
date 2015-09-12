@@ -1,16 +1,9 @@
-<view template="dashboard.html" isDashboard="false">
-  
-  <label>Edit Lookup File</label>
-  
-  <module name="AccountBar" layoutPanel="appHeader"/>
-  <module name="AppBar" layoutPanel="navigationHeader"/>
-  <module name="Message" layoutPanel="messaging">
-    <param name="filter">*</param>
-    <param name="clearOnJobDispatch">False</param>
-    <param name="maxSize">2</param>
-  </module>
-  <module name="LookupFileEditor" layoutPanel="panel_row1_col1">
-    <param name="listView">lookup_list</param>
-  </module>
-
-</view>
+<dashboard script="lookup_edit.js" stylesheet="lookup_edit.css" isDashboard="false" isVisible="true">
+    <label>Lookup Edit</label>
+    
+    <row>
+        <html>
+            <div id="lookups_editor"></div>
+        </html>
+    </row>
+</dashboard>

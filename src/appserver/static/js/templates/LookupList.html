@@ -82,7 +82,7 @@
 
         <% for (var i = 0; i < csv_lookups.length; i++) { %>
         <tr data-lookup-name="<%- csv_lookups[i].name %>">
-            <td><a href="lookup_edit?owner=<%- csv_lookups[i].owner %>&path=<%- csv_lookups[i].namespace %>/<%- csv_lookups[i].name %>"><%- csv_lookups[i].name %></a></td>
+            <td><a href="lookup_edit?owner=<%- csv_lookups[i].owner %>&namespace=<%- csv_lookups[i].namespace %>&lookup=<%- csv_lookups[i].name %>"><%- csv_lookups[i].name %></a></td>
             <td>CSV File Lookup</td>
 			<td><%- csv_lookups[i].namespace %></td>
 			<td><%- csv_lookups[i].owner %></td>
