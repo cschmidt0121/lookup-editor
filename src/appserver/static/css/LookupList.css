@@ -42,6 +42,17 @@
 }
 
 #table_paginate{
-	float:right;
+	float: right;
 	margin-right: 32px
+}
+
+td{
+	background-color: white;
+}
+
+/*
+ * Fix highlight color on the dropdown button
+ */
+.btn-group.open .btn-primary.dropdown-toggle {
+    background-color: #65a637;
 }
