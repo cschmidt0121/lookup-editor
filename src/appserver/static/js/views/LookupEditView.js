@@ -62,11 +62,16 @@ define([
         	
             this.apps = null;
             
+            // The information for the loaded lookup
+            this.lookup = null;
+            this.namespace = null;
+            this.owner = null;
+            
         },
         
         events: {
         	// Filtering
-        	
+        	"click #save" : "doSaveLookup"
         },
         
         /**
@@ -136,7 +141,7 @@ define([
         loadBackupFile: function(version){
         	
         	// Load a default for the version
-        	if( typeof version === 'undefined' ){
+        	if( typeof version == 'undefined' ){
         		version = null;
         	}
         	
@@ -209,7 +214,7 @@ define([
                     	"namespace":namespace};
         	
         	// Populate the default parameter in case user wasn't provided
-        	if( typeof user === 'undefined' ){
+        	if( typeof user == 'undefined' ){
         		user = null;
         	}
 
@@ -247,12 +252,37 @@ define([
         },
 
         /**
+         * Hide the dialogs.
+         */
+        hideDialogs: function(){
+        	$("#warning-dialog", this.$el).hide();
+        	$("#info-dialog", this.$el).hide();
+        },
+        
+        /**
          * Show a warning noting that something bad happened.
          */
-        showWarningDialog: function(message){
-        	$("#message", this.$el).text(message);
+        showWarningDialog: function(message, hide_editor){
+        	
+        	// Load a default for the hide_editor argument
+        	if(typeof hide_editor == 'undefined'){
+        		hide_editor = false;
+        	}
+        	
+        	$("#warning-dialog > .message", this.$el).text(message);
         	$("#warning-dialog", this.$el).show();
-        	$(".editing-content", this.$el).hide();
+        	
+        	if(hide_editor){
+        		$(".editing-content", this.$el).hide();
+        	}
+        },
+        
+        /**
+         * Show a warning noting that something bad happened.
+         */
+        showInfoDialog: function(message){
+        	$("#info-dialog > .message", this.$el).text(message);
+        	$("#info-dialog", this.$el).show();
         },
         
         /**
@@ -267,7 +297,7 @@ define([
         loadLookupContents: function(lookup_file, namespace, user, header_only, version){
         	
         	// Set a default value for header_only
-        	if( typeof header_only === 'undefined' ){
+        	if( typeof header_only == 'undefined' ){
         		header_only = false;
         	}
         	
@@ -276,7 +306,7 @@ define([
                     	"header_only":header_only};
         	
         	// Set a default value for version
-        	if( typeof version === 'undefined' ){
+        	if( typeof version == 'undefined' ){
         		version = undefined;
         	}
         	
@@ -318,11 +348,11 @@ define([
         		  complete: function(jqXHR, textStatus){
         			  if( jqXHR.status == 404){
         				  console.info('Lookup file was not found');
-        				  this.showWarningDialog("The requested lookup file does not exist");
+        				  this.showWarningDialog("The requested lookup file does not exist", true);
         			  }
         			  else if( jqXHR.status == 403){
         				  console.info('Inadequate permissions');
-        				  this.showWarningDialog("You do not have permission to view this lookup file");
+        				  this.showWarningDialog("You do not have permission to view this lookup file", true);
         			  }
         			  
         			  // Hide the loading message
@@ -339,7 +369,7 @@ define([
         		  error: function(jqXHR, textStatus, errorThrown){
         			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
         				  console.info('Lookup file could not be loaded');
-        				  this.showWarningDialog("The lookup could not be loaded from the server");
+        				  this.showWarningDialog("The lookup could not be loaded from the server", true);
         			  }
         		  }.bind(this)
         	});
@@ -357,6 +387,174 @@ define([
         	if( data[0][0] === 0 && data[0][3].length === 0 ){
         		return false;
         	}
+        },
+        
+        /**
+         * Set the title of the save button
+         */
+        setSaveButtonTitle: function(title){
+        	
+        	if(typeof title == 'undefined' ){
+        		$("#save").text("Save Lookup");
+        	}
+        	else{
+        		$("#save").text(title);
+        	}
+        	
+        },
+        
+        /**
+         * Perform the operation to save the lookup
+         * 
+         * @returns {Boolean}
+         */
+        doSaveLookup: function(evt){
+        	
+        	// Determine if we are making a new entry
+        	var making_new_lookup = false;
+        	
+        	// Change the title
+        	this.setSaveButtonTitle("Saving...");
+        	
+        	// Started recording the time so that we figure out how long it took to save the lookup file
+        	var populateStart = new Date().getTime();
+        	
+        	// Get a reference to the handsontable plugin
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	// Get the row data
+        	row_data = handsontable.getData();
+        	
+        	// Convert the data to JSON
+        	json = JSON.stringify(row_data);
+        	
+        	// Make the arguments
+        	var data = {
+        			lookup_file : this.lookup,
+        			namespace   : this.namespace,
+        			contents    : json
+        	};
+
+        	// If a user was defined, then pass the name as a parameter
+        	if(this.owner !== null){
+        		data["owner"] = this.owner;
+        	}
+        	
+        	// Hide the warnings. We will repost them if the input is still invalid
+        	this.hideDialogs();
+        	
+        	// Validate the input if it is new
+        	if( making_new_lookup ){
+        		
+	        	// Get the lookup file name from the form if we are making a new lookup
+	        	if (data["lookup_file"] === ""|| data["lookup_file"] === null){
+	        		data["lookup_file"] = $("#lookup_file_input").val();
+	        	}
+	
+	        	// Make sure that the file name was included; stop if it was not
+	        	if (data["lookup_file"] === ""){
+	        		$("#lookup_file_error").text("Please define a file name");
+	        		$("#lookup_file_error").show();
+	        		this.setSaveButtonTitle();
+	        		return false;
+	        	}
+	        	
+	        	// Make sure that the file name is valid; stop if it is not
+	        	if( !data["lookup_file"].match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) ){
+	        		$("#lookup_file_error").text("The file name contains invalid characters");
+	        		$("#lookup_file_error").show();
+	        		this.setSaveButtonTitle();
+	        		return false;
+	        	}
+	        		
+	        	// Get the namespace from the form if we are making a new lookup
+	        	if (data["namespace"] === "" || data["namespace"] === null){
+	        		data["namespace"] = $("#lookup_file_namespace").val();
+	        	}
+	
+	        	// Make sure that the namespace was included; stop if it was not
+	        	if (data["namespace"] === ""){
+	        		$("#lookup_namespace_error").text("Please define a namespace");
+	        		$("#lookup_namespace_error").show();
+	        		this.setSaveButtonTitle();
+	        		return false;
+	        	}
+	        }
+
+        	// Make sure at least a header exists; stop if not enough content is present
+        	if(row_data.length === 0){		
+        		this.showWarningDialog("Lookup files must contain at least one row (the header)");
+        		//loadLookupContents( lookup_file, namespace, user, true );
+        		return false;
+        	}
+        	
+        	// Make sure the headers are not empty.
+        	// If the editor is allowed to add extra columns then ignore the last row since this for adding a new column thus is allowed
+        	for( i = 0; i < row_data[0].length; i++){
+        		
+        		// Determine if this row has an empty header cell
+        		if( row_data[0][i] === "" ){
+        			this.showWarningDialog("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
+        			return false;
+        		}
+        	}
+        	
+        	// Perform the request to save the lookups
+        	$.ajax( {
+        				url:  Splunk.util.make_url('/custom/lookup_editor/lookup_edit/save'),
+        				type: 'POST',
+        				data: data,
+        				
+        				success: function(){
+        					console.log("Lookup file saved successfully");
+        					this.showInfoDialog("Lookup file saved successfully");
+        					this.setSaveButtonTitle();
+        				}.bind(this),
+        				
+        				// Handle cases where the file could not be found or the user did not have permissions
+        				complete: function(jqXHR, textStatus){
+        					
+        					var elapsed = new Date().getTime()-populateStart;
+        					console.info("Lookup save operation completed in " + elapsed + "ms");
+        					var success = true;
+        					
+        					if(jqXHR.status == 404){
+        						console.info('Lookup file was not found');
+        						this.showWarningDialog("This lookup file could not be found");
+        						success = false;
+        					}
+        					else if(jqXHR.status == 403){
+        						console.info('Inadequate permissions');
+        						this.showWarningDialog("You do not have permission to edit this lookup file");
+        						success = false;
+        					}
+        					else if(jqXHR.status == 400){
+        						console.info('Invalid input');
+        						this.showWarningDialog("This lookup file could not be saved because the input is invalid");
+        						success = false;
+        					}
+        					else if(jqXHR.status == 500){
+        						this.showWarningDialog("The lookup file could not be saved");
+        				    	success = false;
+        					}
+        					
+        					this.setSaveButtonTitle();
+        					
+        					// Update the lookup backup list
+        					if(success){
+        						// loadLookupBackupsList(lookup_file, namespace, user); // TODO
+        					}
+        				}.bind(this),
+        				
+        				error: function(jqXHR,textStatus,errorThrown) {
+        					console.log("Lookup file not saved");
+        					this.showWarningDialog("Lookup file could not be saved");
+        				}.bind(this)
+        				
+        			}
+        	);
+        	
+        	return false;
         },
         
         /**
@@ -450,11 +648,13 @@ define([
         	
         	this.renderLookup([ [""] ]);
         	
-        	var lookup = this.getParameterByName("lookup");
-        	var namespace = this.getParameterByName("namespace");
-        	var owner = this.getParameterByName("owner");
+        	// Get the information from the lookup to load
+        	this.lookup = this.getParameterByName("lookup");
+        	this.namespace = this.getParameterByName("namespace");
+        	this.owner = this.getParameterByName("owner");
         	
-        	this.loadLookupContents(lookup, namespace, owner);
+        	// Load the lookup
+        	this.loadLookupContents(this.lookup, this.namespace, this.owner);
         	
         	
         }

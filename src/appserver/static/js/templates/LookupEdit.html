@@ -5,12 +5,20 @@
 </a> 
     
 <% if(insufficient_permissions) { %>
-
+<div id="no-permissions-dialog" class="alert alert-warning hide">
+	<i class="icon-alert"></i>
+	You don't have permission to edit this lookup file
+</div>
 <% } else { %>
 
 <div id="warning-dialog" class="alert alert-warning hide">
 	<i class="icon-alert"></i>
-	<div id="message">Warning!</div>
+	<div class="message">Warning!</div>
+</div>
+
+<div id="info-dialog" class="alert alert-info hide">
+	<i class="icon-alert"></i>
+	<div class="message">Ok!</div>
 </div>
 
 <div id="lookup-table" class="editing-content"></div>
