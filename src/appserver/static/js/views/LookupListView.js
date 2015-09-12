@@ -245,8 +245,8 @@ define([
         				'name': this.csv_lookups.models[c].entry.attributes.name,
         				'author': this.csv_lookups.models[c].entry.attributes.author,
         				'updated': this.csv_lookups.models[c].entry.attributes.updated,
-        				'namespace': this.csv_lookups.models[c].entry.associated.content.attributes['eai:appName'],
-        				'owner': this.csv_lookups.models[c].entry.associated.content.attributes['eai:userName']
+        				'namespace': this.csv_lookups.models[c].entry.acl.attributes.app,
+        				'owner': this.csv_lookups.models[c].entry.acl.attributes.owner
         				
         		};
         		
