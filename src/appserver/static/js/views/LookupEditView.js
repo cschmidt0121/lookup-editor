@@ -247,6 +247,15 @@ define([
         },
 
         /**
+         * Show a warning noting that something bad happened.
+         */
+        showWarningDialog: function(message){
+        	$("#message", this.$el).text(message);
+        	$("#warning-dialog", this.$el).show();
+        	$(".editing-content", this.$el).hide();
+        },
+        
+        /**
          * Load the lookup file contents from the server and populate the editor.
          * 
          * @param lookup_file The name of the lookup file

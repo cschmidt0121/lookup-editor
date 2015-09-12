@@ -8,8 +8,13 @@
 
 <% } else { %>
 
-<div id="lookup-table"></div>
+<div id="warning-dialog" class="alert alert-warning hide">
+	<i class="icon-alert"></i>
+	<div id="message">Warning!</div>
+</div>
 
-<button class="btn active btn-primary pull-right" id="save">Save Lookup</button>
+<div id="lookup-table" class="editing-content"></div>
+
+<button class="btn active btn-primary pull-right editing-content" id="save">Save Lookup</button>
 
 <% } %>

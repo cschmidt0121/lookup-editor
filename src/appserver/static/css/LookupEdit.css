@@ -27,9 +27,8 @@ input[type=text]{
 	height: 27px;
 }
 
-.warning_dialog{
-	margin-top: 32px;
-	display: none;
+#warning-dialog{
+	margin-left: 32px;
 }
 
 .padlock{
