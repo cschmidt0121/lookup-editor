@@ -44,15 +44,6 @@ input[type=text]{
 	float: left;
 }
 
-#backupsControls{
-	display: none;
-	float: right;
-}
-
-#backupsList{
-	display: inline;
-}
-
 #importFileControls{
 	float: right;
 }
@@ -66,6 +57,18 @@ input[type=text]{
 #save{
 	margin-top: 16px;
 }
+
+#load-backup{
+	margin-right: 16px;
+}
+
+/*
+ * Fix highlight color on the dropdown button
+ */
+.btn-group.open .btn-primary.dropdown-toggle {
+    background-color: #65a637;
+}
+
 
 /**
  * Cell renderers

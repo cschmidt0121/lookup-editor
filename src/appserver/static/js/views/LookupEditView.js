@@ -45,6 +45,13 @@ define([
 	    }
 	});
 	
+	var Backup = Backbone.Model.extend();
+	
+	var Backups = Backbone.Collection.extend({
+	    url: Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_backups_list"),
+	    model: Backup
+	});
+	
 	
     // Define the custom view class
     var LookupEditView = SimpleSplunkView.extend({
@@ -61,6 +68,7 @@ define([
         	this.options = _.extend({}, this.defaults, this.options);
         	
             this.apps = null;
+            this.backups = null;
             
             // The information for the loaded lookup
             this.lookup = null;
@@ -200,58 +208,6 @@ define([
         },
 
         /**
-         * Load the list of backup lookup files.
-         * 
-         * @param lookup_file The name of the lookup file
-         * @param namespace The app where the lookup file exists
-         * @param user The user that owns the file (in the case of user-based lookups)
-         */
-        loadLookupBackupsList: function(lookup_file, namespace, user){
-        	
-        	return; // TODO: remove
-        	
-        	var data = {"lookup_file":lookup_file,
-                    	"namespace":namespace};
-        	
-        	// Populate the default parameter in case user wasn't provided
-        	if( typeof user == 'undefined' ){
-        		user = null;
-        	}
-
-        	// If a user was defined, then pass the name as a parameter
-        	if(user !== null){
-        		data["owner"] = user;
-        	}
-        	
-        	// Make the URL
-            url = Splunk.util.make_full_url("/custom/lookup_editor/lookup_edit/get_lookup_backups_list", data);
-            
-        	// Perform the call
-        	$.ajax({
-        		  url: url,
-        		  cache: false,
-        		  
-        		  // On success, populate the table
-        		  success: function(data) {
-        			  console.info('JSON of lookup table backups was successfully loaded');
-        			  this.setupBackupsList( data );
-        			  $("#backupsList", this.$el).show();
-        		  }.bind(this),
-        		  
-        		  // Handle cases where the file could not be found or the user did not have permissions
-        		  complete: function(jqXHR, textStatus){
-        			  if( jqXHR.status == 404){
-        				  console.info('No backups for this lookup file was found');
-        			  }
-        			  else if( jqXHR.status == 403){
-        				  console.info('Inadequate permissions');
-        			  }
-        		  }
-        	});
-
-        },
-
-        /**
          * Hide the dialogs.
          */
         hideDialogs: function(){
@@ -283,6 +239,62 @@ define([
         showInfoDialog: function(message){
         	$("#info-dialog > .message", this.$el).text(message);
         	$("#info-dialog", this.$el).show();
+        },
+        
+        /**
+         * Load the list of backup lookup files.
+         * 
+         * @param lookup_file The name of the lookup file
+         * @param namespace The app where the lookup file exists
+         * @param user The user that owns the file (in the case of user-based lookups)
+         */
+        loadLookupBackupsList: function(lookup_file, namespace, user){
+        	
+        	var data = {"lookup_file":lookup_file,
+                	    "namespace":namespace};
+    	
+        	
+        	// Populate the default parameter in case user wasn't provided
+        	if( typeof user === 'undefined' ){
+        		user = null;
+        	}
+
+        	// If a user was defined, then pass the name as a parameter
+        	if(user !== null){
+        		data["owner"] = user;
+        	}
+        	
+        	// Fetch them
+        	this.backups = new Backups();
+        	this.backups.fetch({
+        		data: $.param(data),
+        		success: this.renderBackupsList.bind(this)
+        	});
+        	
+        },
+        
+        /**
+         * Render the list of backup files.
+         */
+        renderBackupsList: function(){
+        	//var backup_list_template = $('#lookup-backup-list-template', this.$el).text();
+        	
+        	var backup_list_template = '<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
+        			Load a backup file \
+        			<span class="caret"></span> \
+        		</a> \
+        		<ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;"> \
+        		<% for(var c = 0; c < backups.length; c++){ %> \
+        			<li><a href="#" data-backup-time="<%- backups[c].time %>"><%- backups[c].time_readable %></a></li> \
+        		<% } %> \
+        	</ul>';
+        	
+        	$('#load-backup', this.$el).html(_.template(backup_list_template, {
+        		'backups' : this.backups.toJSON()
+        	}));
+        	
+        	$('#load-backup', this.$el).show();
+        	
         },
         
         /**

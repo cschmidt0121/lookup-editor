@@ -1,26 +1,29 @@
 
-<a class="list-link" href="lookup_list">
-	<i class="icon-chevron-left icon-no-underline"></i>
-	<span>Back to Lookups List</span>
-</a> 
-    
-<% if(insufficient_permissions) { %>
-<div id="no-permissions-dialog" class="alert alert-warning hide">
-	<i class="icon-alert"></i>
-	You don't have permission to edit this lookup file
+<div class="top-controls">
+	<a class="list-link" href="lookup_list">
+		<i class="icon-chevron-left icon-no-underline"></i>
+		<span>Back to Lookups List</span>
+	</a> 
+	    
+	<% if(insufficient_permissions) { %>
+	<div id="no-permissions-dialog" class="alert alert-warning hide">
+		<i class="icon-alert"></i>
+		You don't have permission to edit this lookup file
+	</div>
+	<% } else { %>
+	
+	<div id="load-backup" class="btn-group create-content pull-right"></div>
+	
+	<div id="warning-dialog" class="alert alert-warning hide">
+		<i class="icon-alert"></i>
+		<div class="message">Warning!</div>
+	</div>
+	
+	<div id="info-dialog" class="alert alert-info hide">
+		<i class="icon-alert"></i>
+		<div class="message">Ok!</div>
+	</div>
 </div>
-<% } else { %>
-
-<div id="warning-dialog" class="alert alert-warning hide">
-	<i class="icon-alert"></i>
-	<div class="message">Warning!</div>
-</div>
-
-<div id="info-dialog" class="alert alert-info hide">
-	<i class="icon-alert"></i>
-	<div class="message">Ok!</div>
-</div>
-
 <div id="lookup-table" class="editing-content"></div>
 
 <button class="btn active btn-primary pull-right editing-content" id="save">Save Lookup</button>

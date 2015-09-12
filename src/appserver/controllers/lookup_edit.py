@@ -217,7 +217,7 @@ class LookupEditor(controllers.BaseController):
         # Sort the list
         backups_meta = sorted(backups_meta, key=lambda x: float(x['time']), reverse=True)
         
-        return self.render_json(backups_meta)
+        return self.render_json(backups_meta, set_mime='application/json')
         
     def escapeFilename(self, file_name):
         """
