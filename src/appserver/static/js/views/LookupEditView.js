@@ -38,8 +38,7 @@ define([
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
-	    uurl: "apps/local",
-	    //model: CSVLookup,
+	    url: "apps/local",
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
@@ -79,7 +78,8 @@ define([
         
         events: {
         	// Filtering
-        	"click #save" : "doSaveLookup"
+        	"click #save" : "doSaveLookup",
+        	"click .backup-version" : "doLoadBackup"
         },
         
         /**
@@ -156,54 +156,11 @@ define([
         	var r = confirm('This version the lookup file will now be loaded.\n\nUnsaved changes will be overridden.');
         	
         	if (r == true) {
-        		loadLookupContents(lookup_file, namespace, user, false, version);
+        		this.loadLookupContents(this.lookup, this.namespace, this.owner, false, version);
         		return true;
         	}
         	else{
         		return false;
-        	}
-        },
-
-        /**
-         * Load the list of backup lookup files.
-         * 
-         * @param backups A list of the backups
-         */
-        setupBackupsList: function(backups){
-        	
-        	// If we have some backups, then populate the select box
-        	if(backups.length >= 0){
-        		$("#backupsList").html('<select><option value="">Current version</option></select>');
-        		
-        		for( var c = 0; c < backups.length; c++){
-        			$("#backupsList > select").append('<option value="' + backups[c]['time'] + '">' + backups[c]['time_readable'] + '</option>');
-        		}
-        	}
-        	
-        	// Setup the handler
-        	if( $("#backupsList > select").on ){ // Don't bother if we cannot setup an on handler
-        		$("#backupsList > select").on( "change", function() {
-        			
-        			var version = null;
-        			
-        			// Assign a default
-        			if( this.value ){
-        				version = this.value;
-        			}
-        			
-        			// Load the backup version; if that doesn't succeed, then revert the value
-        			if( !loadBackupFile(version) ){
-        				$(this).val( $(this).data("prev") );
-        			}
-        			else{
-        				// Save the previous value
-        				$(this).data("prev", this.value);
-        			}
-        			
-        		});
-        		
-        		// Show the backups controls
-        		$('#backupsControls').fadeIn(100);
         	}
         },
 
@@ -277,7 +234,6 @@ define([
          * Render the list of backup files.
          */
         renderBackupsList: function(){
-        	//var backup_list_template = $('#lookup-backup-list-template', this.$el).text();
         	
         	var backup_list_template = '<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
         			Load a backup file \
@@ -285,14 +241,16 @@ define([
         		</a> \
         		<ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;"> \
         		<% for(var c = 0; c < backups.length; c++){ %> \
-        			<li><a href="#" data-backup-time="<%- backups[c].time %>"><%- backups[c].time_readable %></a></li> \
+        			<li><a class="backup-version" href="#" data-backup-time="<%- backups[c].time %>"><%- backups[c].time_readable %></a></li> \
         		<% } %> \
         	</ul>';
         	
+        	// Render the list of backups
         	$('#load-backup', this.$el).html(_.template(backup_list_template, {
         		'backups' : this.backups.toJSON()
         	}));
         	
+        	// Show the list of backup lookups
         	$('#load-backup', this.$el).show();
         	
         },
@@ -413,6 +371,14 @@ define([
         		$("#save").text(title);
         	}
         	
+        },
+        
+        /**
+         * Load the selected backup.
+         */
+        doLoadBackup: function(evt){
+        	var version = evt.currentTarget.dataset.backupTime;
+        	this.loadBackupFile(version);
         },
         
         /**
