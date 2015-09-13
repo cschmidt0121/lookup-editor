@@ -37,6 +37,14 @@ define([
     dataTable
 ){
 	
+	var Apps = SplunkDsBaseCollection.extend({
+	    url: "apps/local",
+	    //model: CSVLookup,
+	    initialize: function() {
+	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
+	    }
+	});
+	
 	var CSVLookup = SplunkDBaseModel.extend({
 		    url: 'data/lookup-table-files', // /servicesNS/' + user + '/' + app + '/data/lookup-table-files'
 		    initialize: function() {
@@ -79,7 +87,7 @@ define([
         	
         	// Get the lookups
         	this.csv_lookups = new CSVLookups();
-        	this.csv_lookups.on('reset', this.getCSVLookups.bind(this), this);
+        	this.csv_lookups.on('reset', this.gotCSVLookups.bind(this), this);
         	
         	this.csv_lookups.fetch({
                 success: function() {
@@ -87,6 +95,19 @@ define([
                 },
                 error: function() {
                   console.error("Unable to fetch the lookup files");
+                }
+            });
+        	
+        	// Get the apps
+        	this.apps = new Apps();
+        	this.apps.on('reset', this.gotApps.bind(this), this);
+        	
+        	this.apps.fetch({
+                success: function() {
+                  console.info("Successfully retrieved the list of applications");
+                },
+                error: function() {
+                  console.error("Unable to fetch the apps");
                 }
             });
         },
@@ -199,9 +220,33 @@ define([
         },
         
         /**
+         * Get the description for the app name
+         */
+        getAppDescriptionFromName: function(name){
+        	
+    		for(var c = 0; c < this.apps.models.length; c++){
+    			
+    			if(this.apps.models[c].entry.attributes.name === name){
+    				return this.apps.models[c].entry.associated.content.attributes.label;
+    			}
+    			
+    		}
+    		
+    		return name;
+        	
+        },
+        
+        /**
          * Get the CSV lookups
          */
-        getCSVLookups: function(){
+        gotCSVLookups: function(){
+        	this.renderLookupsList();
+        },
+        
+        /**
+         * Get the apps
+         */
+        gotApps: function(){
         	this.renderLookupsList();
         },
         
@@ -257,6 +302,54 @@ define([
         },
         
         /**
+         * Get the apps list in JSON format
+         */
+        getAppsJSON: function(only_include_those_with_lookups){
+        	
+        	// Set a default for the parameter
+        	if (typeof only_include_those_with_lookups === "undefined") {
+        		only_include_those_with_lookups = true;
+        	}
+        	
+        	// If we don't have the apps yet, then just return an empty list for now
+        	if(!this.apps){
+        		return [];
+        	}
+        	
+        	var apps_json = [];
+        	var new_entry = null;
+        	
+        	for(var c = 0; c < this.apps.models.length; c++){
+        		
+        		new_entry = {
+        				'name': this.apps.models[c].entry.attributes.name,
+        				'label': this.apps.models[c].entry.associated.content.attributes.label
+        		};
+        		
+        		// Filter out the items that are not for an app that exposes a lookup
+        		if(only_include_those_with_lookups){
+	        		// Find out of the item is for an app that publishes a lookup
+	        		for(var d = 0; d < this.csv_lookups.models.length; d++){
+	        			
+	        			if(this.csv_lookups.models[d].entry.acl.attributes.app === this.apps.models[c].entry.attributes.name){
+	        				apps_json.push(new_entry);
+	        				break;
+	        			}
+	        			
+	        		}
+        		}
+        		
+        		// Otherwise, just include all of them
+        		else{
+        			apps_json.push(new_entry);
+        		}
+        		
+        	}
+        	
+        	return apps_json;
+        },
+        
+        /**
          * Render the list of lookups.
          */
         renderLookupsList: function(){
@@ -266,7 +359,8 @@ define([
             
         	$('#content', this.$el).html(_.template(lookup_list_template, {
         		'csv_lookups' : this.getCSVLookupsJSON(),
-        		'apps' : []
+        		'apps' : this.getAppsJSON(),
+        		'getAppDescriptionFromName' : this.getAppDescriptionFromName.bind(this)
         	}));
         	
             // Make the table filterable, sortable and paginated with data-tables
@@ -275,7 +369,7 @@ define([
                 "bLengthChange": false,
                 "searching": true,
                 "aLengthMenu": [[ 25, 50, 100, -1], [25, 50, 100, "All"]],
-                "bStateSave": true,
+                "bStateSave": false,
                 "aaSorting": [[ 1, "asc" ]],
                 "aoColumns": [
                               null,                   // Name

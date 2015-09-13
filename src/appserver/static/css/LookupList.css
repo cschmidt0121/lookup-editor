@@ -15,6 +15,15 @@
 	margin-left: 16px;
 }
 
+.dropdown-secondary > ul{
+    max-height: 320px;
+    overflow-y: scroll;
+}
+
+#content{ /* Make sure that the dropdowns have room even if there isn't much content */
+	min-height: 360px;
+}
+
 .search-query{
 	margin-top: 8px;
 	margin-left: 16px;

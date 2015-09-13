@@ -59,7 +59,7 @@
     <ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;">
 		<li><a href="#">All</a></li>
 	<% for(var c=0; c < apps.length; c++) { %>
-		<li><a href="#"><%- apps[c] %></a></li>
+		<li><a href="#" data-name="apps[c].name"><%- apps[c].label %></a></li>
 	<% } %>
     </ul>
 </div>
@@ -84,7 +84,7 @@
         <tr data-lookup-name="<%- csv_lookups[i].name %>">
             <td><a href="lookup_edit?owner=<%- csv_lookups[i].owner %>&namespace=<%- csv_lookups[i].namespace %>&lookup=<%- csv_lookups[i].name %>"><%- csv_lookups[i].name %></a></td>
             <td>CSV File Lookup</td>
-			<td><%- csv_lookups[i].namespace %></td>
+			<td><%- getAppDescriptionFromName(csv_lookups[i].namespace) %></td>
 			<td><%- csv_lookups[i].owner %></td>
 			<td><a href="../../../custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=<%- csv_lookups[i].namespace %>&lookup_file=<%- csv_lookups[i].name %>">Export</a></td>
         </tr>
