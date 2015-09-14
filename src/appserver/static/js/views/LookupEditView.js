@@ -3,7 +3,8 @@ require.config({
     paths: {
     	Handsontable: "../app/lookup_editor/js/lib/jquery.handsontable.full",
         text: "../app/lookup_editor/js/lib/text",
-        console: '../app/lookup_editor/js/lib/console'
+        console: '../app/lookup_editor/js/lib/console',
+        csv: '../app/lookup_editor/js/lib/csv'
     },
     shim: {
         'Handsontable': {
@@ -21,6 +22,7 @@ define([
     "jquery",
     "splunkjs/mvc/simplesplunkview",
     "text!../app/lookup_editor/js/templates/LookupEdit.html",
+    "csv",
     "Handsontable",
     "bootstrap.dropdown",
     "splunk.util",
@@ -79,7 +81,11 @@ define([
         events: {
         	// Filtering
         	"click #save" : "doSaveLookup",
-        	"click .backup-version" : "doLoadBackup"
+        	"click .backup-version" : "doLoadBackup",
+        	"dragover" : "onDragFile",
+        	//"dragenter" : "onDragFileEnter",
+        	//"dragleave": "onDragFileEnd",
+        	"drop" : "onDropFile" //        	"drop .lookup-table" : "onDropFile",
         },
         
         /**
@@ -230,13 +236,106 @@ define([
         	
         },
         
+        onDragFile: function(evt){
+        	evt.stopPropagation();
+            evt.preventDefault();
+            evt.dataTransfer.dropEffect = 'copy'; // Make it clear this is a copy
+            
+        	//this.$el.addClass('dragging');
+        	console.log("Dragging...")
+        },
+        
+        onDragFileEnter: function(evt){
+        	evt.preventDefault();
+        	return false;
+        },
+        
+        onDragFileEnd: function(){
+        	console.log("Dragging stopped")
+        	this.$el.removeClass('dragging');
+        },
+        
+        /**
+         * Import the dropped file.
+         */
+        onDropFile: function(evt){
+        	
+        	console.log("Got a file via drag and drop");
+        	
+        	// Stop the browser from just re-downloading the file
+        	evt.stopPropagation();
+        	evt.preventDefault();
+        	var files = evt.dataTransfer.files; 
+        	return;
+        	debugger;
+        	evt.dataTransfer.files;
+        	
+        	// Stop if the browser doesn't support processing files in Javascript
+        	if(!window.FileReader){
+        		alert("Your browser doesn't support file reading in Javascript; thus, I cannot parse your uploaded file");
+        		return false;
+        	}
+        	
+        	// Get a reader so that we can read in the file
+        	var reader = new FileReader();
+        	
+        	// Setup an onload handler that will process the file
+        	reader.onload = function(evt) {
+        		
+        		console.log("Running file reader onload handler");
+        		
+        		// Stop if the ready state isn't "loaded"
+                if(evt.target.readyState != 2){
+                	return;
+                }
+                
+                // Stop if the file could not be processed
+                if(evt.target.error) {
+                	
+                	// Hide the loading message
+                	$(".table-loading-message").hide();
+                	
+                	// Show an error
+                	this.
+                    alert('Error while reading file');
+                    return;
+                }
+                
+                // Get the file contents
+                var filecontent = evt.target.result;
+                
+                // Import the file into the view
+            	var data = new CSV(filecontent, { }).parse();
+        		setupTable(data);
+        	}.bind(this);
+        	
+            // Stop if no files where provided (user likely pressed cancel)
+            if( evt.target.files.length > 0 ){
+        	    
+        	    // Set the file name if this is a new file and a filename was not set yet
+            	/*
+        	    if( $('#lookup_file_input').length > 0 && $('#lookup_file_input').val().length === 0 ){
+        	    	$('#lookup_file_input').val( evt.target.files[0].name );
+        	    }
+        	    */
+        	    
+        	    // Start the process of processing file
+        	    reader.readAsText(evt.target.files[0]);
+            }
+            else{
+            	// Hide the loading message
+            	$(".table-loading-message").hide();
+            }
+        	
+        },
+        
         /**
          * Render the list of backup files.
          */
         renderBackupsList: function(){
         	
         	var backup_list_template = '<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
-        			Load a backup file \
+        			Revert to previous version \
         			<span class="caret"></span> \
         		</a> \
         		<ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;"> \
@@ -281,7 +380,7 @@ define([
         	}
         	
         	// Show the loading message
-        	$(".table-loading-message").show();
+        	$(".table-loading-message").show(); // TODO replace
         	
         	// Set the version parameter if we are asking for an old version
         	if( version !== undefined && version ){
@@ -634,7 +733,7 @@ define([
         	// Load the lookup
         	this.loadLookupContents(this.lookup, this.namespace, this.owner);
         	
-        	
+        	$(".LookupEditView").on("drop", function(event, ui){this.onDropFile();}.bind(this));
         }
     });
     
