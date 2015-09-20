@@ -23,12 +23,25 @@ input[type=text]{
     text-align: center;
     font: 20pt bold 'Vollkorn';
     color: #bbb;
+    width: 100%;
+}
+
+#import-file-input{
+	height:0px;
+	overflow:hidden;
+}
+
+#choose-import-file{
+	display: block;
 }
 
 #tableEditor{
 	/* display:none; */
 }
 
+#lookup-table.drop-target > div{
+	display: none;
+}
 
 .no_permissions_dialog{
 	

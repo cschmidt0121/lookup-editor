@@ -12,9 +12,27 @@
 	</div>
 	<% } else { %>
 	
-	<div id="drop-zone">Drop files here</div>
+	<div tabindex="-1" id="import-file-modal" class="modal fade in hide">
+	    <div class="modal-header">
+	        <button type="button" class="close btn-dialog-close" data-dismiss="modal">x</button>
+	        <h3>Import File</h3>
+	    </div>
+	    <div class="modal-body form form-horizontal modal-body-scrolling">
+	        Import the contents of a CSV file into this lookup file.
+	        
+	        <input type="file" id="import-file-input" />
+	        <button class="btn active btn-primary" id="choose-import-file">Select file to import</button>
+	        
+	    </div>
+	    <div class="modal-footer">
+	        <a href="#" class="btn btn-dialog-cancel label_from_data" data-dismiss="modal" style="display: inline;">Close</a>
+	    </div>
+	</div>
+	
+	<div id="drop-zone" class="hide">Drop files here</div>
 	
 	<div id="load-backup" class="btn-group create-content pull-right"></div>
+	<button class="btn active btn-primary pull-right" id="import-file">Import</button>
 	
 	<div id="warning-dialog" class="alert alert-warning hide">
 		<i class="icon-alert"></i>

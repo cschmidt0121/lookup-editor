@@ -75,17 +75,40 @@ define([
             this.lookup = null;
             this.namespace = null;
             this.owner = null;
-            
         },
         
         events: {
         	// Filtering
         	"click #save" : "doSaveLookup",
         	"click .backup-version" : "doLoadBackup",
-        	"dragover" : "onDragFile",
-        	//"dragenter" : "onDragFileEnter",
-        	//"dragleave": "onDragFileEnd",
-        	"drop" : "onDropFile" //        	"drop .lookup-table" : "onDropFile",
+        	"click #choose-import-file" : "chooseImportFile",
+        	"click #import-file" : "openFileImportModal",
+        	"change #import-file-input" : "importFile",
+        	//"dragover #drop-zone" : "onDragFile",
+        	"dragenter #lookup-table" : "onDragFileEnter",
+        	"dragleave #lookup-table": "onDragFileEnd",
+        	//"dragenter #drop-zone" : "onDragFileEnter",
+        	//"dragenter #drop-zone" : "onDragFileEnd",
+        	//"drop #drop-zone" : "onDropFile"
+        },
+        
+        /**
+         * For some reason the backbone handlers don't work.
+         */
+        setupDragDropHandlers: function(){
+        	var drop_zone = document.getElementById('lookup-table');
+        	
+        	drop_zone.ondragover = function (e) {
+        		e.preventDefault();
+        		e.dataTransfer.dropEffect = 'copy';
+        	}.bind(this);
+        	
+        	drop_zone.ondrop = function (e) {
+        	      e.preventDefault();
+        	      this.onDropFile(e);
+        	      return false;
+        	}.bind(this);
+        	
         },
         
         /**
@@ -145,6 +168,20 @@ define([
         	    td.style.opacity = 0.7;
         	}
         	
+        },
+        
+        /**
+         * Open the modal for importing a file.
+         */
+        openFileImportModal: function(){
+        	$('#import-file-modal', this.$el).modal();
+        },
+        
+        /**
+         * Open the file dialog to select a file to import.
+         */
+        chooseImportFile: function(){
+        	$("#import-file-input").click();
         },
         
         /**
@@ -240,18 +277,18 @@ define([
         	evt.stopPropagation();
             evt.preventDefault();
             evt.dataTransfer.dropEffect = 'copy'; // Make it clear this is a copy
-            
-        	//this.$el.addClass('dragging');
-        	console.log("Dragging...")
         },
         
         onDragFileEnter: function(evt){
         	evt.preventDefault();
+        	//$('#drop-zone', this.$el).show();
+        	//$('#drop-zone', this.$el).height($('#lookup-table', this.$el).height());
+        	//$('#lookup-table', this.$el).addClass('drop-target');
         	return false;
         },
         
         onDragFileEnd: function(){
-        	console.log("Dragging stopped")
+        	console.log("Dragging stopped");
         	this.$el.removeClass('dragging');
         },
         
@@ -261,14 +298,17 @@ define([
         onDropFile: function(evt){
         	
         	console.log("Got a file via drag and drop");
-        	
-        	// Stop the browser from just re-downloading the file
         	evt.stopPropagation();
-        	evt.preventDefault();
-        	var files = evt.dataTransfer.files; 
-        	return;
-        	debugger;
-        	evt.dataTransfer.files;
+            evt.preventDefault();
+            var files = evt.dataTransfer.files;
+            
+            this.importFile(evt);
+        },
+        
+        /**
+         * Import the given file into the lookup.
+         */
+        importFile: function(evt){
         	
         	// Stop if the browser doesn't support processing files in Javascript
         	if(!window.FileReader){
@@ -296,7 +336,7 @@ define([
                 	$(".table-loading-message").hide();
                 	
                 	// Show an error
-                	this.
+                	// TODO
                     alert('Error while reading file');
                     return;
                 }
@@ -306,13 +346,32 @@ define([
                 
                 // Import the file into the view
             	var data = new CSV(filecontent, { }).parse();
-        		setupTable(data);
+            	
+            	// Render the lookup file
+            	this.renderLookup(data);
+            	
+            	// Hide the import dialog
+            	$('#import-file-modal', this.$el).modal('hide');
+            	
         	}.bind(this);
         	
+        	var files = [];
+        	
+        	// Get the files from the file input widget if available
+        	if(evt.target.files && evt.target.files.length > 0){
+        		files = evt.target.files;
+        	}
+        	
+        	// Get the files from the drag & drop if available
+        	else if(evt.dataTransfer && evt.dataTransfer.files.length > 0){
+        		files = evt.dataTransfer.files;
+        	}
+        	
             // Stop if no files where provided (user likely pressed cancel)
-            if( evt.target.files.length > 0 ){
+            if(files.length > 0 ){
         	    
         	    // Set the file name if this is a new file and a filename was not set yet
+            	// TODO
             	/*
         	    if( $('#lookup_file_input').length > 0 && $('#lookup_file_input').val().length === 0 ){
         	    	$('#lookup_file_input').val( evt.target.files[0].name );
@@ -320,7 +379,7 @@ define([
         	    */
         	    
         	    // Start the process of processing file
-        	    reader.readAsText(evt.target.files[0]);
+        	    reader.readAsText(files[0]);
             }
             else{
             	// Hide the loading message
@@ -719,6 +778,9 @@ define([
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false
         	}));
+        	
+            
+            this.setupDragDropHandlers();
         	
         	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button
         	$('#lookup-table').height($(window).height() - 320);
