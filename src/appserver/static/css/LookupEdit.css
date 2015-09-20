@@ -43,6 +43,10 @@ input[type=text]{
 	display: none;
 }
 
+.drag-and-drop-tip{
+	margin-top: 16px;
+}
+
 .no_permissions_dialog{
 	
 }
