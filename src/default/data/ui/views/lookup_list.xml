@@ -1,4 +1,4 @@
-<dashboard script="lookup_list.js" stylesheet="lookup_list.css" isDashboard="false" isVisible="true">
+<dashboard script="lookup_list.js" stylesheet="lookup_list.css" isDashboard="false" isVisible="true" hideEdit="true">
     <label>Lookups</label>
     
     <row>
