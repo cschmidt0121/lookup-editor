@@ -233,13 +233,21 @@
     	<script language="javascript">
     		var currentValue = parseInt(project.getProperty("value.deploy.bump"), 10);
     		
-    		var newBump = currentValue + 1;
+    		var newBump = currentValue + '1';
+    		
+    		if(isNaN(newBump)){
+    			echo = project.createTask("echo");
+    			echo.setMessage("The loaded push-version is invalid; it will be reset to 100");
+    		    echo.perform();
+    			newBump = 100;
+    		}
+    		
     		project.setProperty("value.deploy.bump_updated", newBump);
     	
     	</script>
     	
     	<!-- Set the current value of bump -->
-    	<echo file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">${value.deploy.bump_updated}</echo>
+    	<!-- <echo file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">${value.deploy.bump_updated}</echo> -->
     	
     	<echo>The push version was updated from ${value.deploy.bump} to ${value.deploy.bump_updated}</echo>
     	
