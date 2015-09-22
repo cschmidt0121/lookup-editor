@@ -247,7 +247,7 @@
     	</script>
     	
     	<!-- Set the current value of bump -->
-    	<!-- <echo file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">${value.deploy.bump_updated}</echo> -->
+    	<echo file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">${value.deploy.bump_updated}</echo>
     	
     	<echo>The push version was updated from ${value.deploy.bump} to ${value.deploy.bump_updated}</echo>
     	
