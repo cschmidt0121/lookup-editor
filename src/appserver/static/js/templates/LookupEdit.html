@@ -40,13 +40,16 @@
 	<div class="row-fluid">
 		<div class="span6">
 	<% if(is_new) { %>
+			
 			<div class="top-label">
-				<label class="control-label" for="lookup-file-name">Name:</label>
+				<label class="control-label" for="lookup-name">Name:</label>
 			</div>
 			<div class="controls">
-				<input type="text" name="lookup-file-name">
-				<span class="help-block ">Generally ends with ".csv"</span>
+				<div class="input input-text" id="lookup-name"></div>
+	        	<span class="hide help-inline"></span>
+	        	<span class="help-block">Generally ends with ".csv"</span>
 			</div>
+			
 			<div class="top-label">
 				<label class="control-label" for="lookup-app">App:</label>
 			</div>

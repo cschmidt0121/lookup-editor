@@ -845,8 +845,21 @@ define([
         		'is_new' : is_new
         	}));
         	
-            // Make the app selection drop-down
+            
         	if(is_new){
+        		
+	        	// Make the lookup name input
+	        	var name_input = new TextInput({
+	                "id": "lookup-name",
+	                "searchWhenChanged": false,
+	                "el": $('#lookup-name', this.$el)
+	            }, {tokens: true}).render();
+        		
+	        	name_input.on("change", function(newValue) {
+                	this.validate();
+                }.bind(this));
+        		
+	        	// Make the app selection drop-down
                 var app_dropdown = new DropdownInput({
                     "id": "lookup-app",
                     "selectFirstChoice": false,
@@ -860,13 +873,13 @@ define([
                 }.bind(this));
         	}
 
-        	
+        	// Setup the handlers so that we can make the view support drag and drop
             this.setupDragDropHandlers();
         	
         	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button
         	$('#lookup-table').height($(window).height() - 320);
         	
-        	this.renderLookup([ [""] ]);
+        	this.renderLookup([ [""] ]); // TODO remove this
         	
         	// Get the information from the lookup to load
         	this.lookup = this.getParameterByName("lookup");
@@ -876,7 +889,7 @@ define([
         	// Load the lookup
         	this.loadLookupContents(this.lookup, this.namespace, this.owner);
         	
-        	$(".LookupEditView").on("drop", function(event, ui){this.onDropFile();}.bind(this));
+        	$(".LookupEditView").on("drop", function(event, ui){this.onDropFile();}.bind(this)); // TODO: remove this?
         }
     });
     
