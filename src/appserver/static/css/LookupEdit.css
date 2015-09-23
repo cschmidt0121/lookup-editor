@@ -110,6 +110,12 @@ input[type=text]{
 	margin-top: 4px;
 }
 
+/* This styles the name of the lookup (when editing an existing lookup file) */
+.lookup-name{
+	margin-left: 16px;
+	margin-top: 3px;
+}
+
 /* Add a little room before the first label so that the name isn't right up against the edge */
 .row-fluid > div:first-child > .top-label{
 	margin-left: 16px;

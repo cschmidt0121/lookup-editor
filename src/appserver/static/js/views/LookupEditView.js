@@ -858,7 +858,8 @@ define([
         	// Render
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
-        		'is_new' : this.is_new
+        		'is_new' : this.is_new,
+        		'lookup_name': this.lookup
         	}));
         	
             // Show the content that is specific to making new lookups
