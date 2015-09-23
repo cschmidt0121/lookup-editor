@@ -820,7 +820,7 @@ define([
         				  alert("You must have at least one cell to have a valid lookup");
         				  //this.renderLookup( [ [""] ] );
         			  }
-        		  }.bind(this)
+        		  }
         		  
               	});
         	
