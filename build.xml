@@ -212,7 +212,7 @@
           target: splunk.bump_if_necessary
          ================================= -->
     <target name="splunk.bump_if_necessary" unless="appserver_up_to_date" depends="is_appserver_up_to_date">
-    	<antcall target="bump_splunk" />
+    	<antcall target="splunk.bump" />
     </target>
 	
     <!-- ================================= 
@@ -233,7 +233,7 @@
     	<script language="javascript">
     		var currentValue = parseInt(project.getProperty("value.deploy.bump"), 10);
     		
-    		var newBump = currentValue + '1';
+    		var newBump = currentValue + 1;
     		
     		if(isNaN(newBump)){
     			echo = project.createTask("echo");
@@ -252,7 +252,7 @@
     	<echo>The push version was updated from ${value.deploy.bump} to ${value.deploy.bump_updated}</echo>
     	
     	<echo>Restarting Splunk's web interface...</echo>
-    	<antcall target="restart_splunk_web" />
+    	<antcall target="splunk.restart_web" />
     	
     </target>
 	
