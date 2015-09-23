@@ -21,6 +21,8 @@ define([
     "splunkjs/mvc",
     "jquery",
     "splunkjs/mvc/simplesplunkview",
+    "splunkjs/mvc/simpleform/input/text",
+    "splunkjs/mvc/simpleform/input/dropdown",
     "text!../app/lookup_editor/js/templates/LookupEdit.html",
     "csv",
     "Handsontable",
@@ -36,6 +38,8 @@ define([
     mvc,
     $,
     SimpleSplunkView,
+    TextInput,
+    DropdownInput,
     Template
 ){
 	
@@ -68,13 +72,25 @@ define([
         initialize: function() {
         	this.options = _.extend({}, this.defaults, this.options);
         	
-            this.apps = null;
             this.backups = null;
             
             // The information for the loaded lookup
             this.lookup = null;
             this.namespace = null;
             this.owner = null;
+            
+        	// Get the apps
+        	this.apps = new Apps();
+        	this.apps.on('reset', this.gotApps.bind(this), this);
+        	
+        	this.apps.fetch({
+                success: function() {
+                  console.info("Successfully retrieved the list of applications");
+                },
+                error: function() {
+                  console.error("Unable to fetch the apps");
+                }
+            });
         },
         
         events: {
@@ -96,7 +112,18 @@ define([
          * For some reason the backbone handlers don't work.
          */
         setupDragDropHandlers: function(){
+        	
         	var drop_zone = document.getElementById('lookup-table');
+        	
+        	this.setupDragDropHandlerOnElement(drop_zone);
+        	
+        	drop_zone = document.getElementsByClassName("modal-backdrop")[0];
+        	
+        	this.setupDragDropHandlerOnElement(drop_zone);
+        	
+        },
+        
+        setupDragDropHandlerOnElement: function(drop_zone){
         	
         	drop_zone.ondragover = function (e) {
         		e.preventDefault();
@@ -108,7 +135,6 @@ define([
         	      this.onDropFile(e);
         	      return false;
         	}.bind(this);
-        	
         },
         
         /**
@@ -393,7 +419,7 @@ define([
          */
         renderBackupsList: function(){
         	
-        	var backup_list_template = '<a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
+        	var backup_list_template = '<a class="btn active btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
         			Revert to previous version \
         			<span class="caret"></span> \
         		</a> \
@@ -510,11 +536,47 @@ define([
          * @returns {Boolean}
          */
         validate: function(data) {
-        	
+        	return false;
         	// If the cell is the first row, then ensure that the new value is not blank
         	if( data[0][0] === 0 && data[0][3].length === 0 ){
         		return false;
         	}
+        },
+        
+        /**
+         * Get the list of apps as choices.
+         */
+        getAppsChoices: function(){
+        	
+        	// If we don't have the apps yet, then just return an empty list for now
+        	if(!this.apps){
+        		return [];
+        	}
+        	
+        	var choices = [];
+        	
+        	for(var c = 0; c < this.apps.models.length; c++){
+        		choices.push({
+        			'label': this.apps.models[c].entry.associated.content.attributes.label,
+        			'value': this.apps.models[c].entry.attributes.name
+        		});
+        	}
+        	
+        	return choices;
+        	
+        },
+        
+        /**
+         * Get the apps
+         */
+        gotApps: function(){
+        	console.log("Got the apps!!");
+        	
+        	// Update the list
+        	if(mvc.Components.getInstance("lookup-app")){
+        		mvc.Components.getInstance("lookup-app").settings.set("choices", this.getAppsChoices());
+        	}
+        	
         },
         
         /**
@@ -755,7 +817,7 @@ define([
         			  }
         		  }.bind(this)
         		  
-        		});
+              	});
         	
         },
         
@@ -775,11 +837,30 @@ define([
          * Render the page.
          */
         render: function () {
+        	
+        	var is_new = true;
+        	
         	this.$el.html(_.template(Template, {
-        		'insufficient_permissions' : false
+        		'insufficient_permissions' : false,
+        		'is_new' : is_new
         	}));
         	
-            
+            // Make the app selection drop-down
+        	if(is_new){
+                var app_dropdown = new DropdownInput({
+                    "id": "lookup-app",
+                    "selectFirstChoice": false,
+                    "showClearButton": false,
+                    "el": $('#lookup-app', this.$el),
+                    "choices": this.getAppsChoices()
+                }, {tokens: true}).render();
+                
+                app_dropdown.on("change", function(newValue) {
+                	this.validate();
+                }.bind(this));
+        	}
+
+        	
             this.setupDragDropHandlers();
         	
         	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button

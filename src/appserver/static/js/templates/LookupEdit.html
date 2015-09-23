@@ -1,17 +1,3 @@
-
-<div class="top-controls">
-	<a class="list-link" href="lookup_list">
-		<i class="icon-chevron-left icon-no-underline"></i>
-		<span>Back to Lookups List</span>
-	</a> 
-	    
-	<% if(insufficient_permissions) { %>
-	<div id="no-permissions-dialog" class="alert alert-warning hide">
-		<i class="icon-alert"></i>
-		You don't have permission to edit this lookup file
-	</div>
-	<% } else { %>
-	
 	<div tabindex="-1" id="import-file-modal" class="modal fade in hide">
 	    <div class="modal-header">
 	        <button type="button" class="close btn-dialog-close" data-dismiss="modal">x</button>
@@ -24,7 +10,7 @@
 	        <button class="btn active btn-primary" id="choose-import-file">Select file to import</button>
 	        
 	        <div class="drag-and-drop-tip">
-	        	<strong>Tip:</strong> You can drag and drop a file onto the editor to import a file directly
+	        	<strong>Tip:</strong> You can drag and drop a CSV file onto the editor to import it directly
 	        </div>
 	        
 	    </div>
@@ -33,10 +19,49 @@
 	    </div>
 	</div>
 	
-	<div id="drop-zone" class="hide">Drop files here</div>
+
+<div class="top-controls">
+	<div class="row-fluid">
+		<div class="span6">
+			<a class="list-link" href="lookup_list">
+				<i class="icon-chevron-left icon-no-underline"></i>
+				<span>Back to Lookups List</span>
+			</a> 
+		</div>
+	</div>
+
+	<% if(insufficient_permissions) { %>
+	<div id="no-permissions-dialog" class="alert alert-warning hide">
+		<i class="icon-alert"></i>
+		You don't have permission to edit this lookup file
+	</div>
+	<% } else { %>
 	
-	<div id="load-backup" class="btn-group create-content pull-right"></div>
-	<button class="btn active btn-primary pull-right" id="import-file">Import</button>
+	<div class="row-fluid">
+		<div class="span6">
+	<% if(is_new) { %>
+			<div class="top-label">
+				<label class="control-label" for="lookup-file-name">Name:</label>
+			</div>
+			<div class="controls">
+				<input type="text" name="lookup-file-name">
+				<span class="help-block ">Generally ends with ".csv"</span>
+			</div>
+			<div class="top-label">
+				<label class="control-label" for="lookup-app">App:</label>
+			</div>
+			<div class="controls">
+				<div class="input input-dropdown" id="lookup-app"></div>
+	        	<span class="hide help-inline"></span>
+	        	<span class="help-block">Specifies the app where the lookup file will reside</span>
+			</div>
+	<% } %>
+		</div>
+		<div class="span6">
+			<div id="load-backup" class="btn-group create-content pull-right"></div>
+			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
+		</div>
+	</div>
 	
 	<div id="warning-dialog" class="alert alert-warning hide">
 		<i class="icon-alert"></i>
@@ -48,6 +73,7 @@
 		<div class="message">Ok!</div>
 	</div>
 </div>
+
 <div id="lookup-table" class="editing-content"></div>
 
 <button class="btn active btn-primary pull-right editing-content" id="save">Save Lookup</button>
