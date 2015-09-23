@@ -91,6 +91,8 @@ define([
                   console.error("Unable to fetch the apps");
                 }
             });
+        	
+        	this.is_new = true;
         },
         
         events: {
@@ -423,9 +425,12 @@ define([
         			Revert to previous version \
         			<span class="caret"></span> \
         		</a> \
-        		<ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;"> \
+        		<ul class="dropdown-menu"> \
         		<% for(var c = 0; c < backups.length; c++){ %> \
         			<li><a class="backup-version" href="#" data-backup-time="<%- backups[c].time %>"><%- backups[c].time_readable %></a></li> \
+        		<% } %> \
+        		<% if(backups.length == 0){ %> \
+        			<li><a class="backup-version" href="#">No backup versions available</a></li> \
         		<% } %> \
         	</ul>';
         	
@@ -491,7 +496,7 @@ define([
         		  // On success, populate the table
         		  success: function(data) {
         			  console.info('JSON of lookup table was successfully loaded');
-        			  this.renderLookup( data );
+        			  this.renderLookup(data);
         			  $("#tableEditor").show();
         			  
         			  var elapsed = new Date().getTime()-populateStart;
@@ -536,7 +541,7 @@ define([
          * @returns {Boolean}
          */
         validate: function(data) {
-        	return false;
+        	
         	// If the cell is the first row, then ensure that the new value is not blank
         	if( data[0][0] === 0 && data[0][3].length === 0 ){
         		return false;
@@ -598,7 +603,11 @@ define([
          */
         doLoadBackup: function(evt){
         	var version = evt.currentTarget.dataset.backupTime;
-        	this.loadBackupFile(version);
+        	
+        	if(version){
+        		this.loadBackupFile(version);
+        	}
+        	
         },
         
         /**
@@ -609,7 +618,7 @@ define([
         doSaveLookup: function(evt){
         	
         	// Determine if we are making a new entry
-        	var making_new_lookup = false;
+        	var making_new_lookup = this.is_new;
         	
         	// Change the title
         	this.setSaveButtonTitle("Saving...");
@@ -645,13 +654,11 @@ define([
         	if( making_new_lookup ){
         		
 	        	// Get the lookup file name from the form if we are making a new lookup
-	        	if (data["lookup_file"] === ""|| data["lookup_file"] === null){
-	        		data["lookup_file"] = $("#lookup_file_input").val();
-	        	}
+        		data["lookup_file"] = mvc.Components.getInstance("lookup-name").val();
 	
 	        	// Make sure that the file name was included; stop if it was not
 	        	if (data["lookup_file"] === ""){
-	        		$("#lookup_file_error").text("Please define a file name");
+	        		$("#lookup_file_error").text("Please define a file name"); // TODO
 	        		$("#lookup_file_error").show();
 	        		this.setSaveButtonTitle();
 	        		return false;
@@ -659,16 +666,14 @@ define([
 	        	
 	        	// Make sure that the file name is valid; stop if it is not
 	        	if( !data["lookup_file"].match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) ){
-	        		$("#lookup_file_error").text("The file name contains invalid characters");
+	        		$("#lookup_file_error").text("The file name contains invalid characters"); // TODO
 	        		$("#lookup_file_error").show();
 	        		this.setSaveButtonTitle();
 	        		return false;
 	        	}
 	        		
 	        	// Get the namespace from the form if we are making a new lookup
-	        	if (data["namespace"] === "" || data["namespace"] === null){
-	        		data["namespace"] = $("#lookup_file_namespace").val();
-	        	}
+	        	data["namespace"] = mvc.Components.getInstance("lookup-app").val();
 	
 	        	// Make sure that the namespace was included; stop if it was not
 	        	if (data["namespace"] === ""){
@@ -838,15 +843,26 @@ define([
          */
         render: function () {
         	
-        	var is_new = true;
+        	// Get the information from the lookup to load
+        	this.lookup = this.getParameterByName("lookup");
+        	this.namespace = this.getParameterByName("namespace");
+        	this.owner = this.getParameterByName("owner");
         	
+        	this.is_new = false;
+        	
+        	// Determine if we are making a new lookup
+        	if(this.lookup == "" && this.namespace == "" && this.owner == ""){
+        		this.is_new = true;
+        	}
+        	
+        	// Render
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
-        		'is_new' : is_new
+        		'is_new' : this.is_new
         	}));
         	
-            
-        	if(is_new){
+            // Show the content that is specific to making new lookups
+        	if(this.is_new){
         		
 	        	// Make the lookup name input
 	        	var name_input = new TextInput({
@@ -856,7 +872,7 @@ define([
 	            }, {tokens: true}).render();
         		
 	        	name_input.on("change", function(newValue) {
-                	this.validate();
+                	this.validateForm();
                 }.bind(this));
         		
 	        	// Make the app selection drop-down
@@ -869,27 +885,40 @@ define([
                 }, {tokens: true}).render();
                 
                 app_dropdown.on("change", function(newValue) {
-                	this.validate();
+                	this.validateForm();
                 }.bind(this));
         	}
 
         	// Setup the handlers so that we can make the view support drag and drop
             this.setupDragDropHandlers();
-        	
+            
         	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button
         	$('#lookup-table').height($(window).height() - 320);
         	
-        	this.renderLookup([ [""] ]); // TODO remove this
+        	// Show a default lookup if this is a new lookup
+        	if(this.is_new){
+        		
+        		var data = [
+        		            ["Column1", "Column2", "Column3", "Column4", "Column5", "Column6"],
+        		            ["", "", "", "", "", ""],
+        		            ["", "", "", "", "", ""],
+        		            ["", "", "", "", "", ""],
+        		            ["", "", "", "", "", ""]
+        		          ];
+        		
+        		this.renderLookup(data);
+        	}
         	
-        	// Get the information from the lookup to load
-        	this.lookup = this.getParameterByName("lookup");
-        	this.namespace = this.getParameterByName("namespace");
-        	this.owner = this.getParameterByName("owner");
+        	// Stop if we didn't get enough information to load a lookup
+        	else if(this.lookup == "" || this.namespace == "" || this.owner == ""){
+        		this.showWarningDialog("Not enough information to identify the lookup file to load");
+        	}
         	
         	// Load the lookup
-        	this.loadLookupContents(this.lookup, this.namespace, this.owner);
+        	else{
+        		this.loadLookupContents(this.lookup, this.namespace, this.owner);
+        	}
         	
-        	$(".LookupEditView").on("drop", function(event, ui){this.onDropFile();}.bind(this)); // TODO: remove this?
         }
     });
     

@@ -115,6 +115,13 @@ input[type=text]{
 	margin-left: 16px;
 }
 
+/* Set the size of the drop-down */
+.dropdown-menu{
+	width: 220px;
+	margin-left: -38px;
+	margin-top: 2px;	
+}
+
 /*
  * Fix highlight color on the dropdown button
  */
