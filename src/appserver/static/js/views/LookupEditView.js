@@ -497,10 +497,15 @@ define([
         		  success: function(data) {
         			  console.info('JSON of lookup table was successfully loaded');
         			  this.renderLookup(data);
-        			  $("#tableEditor").show();
         			  
         			  var elapsed = new Date().getTime()-populateStart;
         			  console.info("Lookup loaded and rendered in " + elapsed + "ms");
+        			  
+        			  // Remember the specs on the loaded file
+        			  this.lookup = lookup_file;
+        	          this.namespace = namespace;
+        	          this.owner = user;
+        			  
         		  }.bind(this),
         		  
         		  // Handle cases where the file could not be found or the user did not have permissions
@@ -743,9 +748,14 @@ define([
         					
         					this.setSaveButtonTitle();
         					
+        					// If we made a new lookup, then switch modes
+        					if(this.is_new){
+        						this.changeToEditMode();
+        					}
+        					
         					// Update the lookup backup list
         					if(success){
-        						// loadLookupBackupsList(lookup_file, namespace, user); // TODO
+        						this.loadLookupBackupsList(this.lookup, this.namespace, this.owner);
         					}
         				}.bind(this),
         				
@@ -836,6 +846,24 @@ define([
                 results = regex.exec(location.search);
             
             return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+        },
+        
+        /**
+         * Change from the new mode of the editor to the edit mode
+         */
+        changeToEditMode: function(){
+        	
+        	// Set the lookup name
+        	$('#lookup-name-static', this.$el).text(this.lookup);
+        	
+        	// Hide the creation controls
+        	$('.show-when-creating', this.$el).hide();
+        	
+        	// Change the title
+        	$('h2', this.$el).show("Edit Lookup");
+        	
+        	// Remember that we are not editing a file
+			this.is_new = false;
         },
         
         /**

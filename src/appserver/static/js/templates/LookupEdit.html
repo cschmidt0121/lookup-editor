@@ -41,26 +41,25 @@
 		<div class="span6">
 	<% if(is_new) { %>
 			
-			<div class="top-label">
+			<div class="top-label show-when-creating">
 				<label class="control-label" for="lookup-name">Name:</label>
 			</div>
-			<div class="controls">
+			<div class="controls show-when-creating">
 				<div class="input input-text" id="lookup-name"></div>
 	        	<span class="hide help-inline"></span>
 	        	<span class="help-block">Generally ends with ".csv"</span>
 			</div>
 			
-			<div class="top-label">
+			<div class="top-label show-when-creating">
 				<label class="control-label" for="lookup-app">App:</label>
 			</div>
-			<div class="controls">
+			<div class="controls show-when-creating">
 				<div class="input input-dropdown" id="lookup-app"></div>
 	        	<span class="hide help-inline"></span>
 	        	<span class="help-block">Specifies the app where the lookup file will reside</span>
 			</div>
-	<% } else { %>
-			<div class="lookup-name lead" id="lookup-name"><%- lookup_name %></div>
 	<% } %>
+			<div class="lookup-name lead <% if(is_new) { %>hide<% } %>" id="lookup-name-static"><%- lookup_name %></div>
 		</div>
 		<div class="span6">
 			<div id="load-backup" class="btn-group create-content pull-right"></div>
