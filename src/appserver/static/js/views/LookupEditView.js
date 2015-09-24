@@ -561,8 +561,6 @@ define([
         	
         	this.hideWarningDialog();
         	
-        	//.match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) )
-        	
         	if(this.is_new && (!mvc.Components.getInstance("lookup-name").val() || mvc.Components.getInstance("lookup-name").val().length <= 0)){
         		$('#lookup-name-control-group', this.$el).addClass('error');
         		this.showWarningDialog("Please enter a lookup name");
@@ -898,22 +896,46 @@ define([
         },
         
         /**
+         * Hide the given item while retaining the display value
+         */
+        hide: function(selector){
+        	selector.css("display", "none");
+        },
+        
+        unhide: function(selector){
+        	//selector.css("display", "");
+        	removeAttr("display");
+        },
+        
+        /**
          * Change from the new mode of the editor to the edit mode
          */
         changeToEditMode: function(){
         	
         	// Set the lookup name
         	$('#lookup-name-static', this.$el).text(this.lookup);
-        	$('#lookup-name-static', this.$el).removeClass('hide');
+        	this.hide($('#lookup-name-static', this.$el));
         	
         	// Hide the creation controls
-        	$('.show-when-creating', this.$el).addClass('hide');
+        	this.hide($('.show-when-creating', this.$el));
         	
         	// Change the title
         	$('h2', this.$el).text("Edit Lookup");
         	
         	// Remember that we are not editing a file
 			this.is_new = false;
+			
+			// Change the URL
+			var url = "?lookup=" + this.lookup + "&namespace=" + this.namespace;
+			
+			if(this.owner){
+				url += "&owner=" + this.owner;
+			}
+			else{
+				url += "&owner=nobody";
+			}
+			
+			history.pushState(null, "Lookup Edit",url);
         },
         
         /**
