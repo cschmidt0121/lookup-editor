@@ -110,10 +110,28 @@ input[type=text]{
 	margin-top: 4px;
 }
 
+/* Make the alert dialogs centered and give them some height so that the view doesn't bounce when a message is shown */
+.alert-dialogs{
+	min-height: 35px;
+	text-align: center;
+}
+
+/* Tell the dialogs to use an inline-block so that they center */
+#info-dialog, #warning-dialog{
+	display: inline-block;
+    vertical-align: top;
+}
+
+/* Reinstate the display none if the hide class is set (since the CSS about overrides this) */
+#info-dialog.hide, #warning-dialog.hide{
+	display: none;
+}
+
 /* This styles the name of the lookup (when editing an existing lookup file) */
 .lookup-name{
 	margin-left: 16px;
 	margin-top: 3px;
+	display:inline-block;
 }
 
 /* Add a little room before the first label so that the name isn't right up against the edge */
@@ -126,6 +144,12 @@ input[type=text]{
 	width: 220px;
 	margin-left: -38px;
 	margin-top: 2px;	
+}
+
+/* Fixing padding on Bootstrap info alerts */
+#info-dialog{
+	padding-bottom: 0px;
+	margin-bottom: 0px;
 }
 
 /*

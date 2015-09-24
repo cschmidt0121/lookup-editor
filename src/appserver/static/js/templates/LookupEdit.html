@@ -22,11 +22,14 @@
 
 <div class="top-controls">
 	<div class="row-fluid">
-		<div class="span6">
+		<div class="span2">
 			<a class="list-link" href="lookup_list">
 				<i class="icon-chevron-left icon-no-underline"></i>
 				<span>Back to Lookups List</span>
 			</a> 
+		</div>
+		<div class="span8 alert-dialogs">
+
 		</div>
 	</div>
 
@@ -38,44 +41,49 @@
 	<% } else { %>
 	
 	<div class="row-fluid">
-		<div class="span6">
+		<div class="span9">
 	<% if(is_new) { %>
 			
-			<div class="top-label show-when-creating">
-				<label class="control-label" for="lookup-name">Name:</label>
-			</div>
-			<div class="controls show-when-creating">
-				<div class="input input-text" id="lookup-name"></div>
-	        	<span class="hide help-inline"></span>
-	        	<span class="help-block">Generally ends with ".csv"</span>
-			</div>
+			<span id="lookup-name-control-group" class="control-group">
+				<div class="top-label show-when-creating">
+					<label class="control-label" for="lookup-name">Name:</label>
+				</div>
+				<div class="controls show-when-creating">
+					<div class="input input-text" id="lookup-name"></div>
+		        	<span class="hide help-inline"></span>
+		        	<span class="help-block">Generally ends with ".csv"</span>
+				</div>
+			</span>
 			
-			<div class="top-label show-when-creating">
-				<label class="control-label" for="lookup-app">App:</label>
-			</div>
-			<div class="controls show-when-creating">
-				<div class="input input-dropdown" id="lookup-app"></div>
-	        	<span class="hide help-inline"></span>
-	        	<span class="help-block">Specifies the app where the lookup file will reside</span>
-			</div>
+			<span id="lookup-app-control-group" class="control-group">
+				<div class="top-label show-when-creating">
+					<label class="control-label" for="lookup-app">App:</label>
+				</div>
+				<div class="controls show-when-creating">
+					<div class="input input-dropdown" id="lookup-app"></div>
+		        	<span class="hide help-inline"></span>
+		        	<span class="help-block">Specifies the app where the lookup file will reside</span>
+				</div>
+			</span>
 	<% } %>
 			<div class="lookup-name lead <% if(is_new) { %>hide<% } %>" id="lookup-name-static"><%- lookup_name %></div>
+			
+			<div id="warning-dialog" class="alert alert-warning hide">
+				<i class="icon-alert"></i>
+				<div class="message">Warning!</div>
+			</div>
+			
+			<div id="info-dialog" class="alert alert-info hide">
+				<i class="icon-alert"></i>
+				<div class="message">Ok!</div>
+			</div>
 		</div>
-		<div class="span6">
+		<div class="span3">
 			<div id="load-backup" class="btn-group create-content pull-right"></div>
 			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
 		</div>
 	</div>
 	
-	<div id="warning-dialog" class="alert alert-warning hide">
-		<i class="icon-alert"></i>
-		<div class="message">Warning!</div>
-	</div>
-	
-	<div id="info-dialog" class="alert alert-info hide">
-		<i class="icon-alert"></i>
-		<div class="message">Ok!</div>
-	</div>
 </div>
 
 <div id="lookup-table" class="editing-content"></div>

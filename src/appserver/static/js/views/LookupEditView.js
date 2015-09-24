@@ -234,31 +234,29 @@ define([
         		return false;
         	}
         },
-
+        
+        hideWarningDialog: function(){
+        	$("#warning-dialog", this.$el).addClass('hide');
+        },
+        
+        hideInfoDialog: function(){
+        	$("#info-dialog", this.$el).addClass('hide');
+        },
+        
         /**
          * Hide the dialogs.
          */
         hideDialogs: function(){
-        	$("#warning-dialog", this.$el).hide();
-        	$("#info-dialog", this.$el).hide();
+        	this.hideWarningDialog();
+        	this.hideInfoDialog();
         },
         
         /**
          * Show a warning noting that something bad happened.
          */
-        showWarningDialog: function(message, hide_editor){
-        	
-        	// Load a default for the hide_editor argument
-        	if(typeof hide_editor == 'undefined'){
-        		hide_editor = false;
-        	}
-        	
+        showWarningDialog: function(message){
         	$("#warning-dialog > .message", this.$el).text(message);
-        	$("#warning-dialog", this.$el).show();
-        	
-        	if(hide_editor){
-        		$(".editing-content", this.$el).hide();
-        	}
+        	$("#warning-dialog", this.$el).removeClass('hide');
         },
         
         /**
@@ -266,7 +264,7 @@ define([
          */
         showInfoDialog: function(message){
         	$("#info-dialog > .message", this.$el).text(message);
-        	$("#info-dialog", this.$el).show();
+        	$("#info-dialog", this.$el).removeClass('hide');
         },
         
         /**
@@ -399,12 +397,9 @@ define([
             if(files.length > 0 ){
         	    
         	    // Set the file name if this is a new file and a filename was not set yet
-            	// TODO
-            	/*
-        	    if( $('#lookup_file_input').length > 0 && $('#lookup_file_input').val().length === 0 ){
-        	    	$('#lookup_file_input').val( evt.target.files[0].name );
+        	    if(this.is_new && (!mvc.Components.getInstance("lookup-name").val() || mvc.Components.getInstance("lookup-name").val().length <= 0)){
+        	    	mvc.Components.getInstance("lookup-name").val(files[0].name);
         	    }
-        	    */
         	    
         	    // Start the process of processing file
         	    reader.readAsText(files[0]);
@@ -554,6 +549,47 @@ define([
         },
         
         /**
+         * Validate the content of the form
+         */
+        validateForm: function(){
+        	
+        	var issues = 0;
+        	
+        	// By default assume everything passes
+        	$('#lookup-name-control-group', this.$el).removeClass('error');
+        	$('#lookup-app-control-group', this.$el).removeClass('error');
+        	
+        	this.hideWarningDialog();
+        	
+        	//.match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) )
+        	
+        	if(this.is_new && (!mvc.Components.getInstance("lookup-name").val() || mvc.Components.getInstance("lookup-name").val().length <= 0)){
+        		$('#lookup-name-control-group', this.$el).addClass('error');
+        		this.showWarningDialog("Please enter a lookup name");
+        		issues = issues + 1;
+        	}
+        	else if(this.is_new && !mvc.Components.getInstance("lookup-name").val().match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi)){
+        		$('#lookup-name-control-group', this.$el).addClass('error');
+        		this.showWarningDialog("Lookup name is invalid");
+        		issues = issues + 1;
+        	}
+        	
+        	if(this.is_new && (! mvc.Components.getInstance("lookup-app").val() || mvc.Components.getInstance("lookup-app").val().length <= 0)){
+        		$('#lookup-app-control-group', this.$el).addClass('error');
+        		this.showWarningDialog("Select the app where the lookup will reside");
+        		issues = issues + 1;
+        	}
+        	
+        	// Determine if the validation passed
+        	if(issues > 0){
+        		return false;
+        	}
+        	else{
+        		return true;
+        	}
+        },
+        
+        /**
          * Get the list of apps as choices.
          */
         getAppsChoices: function(){
@@ -655,8 +691,14 @@ define([
         	// Hide the warnings. We will repost them if the input is still invalid
         	this.hideDialogs();
         	
+        	// Stop if the form didn't validate
+        	if(!this.validateForm()){
+        		this.setSaveButtonTitle();
+        		return;
+        	}
+        	
         	// Validate the input if it is new
-        	if( making_new_lookup ){
+        	if(making_new_lookup){
         		
 	        	// Get the lookup file name from the form if we are making a new lookup
         		data["lookup_file"] = mvc.Components.getInstance("lookup-name").val();
@@ -717,6 +759,13 @@ define([
         					console.log("Lookup file saved successfully");
         					this.showInfoDialog("Lookup file saved successfully");
         					this.setSaveButtonTitle();
+        					
+        					// Persist the information about the lookup
+        					if(this.is_new){
+	        					this.lookup = data["lookup_file"];
+	        					this.namespace = data["namespace"];
+	        					this.owner = data["owner"];
+        					}
         				}.bind(this),
         				
         				// Handle cases where the file could not be found or the user did not have permissions
@@ -855,12 +904,13 @@ define([
         	
         	// Set the lookup name
         	$('#lookup-name-static', this.$el).text(this.lookup);
+        	$('#lookup-name-static', this.$el).removeClass('hide');
         	
         	// Hide the creation controls
-        	$('.show-when-creating', this.$el).hide();
+        	$('.show-when-creating', this.$el).addClass('hide');
         	
         	// Change the title
-        	$('h2', this.$el).show("Edit Lookup");
+        	$('h2', this.$el).text("Edit Lookup");
         	
         	// Remember that we are not editing a file
 			this.is_new = false;
