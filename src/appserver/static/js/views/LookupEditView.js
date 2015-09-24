@@ -93,6 +93,10 @@ define([
             });
         	
         	this.is_new = true;
+        	
+        	this.info_message_posted_time = null;
+        	
+        	setInterval(this.hideInfoMessageIfNecessary.bind(this), 1000);
         },
         
         events: {
@@ -111,17 +115,27 @@ define([
         },
         
         /**
+         * Hide the informational message if it is old enough
+         */
+        hideInfoMessageIfNecessary: function(){
+        	if(this.info_message_posted_time && ((this.info_message_posted_time + 5000) < new Date().getTime() )){
+        		this.info_message_posted_time = null;
+        		$("#info-message", this.$el).fadeOut(200);
+        	}
+        },
+        
+        /**
          * For some reason the backbone handlers don't work.
          */
         setupDragDropHandlers: function(){
         	
+        	// Setup a handler for handling files dropped on the table
         	var drop_zone = document.getElementById('lookup-table');
-        	
         	this.setupDragDropHandlerOnElement(drop_zone);
         	
-        	drop_zone = document.getElementsByClassName("modal-backdrop")[0];
-        	
-        	this.setupDragDropHandlerOnElement(drop_zone);
+        	// Setup a handler for handling files dropped on the import dialog
+        	drop_zone2 = document.getElementById('import-file-modal');
+        	this.setupDragDropHandlerOnElement(drop_zone2);
         	
         },
         
@@ -202,7 +216,33 @@ define([
          * Open the modal for importing a file.
          */
         openFileImportModal: function(){
+        	
+        	$('.dragging').removeClass('dragging');
+        	
         	$('#import-file-modal', this.$el).modal();
+        	
+        	// Setuo handlers for drag & drop
+        	$('.modal-backdrop').on('dragenter', function(){
+        		$('.modal-body').addClass('dragging');
+        		console.log("enter");
+        	});
+        	
+        	$('.modal-backdrop').on('dragleave', function(){
+        		$('.modal-body').removeClass('dragging');
+        		console.log("leave");
+        	});
+        	
+        	$('#import-file-modal').on('dragenter', function(){
+        		$('.modal-body').addClass('dragging');
+        		console.log("enter");
+        	});
+        	
+        	/*
+        	$('#import-file-modal').on('dragleave', function(){
+        		$('.modal-body').removeClass('dragging');
+        		console.log("leave");
+        	});
+        	*/
         },
         
         /**
@@ -235,36 +275,44 @@ define([
         	}
         },
         
-        hideWarningDialog: function(){
-        	$("#warning-dialog", this.$el).addClass('hide');
-        },
-        
-        hideInfoDialog: function(){
-        	$("#info-dialog", this.$el).addClass('hide');
+        /**
+         * Hide the warning message.
+         */
+        hideWarningMessage: function(){
+        	this.hide($("#warning-message", this.$el));
         },
         
         /**
-         * Hide the dialogs.
+         * Hide the informational message
          */
-        hideDialogs: function(){
-        	this.hideWarningDialog();
-        	this.hideInfoDialog();
+        hideInfoMessage: function(){
+        	this.hide($("#info-message", this.$el));
         },
         
         /**
-         * Show a warning noting that something bad happened.
+         * Hide the messages.
          */
-        showWarningDialog: function(message){
-        	$("#warning-dialog > .message", this.$el).text(message);
-        	$("#warning-dialog", this.$el).removeClass('hide');
+        hideMessages: function(){
+        	this.hideWarningMessage();
+        	this.hideInfoMessage();
         },
         
         /**
          * Show a warning noting that something bad happened.
          */
-        showInfoDialog: function(message){
-        	$("#info-dialog > .message", this.$el).text(message);
-        	$("#info-dialog", this.$el).removeClass('hide');
+        showWarningMessage: function(message){
+        	$("#warning-message > .message", this.$el).text(message);
+        	this.unhide($("#warning-message", this.$el));
+        },
+        
+        /**
+         * Show a warning noting that something bad happened.
+         */
+        showInfoMessage: function(message){
+        	$("#info-message > .message", this.$el).text(message);
+        	this.unhide($("#info-message", this.$el));
+        	
+        	this.info_message_posted_time = new Date().getTime();
         },
         
         /**
@@ -362,8 +410,7 @@ define([
                 	$(".table-loading-message").hide();
                 	
                 	// Show an error
-                	// TODO
-                    alert('Error while reading file');
+                    this.showWarningMessage("Unable to import the file");
                     return;
                 }
                 
@@ -378,6 +425,9 @@ define([
             	
             	// Hide the import dialog
             	$('#import-file-modal', this.$el).modal('hide');
+            	
+            	// Show a message noting that the file was imported
+            	this.showInfoMessage("File imported successfully");
             	
         	}.bind(this);
         	
@@ -507,11 +557,11 @@ define([
         		  complete: function(jqXHR, textStatus){
         			  if( jqXHR.status == 404){
         				  console.info('Lookup file was not found');
-        				  this.showWarningDialog("The requested lookup file does not exist", true);
+        				  this.showWarningMessage("The requested lookup file does not exist", true);
         			  }
         			  else if( jqXHR.status == 403){
         				  console.info('Inadequate permissions');
-        				  this.showWarningDialog("You do not have permission to view this lookup file", true);
+        				  this.showWarningMessage("You do not have permission to view this lookup file", true);
         			  }
         			  
         			  // Hide the loading message
@@ -521,6 +571,10 @@ define([
         			  if( version === undefined ){
         				  this.loadLookupBackupsList(lookup_file, namespace, user);
         			  }
+        			  else{
+        				  // Show a message noting that the backup was imported
+        				  this.showInfoMessage("Backup file was loaded successfully");
+        			  }
         			  
         		  }.bind(this),
         		  
@@ -528,7 +582,7 @@ define([
         		  error: function(jqXHR, textStatus, errorThrown){
         			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
         				  console.info('Lookup file could not be loaded');
-        				  this.showWarningDialog("The lookup could not be loaded from the server", true);
+        				  this.showWarningMessage("The lookup could not be loaded from the server", true);
         			  }
         		  }.bind(this)
         	});
@@ -559,22 +613,22 @@ define([
         	$('#lookup-name-control-group', this.$el).removeClass('error');
         	$('#lookup-app-control-group', this.$el).removeClass('error');
         	
-        	this.hideWarningDialog();
+        	this.hideWarningMessage();
         	
         	if(this.is_new && (!mvc.Components.getInstance("lookup-name").val() || mvc.Components.getInstance("lookup-name").val().length <= 0)){
         		$('#lookup-name-control-group', this.$el).addClass('error');
-        		this.showWarningDialog("Please enter a lookup name");
+        		this.showWarningMessage("Please enter a lookup name");
         		issues = issues + 1;
         	}
         	else if(this.is_new && !mvc.Components.getInstance("lookup-name").val().match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi)){
         		$('#lookup-name-control-group', this.$el).addClass('error');
-        		this.showWarningDialog("Lookup name is invalid");
+        		this.showWarningMessage("Lookup name is invalid");
         		issues = issues + 1;
         	}
         	
         	if(this.is_new && (! mvc.Components.getInstance("lookup-app").val() || mvc.Components.getInstance("lookup-app").val().length <= 0)){
         		$('#lookup-app-control-group', this.$el).addClass('error');
-        		this.showWarningDialog("Select the app where the lookup will reside");
+        		this.showWarningMessage("Select the app where the lookup will reside");
         		issues = issues + 1;
         	}
         	
@@ -687,7 +741,7 @@ define([
         	}
         	
         	// Hide the warnings. We will repost them if the input is still invalid
-        	this.hideDialogs();
+        	this.hideMessages();
         	
         	// Stop if the form didn't validate
         	if(!this.validateForm()){
@@ -731,7 +785,7 @@ define([
 
         	// Make sure at least a header exists; stop if not enough content is present
         	if(row_data.length === 0){		
-        		this.showWarningDialog("Lookup files must contain at least one row (the header)");
+        		this.showWarningMessage("Lookup files must contain at least one row (the header)");
         		//loadLookupContents( lookup_file, namespace, user, true );
         		return false;
         	}
@@ -742,7 +796,7 @@ define([
         		
         		// Determine if this row has an empty header cell
         		if( row_data[0][i] === "" ){
-        			this.showWarningDialog("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
+        			this.showWarningMessage("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
         			return false;
         		}
         	}
@@ -755,7 +809,7 @@ define([
         				
         				success: function(){
         					console.log("Lookup file saved successfully");
-        					this.showInfoDialog("Lookup file saved successfully");
+        					this.showInfoMessage("Lookup file saved successfully");
         					this.setSaveButtonTitle();
         					
         					// Persist the information about the lookup
@@ -775,21 +829,21 @@ define([
         					
         					if(jqXHR.status == 404){
         						console.info('Lookup file was not found');
-        						this.showWarningDialog("This lookup file could not be found");
+        						this.showWarningMessage("This lookup file could not be found");
         						success = false;
         					}
         					else if(jqXHR.status == 403){
         						console.info('Inadequate permissions');
-        						this.showWarningDialog("You do not have permission to edit this lookup file");
+        						this.showWarningMessage("You do not have permission to edit this lookup file");
         						success = false;
         					}
         					else if(jqXHR.status == 400){
         						console.info('Invalid input');
-        						this.showWarningDialog("This lookup file could not be saved because the input is invalid");
+        						this.showWarningMessage("This lookup file could not be saved because the input is invalid");
         						success = false;
         					}
         					else if(jqXHR.status == 500){
-        						this.showWarningDialog("The lookup file could not be saved");
+        						this.showWarningMessage("The lookup file could not be saved");
         				    	success = false;
         					}
         					
@@ -808,7 +862,7 @@ define([
         				
         				error: function(jqXHR,textStatus,errorThrown) {
         					console.log("Lookup file not saved");
-        					this.showWarningDialog("Lookup file could not be saved");
+        					this.showWarningMessage("Lookup file could not be saved");
         				}.bind(this)
         				
         			}
@@ -900,11 +954,17 @@ define([
          */
         hide: function(selector){
         	selector.css("display", "none");
+        	selector.addClass("hide");
         },
         
+        /**
+         * Un-hide the given item.
+         * 
+         * Note: this removes all custom styles applied directly to the element.
+         */
         unhide: function(selector){
-        	//selector.css("display", "");
-        	removeAttr("display");
+        	selector.removeClass("hide");
+        	selector.removeAttr("style");
         },
         
         /**
@@ -914,7 +974,7 @@ define([
         	
         	// Set the lookup name
         	$('#lookup-name-static', this.$el).text(this.lookup);
-        	this.hide($('#lookup-name-static', this.$el));
+        	this.unhide($('#lookup-name-static', this.$el));
         	
         	// Hide the creation controls
         	this.hide($('.show-when-creating', this.$el));
@@ -1012,7 +1072,7 @@ define([
         	
         	// Stop if we didn't get enough information to load a lookup
         	else if(this.lookup == "" || this.namespace == "" || this.owner == ""){
-        		this.showWarningDialog("Not enough information to identify the lookup file to load");
+        		this.showWarningMessage("Not enough information to identify the lookup file to load");
         	}
         	
         	// Load the lookup

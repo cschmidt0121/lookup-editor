@@ -35,12 +35,20 @@ input[type=text]{
 	display: block;
 }
 
-#tableEditor{
-	/* display:none; */
+/* Setup a particular styling for drop zones */
+.dragging{
+	border: 5px dashed #ddd;
+	background-image: url('/en-US/static/app/lookup_editor/images/drag_and_drop.png');
+	background-repeat: no-repeat;
+	background-position: center;
+	margin: 10px;
+	padding: 5px
 }
 
-#lookup-table.drop-target > div{
-	display: none;
+
+/* Hide items in the drop-zone while dragging is happening */
+.modal-body.dragging > span, .modal-body.dragging > div, .modal-body.dragging > button, #lookups_editor.dragging > div{
+	opacity: 0.01;
 }
 
 .drag-and-drop-tip{
@@ -110,20 +118,16 @@ input[type=text]{
 	margin-top: 4px;
 }
 
-/* Make the alert dialogs centered and give them some height so that the view doesn't bounce when a message is shown */
-.alert-dialogs{
-	min-height: 35px;
-	text-align: center;
-}
-
-/* Tell the dialogs to use an inline-block so that they center */
-#info-dialog, #warning-dialog{
+/* Tell the dialogs to use an inline-block so that they fit nicely next to other elements */
+#info-message, #warning-message{
 	display: inline-block;
     vertical-align: top;
+    padding-bottom: 0px;
+	margin-bottom: 0px;
 }
 
 /* Reinstate the display none if the hide class is set (since the CSS about overrides this) */
-#info-dialog.hide, #warning-dialog.hide{
+#info-message.hide, #warning-message.hide{
 	display: none;
 }
 
@@ -144,12 +148,6 @@ input[type=text]{
 	width: 220px;
 	margin-left: -38px;
 	margin-top: 2px;	
-}
-
-/* Fixing padding on Bootstrap info alerts */
-#info-dialog{
-	padding-bottom: 0px;
-	margin-bottom: 0px;
 }
 
 /*
