@@ -45,9 +45,9 @@
         <span class="caret"></span>
     </a>
     <ul class="dropdown-menu" style="width: 120px;margin-left: -38px;margin-top: 2px;">
-		<li><a href="#">All</a></li>
-        <li><a href="#">KV Store Lookup</a></li>
-		<li><a href="#">CSV File Lookup</a></li>
+		<li><a href="#"><i class="icon-check" />All</a></li>
+        <li><a href="#"><i class="icon-check hide" />KV Store Lookup</a></li>
+		<li><a href="#"><i class="icon-check hide" />CSV File Lookup</a></li>
     </ul>
 </div>
 
@@ -57,9 +57,9 @@
         <span class="caret"></span>
     </a>
     <ul class="dropdown-menu" style="width: 220px;margin-left: -38px;margin-top: 2px;">
-		<li><a href="#">All</a></li>
+		<li><a href="#"><i class="icon-check" />All</a></li>
 	<% for(var c=0; c < apps.length; c++) { %>
-		<li><a href="#" data-name="apps[c].name"><%- apps[c].label %></a></li>
+		<li><a href="#" data-name="apps[c].name"><i class="icon-check hide" /><%- apps[c].label %></a></li>
 	<% } %>
     </ul>
 </div>

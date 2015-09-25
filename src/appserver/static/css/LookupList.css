@@ -10,9 +10,21 @@
 	width: 400px;
 }
 
-.bulk-actions, .type-filter, .app-filter, .status-filter{
+.type-filter, .app-filter{
 	margin-top: 8px;
 	margin-left: 16px;
+}
+
+.type-filter > .dropdown-menu > li > a, .app-filter > .dropdown-menu > li > a{
+   padding-left: 22px;
+}
+
+.dropdown-menu{
+	background-color: white;
+}
+
+.icon-check.hide{
+      display: none;
 }
 
 .dropdown-secondary > ul{

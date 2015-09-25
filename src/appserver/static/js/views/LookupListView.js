@@ -157,6 +157,12 @@ define([
         	
         	this.setFilterText('type-filter', 'Type', filter);
         	
+        	// Remove the checked icon from any existing entries
+        	$('.type-filter > .dropdown-menu > li > a > i').addClass('hide');
+        	  
+        	// Show the checked icon on this entry
+        	$('i', ev.currentTarget).removeClass('hide');
+        	
         	this.applyFilter();
         	
         },
@@ -175,6 +181,12 @@ define([
         	}
         	
         	this.setFilterText('app-filter', 'App', filter);
+        	
+        	// Remove the checked icon from any existing entries
+        	$('.app-filter > .dropdown-menu > li > a > i').addClass('hide');
+        	  
+        	// Show the checked icon on this entry
+        	$('i', ev.currentTarget).removeClass('hide');
         	
         	this.applyFilter();
         	
