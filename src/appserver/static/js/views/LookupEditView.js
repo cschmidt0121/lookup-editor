@@ -78,6 +78,7 @@ define([
             this.lookup = null;
             this.namespace = null;
             this.owner = null;
+            this.lookup_type = null;
             
         	// Get the apps
         	this.apps = new Apps();
@@ -267,7 +268,7 @@ define([
         	var r = confirm('This version the lookup file will now be loaded.\n\nUnsaved changes will be overridden.');
         	
         	if (r == true) {
-        		this.loadLookupContents(this.lookup, this.namespace, this.owner, false, version);
+        		this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type, false, version);
         		return true;
         	}
         	else{
@@ -495,10 +496,11 @@ define([
          * @param lookup_file The name of the lookup file
          * @param namespace The app where the lookup file exists
          * @param user The user that owns the file (in the case of user-based lookups)
+         * @param lookup_type Indicates whether this is a KV store or a CSV lookup (needs to be either "kv" or "csv")
          * @param header_only Indicates if only the header row should be retrieved
          * @param version The version to get from the archived history
          */
-        loadLookupContents: function(lookup_file, namespace, user, header_only, version){
+        loadLookupContents: function(lookup_file, namespace, user, lookup_type, header_only, version){
         	
         	// Set a default value for header_only
         	if( typeof header_only == 'undefined' ){
@@ -506,8 +508,9 @@ define([
         	}
         	
         	var data = {"lookup_file":lookup_file,
-                    	"namespace":namespace,
-                    	"header_only":header_only};
+                    	"namespace"  :namespace,
+                    	"header_only":header_only,
+                    	"lookup_type":lookup_type};
         	
         	// Set a default value for version
         	if( typeof version == 'undefined' ){
@@ -550,6 +553,7 @@ define([
         			  this.lookup = lookup_file;
         	          this.namespace = namespace;
         	          this.owner = user;
+        	          this.lookup_type = lookup_type;
         			  
         		  }.bind(this),
         		  
@@ -786,7 +790,6 @@ define([
         	// Make sure at least a header exists; stop if not enough content is present
         	if(row_data.length === 0){		
         		this.showWarningMessage("Lookup files must contain at least one row (the header)");
-        		//loadLookupContents( lookup_file, namespace, user, true );
         		return false;
         	}
         	
@@ -1007,6 +1010,7 @@ define([
         	this.lookup = this.getParameterByName("lookup");
         	this.namespace = this.getParameterByName("namespace");
         	this.owner = this.getParameterByName("owner");
+        	this.lookup_type = this.getParameterByName("type");
         	
         	this.is_new = false;
         	
@@ -1077,7 +1081,7 @@ define([
         	
         	// Load the lookup
         	else{
-        		this.loadLookupContents(this.lookup, this.namespace, this.owner);
+        		this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type);
         	}
         	
         }

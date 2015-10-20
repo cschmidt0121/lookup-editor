@@ -10,6 +10,7 @@ import time
 import datetime
 
 from splunk import AuthorizationFailed, ResourceNotFound
+import splunk.rest
 import splunk.appserver.mrsparkle.controllers as controllers
 import splunk.appserver.mrsparkle.lib.util as util
 import splunk.bundle as bundle
@@ -488,6 +489,42 @@ class LookupEditor(controllers.BaseController):
         else:
             return lookup_path
             
+    def get_kv_lookup(self, lookup_file, namespace="lookup_editor", owner=None):
+        """
+        Get the contents of a KV store lookup.
+        """
+        
+        # Get the session key
+        session_key = cherrypy.session.get('sessionKey')
+        lookup_contents = []
+        
+        # Get the fields so that we can compose the header
+        response, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+        header = json.loads(content)
+
+        fields = ['_key']
+        
+        for field in header['entry'][0]['content']:
+            if field.startswith('field.'):
+                fields.append(field[6:])
+        
+        lookup_contents.append(fields)
+        
+        # Get the contents        
+        response, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/data/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+            
+        rows = json.loads(content)
+        
+        for row in rows:
+            new_row = []
+            
+            for field in fields:
+                new_row.append(row[field])
+        
+            lookup_contents.append(new_row)
+            
+        return lookup_contents
+            
     def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None):
         """
         Get a file handle to the associated lookup file.
@@ -506,7 +543,7 @@ class LookupEditor(controllers.BaseController):
         return open(self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv, version), 'rb')
 
     @expose_page(must_login=True, methods=['GET']) 
-    def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, version=None, **kwargs):
+    def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, version=None, lookup_type=None, **kwargs):
         """
         Provides the contents of a lookup file as JSON.
         """
@@ -517,21 +554,29 @@ class LookupEditor(controllers.BaseController):
             header_only = False
         
         try:
-            with self.get_lookup(lookup_file, namespace, owner, version=version) as csv_file:
-                
-                csv_reader = csv.reader(csv_file)
             
-                # Convert the content to JSON
-                lookup_contents = []
+            # Load the KV store lookup
+            if lookup_type == "kv":
+                return self.render_json(self.get_kv_lookup(lookup_file, namespace, owner))
                 
-                for row in csv_reader:
-                    lookup_contents.append(row)
+            # Load the CSV lookup
+            elif lookup_type == "csv":
+                
+                with self.get_lookup(lookup_file, namespace, owner, version=version) as csv_file:
                     
-                    # If we are only loading the header, then stop here
-                    if header_only:
-                        break
+                    csv_reader = csv.reader(csv_file)
                 
-                return self.render_json(lookup_contents)
+                    # Convert the content to JSON
+                    lookup_contents = []
+                    
+                    for row in csv_reader:
+                        lookup_contents.append(row)
+                        
+                        # If we are only loading the header, then stop here
+                        if header_only:
+                            break
+                    
+                    return self.render_json(lookup_contents)
             
         except IOError:
             cherrypy.response.status = 404
