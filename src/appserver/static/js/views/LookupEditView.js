@@ -572,7 +572,7 @@ define([
         			  $(".table-loading-message").hide();
         			  
         			  // Start the loading of the history
-        			  if( version === undefined ){
+        			  if( version === undefined && this.lookup_type == "csv" ){
         				  this.loadLookupBackupsList(lookup_file, namespace, user);
         			  }
         			  else{
@@ -1023,7 +1023,8 @@ define([
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
         		'is_new' : this.is_new,
-        		'lookup_name': this.lookup
+        		'lookup_name': this.lookup,
+        		'lookup_type' : this.lookup_type
         	}));
         	
             // Show the content that is specific to making new lookups

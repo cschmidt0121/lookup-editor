@@ -81,8 +81,10 @@
 			</div>
 		</div>
 		<div class="span3">
+			<% if(lookup_type == "csv"){ %>
 			<div id="load-backup" class="btn-group create-content pull-right"></div>
 			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
+			<% } %>
 		</div>
 	</div>
 	
@@ -90,6 +92,8 @@
 
 <div id="lookup-table" class="editing-content"></div>
 
+<% if(lookup_type == "csv"){ %>
 <button class="btn active btn-primary pull-right editing-content" id="save">Save Lookup</button>
+<% } %>
 
 <% } %>
