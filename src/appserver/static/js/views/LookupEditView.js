@@ -575,7 +575,7 @@ define([
         			  if( version === undefined && this.lookup_type == "csv" ){
         				  this.loadLookupBackupsList(lookup_file, namespace, user);
         			  }
-        			  else{
+        			  else if(this.lookup_type == "csv"){
         				  // Show a message noting that the backup was imported
         				  this.showInfoMessage("Backup file was loaded successfully");
         			  }
