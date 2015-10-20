@@ -80,13 +80,13 @@
     </thead>
     <tbody>
 
-        <% for (var i = 0; i < csv_lookups.length; i++) { %>
-        <tr data-lookup-name="<%- csv_lookups[i].name %>">
-            <td><a href="lookup_edit?owner=<%- csv_lookups[i].owner %>&namespace=<%- csv_lookups[i].namespace %>&lookup=<%- csv_lookups[i].name %>"><%- csv_lookups[i].name %></a></td>
-            <td>CSV File Lookup</td>
-			<td><%- getAppDescriptionFromName(csv_lookups[i].namespace) %></td>
-			<td><%- csv_lookups[i].owner %></td>
-			<td><a href="../../../custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=<%- csv_lookups[i].namespace %>&lookup_file=<%- csv_lookups[i].name %>">Export</a></td>
+        <% for (var i = 0; i < lookups.length; i++) { %>
+        <tr data-lookup-name="<%- lookups[i].name %>">
+            <td><a href="lookup_edit?owner=<%- lookups[i].owner %>&namespace=<%- lookups[i].namespace %>&lookup=<%- lookups[i].name %>&type=<%- lookups[i].type %>"><%- lookups[i].name %></a></td>
+            <td><% if(lookups[i].type == "csv") { %>CSV File Lookup<% } else { %>KV Store Lookup<% } %></td>
+			<td><%- getAppDescriptionFromName(lookups[i].namespace) %></td>
+			<td><%- lookups[i].owner %></td>
+			<td><a href="../../../custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=<%- lookups[i].namespace %>&lookup_file=<%- lookups[i].name %>&type=<%- lookups[i].type %>">Export</a></td>
         </tr>
 		<% } %>
     </tbody>

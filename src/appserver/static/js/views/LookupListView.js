@@ -39,25 +39,23 @@ define([
 	
 	var Apps = SplunkDsBaseCollection.extend({
 	    url: "apps/local",
-	    //model: CSVLookup,
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
 	});
 	
-	var CSVLookup = SplunkDBaseModel.extend({
-		    url: 'data/lookup-table-files', // /servicesNS/' + user + '/' + app + '/data/lookup-table-files'
-		    initialize: function() {
-		      SplunkDBaseModel.prototype.initialize.apply(this, arguments);
-		    }
+	var CSVLookups = SplunkDsBaseCollection.extend({
+		url: 'data/lookup-table-files',
+		initialize: function() {
+			SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
+		}
 	});
 	
-	var CSVLookups = SplunkDsBaseCollection.extend({
-		    url: 'data/lookup-table-files',
-		    //model: CSVLookup,
-		    initialize: function() {
-		      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
-		    }
+	var KVLookups = SplunkDsBaseCollection.extend({
+	    url: '/servicesNS/nobody/lookup_editor/storage/collections/config',
+	    initialize: function() {
+	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
+	    }
 	});
 	
     // Define the custom view class
@@ -85,16 +83,29 @@ define([
             // The reference to the data-table
             this.data_table = null;
         	
-        	// Get the lookups
+        	// Get the CSV lookups
         	this.csv_lookups = new CSVLookups();
         	this.csv_lookups.on('reset', this.gotCSVLookups.bind(this), this);
         	
         	this.csv_lookups.fetch({
                 success: function() {
-                  console.info("Successfully retrieved the lookup files");
+                  console.info("Successfully retrieved the CSV lookup files");
                 },
                 error: function() {
-                  console.error("Unable to fetch the lookup files");
+                  console.error("Unable to fetch the CSV lookup files");
+                }
+            });
+        	
+        	// Get the KV store lookups
+        	this.kv_lookups = new KVLookups();
+        	this.kv_lookups.on('reset', this.gotKVLookups.bind(this), this);
+        	
+        	this.kv_lookups.fetch({
+                success: function() {
+                  console.info("Successfully retrieved the KV store lookup files");
+                },
+                error: function() {
+                  console.error("Unable to fetch the KV store lookup files");
                 }
             });
         	
@@ -249,9 +260,16 @@ define([
         },
         
         /**
-         * Get the CSV lookups
+         * Got the CSV lookups
          */
         gotCSVLookups: function(){
+        	this.renderLookupsList();
+        },
+        
+        /**
+         * Got the KV store lookups
+         */
+        gotKVLookups: function(){
         	this.renderLookupsList();
         },
         
@@ -291,11 +309,12 @@ define([
         /**
          * Get the lookups list in JSON format
          */
-        getCSVLookupsJSON: function(){
+        getLookupsJSON: function(){
         	
         	var lookups_json = [];
         	var new_entry = null;
         	
+        	// Add the CSV lookups
         	for(var c = 0; c < this.csv_lookups.models.length; c++){
         		
         		new_entry = {
@@ -303,8 +322,24 @@ define([
         				'author': this.csv_lookups.models[c].entry.attributes.author,
         				'updated': this.csv_lookups.models[c].entry.attributes.updated,
         				'namespace': this.csv_lookups.models[c].entry.acl.attributes.app,
-        				'owner': this.csv_lookups.models[c].entry.acl.attributes.owner
+        				'owner': this.csv_lookups.models[c].entry.acl.attributes.owner,
+        				'type' : 'csv'
         				
+        		};
+        		
+        		lookups_json.push(new_entry);
+        	}
+        	
+        	// Add the KV store lookups
+        	for(var c = 0; c < this.kv_lookups.models.length; c++){
+        		
+        		new_entry = {
+        				'name': this.kv_lookups.models[c].entry.attributes.name,
+        				'author': this.kv_lookups.models[c].entry.attributes.author,
+        				'updated': this.kv_lookups.models[c].entry.attributes.updated,
+        				'namespace': this.kv_lookups.models[c].entry.acl.attributes.app,
+        				'owner': this.kv_lookups.models[c].entry.acl.attributes.owner,
+        				'type' : 'kv'
         		};
         		
         		lookups_json.push(new_entry);
@@ -370,7 +405,7 @@ define([
             var lookup_list_template = $('#lookup-list-template', this.$el).text();
             
         	$('#content', this.$el).html(_.template(lookup_list_template, {
-        		'csv_lookups' : this.getCSVLookupsJSON(),
+        		'lookups' : this.getLookupsJSON(),
         		'apps' : this.getAppsJSON(),
         		'getAppDescriptionFromName' : this.getAppDescriptionFromName.bind(this)
         	}));
