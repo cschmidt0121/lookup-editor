@@ -10,7 +10,7 @@
     <!-- Set up some basic parameters -->
     <property name="value.src.directory" value="src" />
     <property name="value.temp.directory" value="${java.io.tmpdir}/${user.name}/${ant.project.name}" />
-    <property name="value.build.appname" value="lookup_editor" />
+    <property name="value.build.appname" value="${ant.project.name}" />
     
     <!-- Set up the ant classpath -->
     <path id="ant.classpath">
@@ -18,7 +18,18 @@
           <include name="*.jar" />
         </fileset>
     </path>
-    
+	
+    <!-- ================================= 
+          target: initialize_libraries
+         ================================= -->
+	<target name="initialize_libraries">
+		<taskdef resource="net/sf/antcontrib/antlib.xml">
+		     <classpath>
+		    	<pathelement location="${basedir}/lib/ant-contrib-0.6.jar"/>
+		     </classpath>
+		</taskdef>
+	</target>
+	
     <!-- ================================= 
           target: clean
          ================================= -->
@@ -91,8 +102,8 @@
     <!-- ================================= 
           target: populate_export_dir
          ================================= -->
-    <target name="populate_export_dir" depends="get_build_number">
-        
+    <target name="populate_export_dir" depends="get_build_number,initialize_libraries">
+    	
         <!-- Copy the files over that need substitution. This should only be
              applied to text files since Ant may corrupt binary files otherwise. -->
         <copy todir="${export_dir}/${value.build.appname}">
@@ -109,14 +120,53 @@
             </filterset>
         </copy>
         
-        <!-- Copy the binary files over. -->
+        <!-- Copy the binary files over (excluding the javascript files which are to be minified) -->
         <copy todir="${export_dir}/${value.build.appname}">
             <fileset dir="${value.src.directory}">
                 <exclude name="**/*.conf" />
                 <exclude name="**/*.txt" />
                 <exclude name="**/*.xml" />
+            	<exclude name="**/*.js" />
+            	<exclude name="**/*.css" />
             </fileset>
         </copy>
+    	
+    	<!-- Deploy the CSS and JS (and optionally optimize it) -->
+    	<if>
+    		<or>
+    			<equals arg1="${value.build.optimize}" arg2="true" />
+    			<equals arg1="${value.build.optimize}" arg2="1" />
+    		</or>
+    		<then>
+				<!-- The mapper to map the original source files to the minified versions with the same name, but different path -->
+		    	<mapper id="to_export_dir_mapper" type="glob" from="*" to="${export_dir}/${value.build.appname}/*" />
+		    	
+				<!-- Minify the Javascript files -->		
+			    <apply executable="java" parallel="false">
+			    	
+			    	<!-- Source of the files -->	
+			        <fileset dir="${basedir}/src">
+			    		<include name="**/*.js" />
+			        	<include name="**/*.css" />
+			        </fileset>
+			        <arg line="-jar" />
+			        <arg path="lib/yuicompressor-2.4.8.jar" />
+			        <srcfile />
+			        <arg line="-o"/>
+			    	<mapper refid="to_export_dir_mapper" />
+			        <targetfile />
+			    </apply>
+    		</then>
+    		<else>
+    	        <!-- Copy the unoptimized files over -->
+    	        <copy todir="${export_dir}/${value.build.appname}">
+    	            <fileset dir="${value.src.directory}">
+    	            	<include name="**/*.js" />
+    	            	<include name="**/*.css" />
+    	            </fileset>
+    	        </copy>
+    		</else>
+    	</if>
 
     </target>
         
@@ -153,7 +203,7 @@
     <target name="setup_tmp_directory_for_deployment">
         
         <!-- Create a reference to the directory to send the files to -->
-        <property name="export_dir" value="${value.deploy.splunk_home}/etc/apps/" />
+        <property name="export_dir" value="${value.deploy.splunk_home}/etc/apps" />
         
         <!-- Make the app directory if it does not yet exist -->
         <mkdir dir="${export_dir}" />
@@ -216,11 +266,16 @@
     </target>
 	
     <!-- ================================= 
-          target: splunk.bump
+          target: splunk.push_version_defined
          ================================= -->
-    <target name="splunk.bump" description="Bump Splunk">
-    	
-		<!-- Get the current value of bump -->
+	<target name="splunk.push_version_defined">
+		<available file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt" property="value.deploy.bump_available"/>
+	</target>
+	
+    <!-- ================================= 
+          target: splunk.get_push_version
+         ================================= -->
+	<target name="splunk.get_push_version" depends="splunk.push_version_defined,splunk.get_default_push_version" if="value.deploy.bump_available">
     	<loadfile
     	      property="value.deploy.bump"
     	      srcFile="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">
@@ -228,23 +283,23 @@
     	        <striplinebreaks/>
     	      </filterchain>
     	</loadfile>
-    	
+	</target>
+	
+    <!-- ================================= 
+          target: splunk.get_default_push_version
+         ================================= -->
+	<target name="splunk.get_default_push_version" unless="value.deploy.bump_available">
+		<property name="value.deploy.bump">0</property>
+		<echo>No push version available, assigning the default</echo>
+	</target>
+	
+    <!-- ================================= 
+          target: splunk.bump
+         ================================= -->
+    <target name="splunk.bump" depends="splunk.get_push_version,initialize_libraries" description="Bump Splunk">
+		
     	<!-- Increment the value -->
-    	<script language="javascript">
-    		var currentValue = parseInt(project.getProperty("value.deploy.bump"), 10);
-    		
-    		var newBump = currentValue + 1;
-    		
-    		if(isNaN(newBump)){
-    			echo = project.createTask("echo");
-    			echo.setMessage("The loaded push-version is invalid; it will be reset to 100");
-    		    echo.perform();
-    			newBump = 100;
-    		}
-    		
-    		project.setProperty("value.deploy.bump_updated", newBump);
-    	
-    	</script>
+    	<math result="value.deploy.bump_updated" operand1="${value.deploy.bump}" operation="+" operand2="1" datatype="int"/>
     	
     	<!-- Set the current value of bump -->
     	<echo file="${value.deploy.splunk_home}/var/run/splunk/push-version.txt">${value.deploy.bump_updated}</echo>
