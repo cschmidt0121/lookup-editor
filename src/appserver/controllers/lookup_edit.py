@@ -8,6 +8,7 @@ import cherrypy
 import re
 import time
 import datetime
+import StringIO # For converting KV store array data to CSV for export
 
 from splunk import AuthorizationFailed, ResourceNotFound
 import splunk.rest
@@ -401,18 +402,46 @@ class LookupEditor(controllers.BaseController):
         output.addError(msg)
         return self.render_json(output, set_mime='text/plain')
     
+    def convert_array_to_csv(self, array):
+        
+        output = StringIO.StringIO() #io.StringIO()
+        
+        writer = csv.writer(output)
+        
+        for row in array:
+            writer.writerow(row)
+            
+        return output.getvalue()
+    
     @expose_page(must_login=True, methods=['GET']) 
     def get_original_lookup_file(self, lookup_file, namespace="lookup_editor", **kwargs):
         """
         Provides the contents of a lookup file.
         """
-    
+        
+        lookup_type = kwargs.get("type", "csv")
+        
+        logger.info("Exporting lookup, namespace=%s, lookup=%s, type=%s, owner=%s", namespace, lookup_file, lookup_type, None)
+        
         try:
             
-            with self.get_lookup( lookup_file, namespace, None ) as f:
-                csvData = f.read()
-            
-            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s"' % lookup_file
+            # If we are getting the CSV, then just pipe the file to the user
+            if lookup_type == "csv":
+                with self.get_lookup(lookup_file, namespace, None) as f:
+                    csvData = f.read()
+                
+            # If we are getting a KV store lookup, then convert it to a CSV file
+            else:
+                rows = self.get_kv_lookup(lookup_file, namespace, None)
+                
+                csvData = self.convert_array_to_csv(rows)
+                
+            # Tell the browser to download this as a file
+            if lookup_file.endswith(".csv"):
+                cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s"' % lookup_file
+            else:
+                cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s"' % (lookup_file + ".csv")
+                
             cherrypy.response.headers['Content-Type'] = 'text/csv'
             return csvData
             
@@ -449,7 +478,7 @@ class LookupEditor(controllers.BaseController):
         Resolve the lookup filename.
         """
         
-        # Strip out invalid characters like ".."
+        # Strip out invalid characters like ".." so that this cannot be used to conduct an directory traversal
         lookup_file = os.path.basename(lookup_file)
         namespace = os.path.basename(namespace)
         
@@ -530,7 +559,6 @@ class LookupEditor(controllers.BaseController):
         Get a file handle to the associated lookup file.
         """
         
-        logger.info("Retrieving lookup file contents...")
         logger.debug("Version is:" + str(version))
         # Get the user's name and session
         user = cherrypy.session['user']['name'] 
@@ -547,6 +575,8 @@ class LookupEditor(controllers.BaseController):
         """
         Provides the contents of a lookup file as JSON.
         """
+        
+        logger.debug("Retrieving lookup contents, namespace=%s, lookup=%s, type=%s, owner=%s, version=%s", namespace, lookup_file, lookup_type, owner, version)
         
         if header_only in ["1", "true", 1, True]:
             header_only = True
