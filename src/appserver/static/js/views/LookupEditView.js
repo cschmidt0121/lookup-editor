@@ -910,9 +910,35 @@ define([
       		  	error: function(jqXHR, textStatus, errorThrown){
       		  		this.showWarningMessage("An entry could not be saved to the KV store lookup", true);
       		  	}.bind(this)
-      	});
+        	});
+        },
+        
+        /**
+         * Do the removal of a row (for KV store lookups since edits are dynamic).
+         */
+        doRemoveRow: function(row){
         	
+        	var handsontable = $("#lookup-table").data('handsontable');
         	
+        	// First, we need to get the _key of the edited row
+        	var row_data = handsontable.getDataAtRow(row);
+        	var _key = row_data[0];
+        	
+        	// Second, we need to do a post to remove the row
+        	$.ajax({
+        		url: Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/" + _key),
+        		type: "DELETE",
+        		
+      		  	// On success
+      		  	success: function(data) {
+      		  		console.info('KV store entry removal completed for entry ' + _key);
+      		  	}.bind(this),
+      		  
+      		  	// Handle errors
+      		  	error: function(jqXHR, textStatus, errorThrown){
+      		  		this.showWarningMessage("An entry could not be removed from the KV store lookup", true);
+      		  	}.bind(this)
+        	});
         },
         
         /**
@@ -1035,6 +1061,17 @@ define([
 		        		var new_value = changes[c][3];
 		        		
 		        		this.doEditCell(row, col, new_value);
+	        		}
+
+	        	}.bind(this));
+	        	
+	        	// For row removal
+	        	handsontable.addHook('beforeRemoveRow', function(index, amount) {
+	        		
+	        		// Iterate and remove each row
+	        		for(var c = 0; c < amount; c++){
+		        		var row = index + c;		        		
+		        		this.doRemoveRow(row);
 	        		}
 
 	        	}.bind(this));
