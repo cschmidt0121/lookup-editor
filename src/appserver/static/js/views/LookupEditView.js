@@ -1,7 +1,7 @@
 
 require.config({
     paths: {
-    	Handsontable: "../app/lookup_editor/js/lib/jquery.handsontable.full",
+    	Handsontable: "../app/lookup_editor/js/lib/handsontable.full.min",
         text: "../app/lookup_editor/js/lib/text",
         console: '../app/lookup_editor/js/lib/console',
         csv: '../app/lookup_editor/js/lib/csv'
@@ -29,7 +29,7 @@ define([
     "bootstrap.dropdown",
     "splunk.util",
     "css!../app/lookup_editor/css/LookupEdit.css",
-    "css!../app/lookup_editor/css/lib/jquery.handsontable.full.css"
+    "css!../app/lookup_editor/css/lib/handsontable.full.min.css"
 ], function(
     _,
     Backbone,
@@ -881,11 +881,41 @@ define([
         	
         	var renderer = this.lookupRenderer.bind(this);
         	
+        	// If we are editing a CSV, use these menu options
+        	var contextMenu = {
+      			items: ['row_above', 'row_below', '---------', 'col_left', 'col_right', '---------', 'remove_row', 'remove_col', '---------', 'undo', 'redo']
+    		};
+    		
+    		// If we are editing a KV store lookup, use these menu options
+        	if(this.lookup_type == "kv"){
+	    		contextMenu = {
+	    				items: {
+	    					'row_above': {
+	    						disabled: function () {
+	    				            // if first row, disable this option
+	    				            return $("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    				        }
+	    					},
+	    					'row_below': {},
+	    					"hsep1": "---------",
+	    					'remove_row': {
+	    						disabled: function () {
+	    				            // if first row, disable this option
+	    				            return $("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    				        }
+	    					},
+	    					'hsep2': "---------",
+	    					'undo': {},
+	    					'redo': {}
+	    				}
+	    		}
+        	}
+        	
         	$("#lookup-table").handsontable({
         		  data: data,
         		  startRows: 1,
         		  startCols: 1,
-        		  contextMenu: true,
+        		  contextMenu: contextMenu,
         		  minSpareRows: 0,
         		  minSpareCols: 0,
         		  colHeaders: false,
@@ -897,8 +927,20 @@ define([
         		  manualColumnMove: true,
         		  onBeforeChange: this.validate.bind(this),
         		  
+        		  allowInsertColumn: false,
+        		  allowRemoveColumn: false,
+        		  
         		  cells: function(row, col, prop) {
         			  this.renderer = renderer;
+        			  
+        			  var cellProperties = {};
+        			  
+        			  // Don't allow the _key row or the header to be editable on KV store lookups (since the schema is unchangable and the keys are auto-assigned)
+        		      if (this.lookup_type = "kv" && (row == 0 || col == 0)) {
+        		        cellProperties.readOnly = true;
+        		      }
+
+        		      return cellProperties;
         		  },
         		
         		  beforeRemoveRow: function(index, amount){
@@ -935,9 +977,43 @@ define([
         				  //this.renderLookup( [ [""] ] );
         			  }
         		  }
-        		  
-              	});
+            });
         	
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	/*
+        	handsontable.updateSettings({
+        		contextMenu: {
+        			items: ['row_above', 'row_below', 'hsep1', 'col_left', 'col_right', 'hsep2', 'remove_row', 'remove_col', 'hsep3', 'undo', 'redo']
+        		}
+        	});
+        	*/
+        	
+        	/*
+        	// Update the settings
+        	handsontable.updateSettings({
+        	    contextMenu: {
+        	      items: {
+        	        "row_above": {
+        	          disabled: function () {
+        	            // if first row, disable this option
+        	            return handsontable.getSelected()[0] === 0;
+        	          }
+        	        },
+        	        "row_below": {},
+        	        "hsep1": "---------",
+        	        "remove_row": {
+        	          disabled: function () {
+        	            // if first row, disable this option
+        	            return handsontable.getSelected()[0] === 0
+        	          }
+        	        },
+        	        "hsep2": "---------",
+        	        "about": {name: 'About this menu'}
+        	      }
+        	    }
+        	  });
+        	  */
         },
         
         /**
