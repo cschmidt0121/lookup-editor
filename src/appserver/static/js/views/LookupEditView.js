@@ -942,6 +942,53 @@ define([
         },
         
         /**
+         * Do the creation of a row (for KV store lookups since edits are dynamic).
+         */
+        doCreateRows: function(row, count){
+        	
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	// First, we need to create an empty record that will be used to populate each new row
+        	var row_header = handsontable.getDataAtRow(0);
+        	
+        	var record_prototype = {};
+        	
+        	for(var c=1; c < row_header.length; c++){
+        		record_prototype[row_header[c]] = '';
+        	}
+        	
+        	// Second, we need to create entries for each row to create
+        	var record_data = [];
+        	
+        	for(var c=0; c < count; c++){
+        		record_data.push(record_prototype);
+        	}
+        	
+        	// Third, we need to do a post to creates the rows
+        	$.ajax({
+        		url: Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/batch_save"),
+        		type: "POST",
+        		dataType: "json",
+        		data: JSON.stringify(record_data),
+        		contentType: "application/json; charset=utf-8",
+        		
+      		  	// On success
+      		  	success: function(data) {
+      		  		
+      		  		for(var c=0; c < data.length; c++){
+      		  			handsontable.setDataAtCell(row + c, 0, data[c], "key_update")
+      		  		}
+      		  		
+      		  	}.bind(this),
+      		  
+      		  	// Handle errors
+      		  	error: function(jqXHR, textStatus, errorThrown){
+      		  		this.showWarningMessage("Entries could not be saved to the KV store lookup", true);
+      		  	}.bind(this)
+        	});
+        },
+        
+        /**
          * Render the lookup.
          */
         renderLookup: function(data){
@@ -1054,6 +1101,11 @@ define([
         		// For cell edits
 	        	handsontable.addHook('afterChange', function(changes, source) {
 	        		
+	        		// Ignore changes caused by the script updating the _key for newly added rows
+	        		if(source === "key_update"){
+	        			return;
+	        		}
+	        		
 	        		// Iterate and change each cell
 	        		for(var c = 0; c < changes.length; c++){
 		        		var row = changes[c][0];
@@ -1075,6 +1127,9 @@ define([
 	        		}
 
 	        	}.bind(this));
+	        	
+	        	// For row creation
+	        	handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
         	}
         	
         },
