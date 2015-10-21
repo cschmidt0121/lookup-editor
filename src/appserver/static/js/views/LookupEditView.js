@@ -875,6 +875,47 @@ define([
         },
         
         /**
+         * Do an edit to a row cell (for KV store lookups since edits are dynamic).
+         */
+        doEditCell: function(row, col, new_value){
+        	
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	// First, we need to get the _key of the edited row
+        	var row_data = handsontable.getDataAtRow(row);
+        	var _key = row_data[0];
+        	
+        	// Second, we need to get all of the data from the given row because we must re-post all of the cell data
+        	var record_data = {};
+        	var row_header = handsontable.getDataAtRow(0);
+        	
+        	for(var c=1; c < row_data.length; c++){
+        		record_data[row_header[c]] = row_data[c];
+        	}
+        	
+        	// Third, we need to do a post to update the row
+        	$.ajax({
+        		url: Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/" + _key),
+        		type: "POST",
+        		dataType: "json",
+        		data: JSON.stringify(record_data),
+        		contentType: "application/json; charset=utf-8",
+        		
+      		  	// On success
+      		  	success: function(data) {
+      		  		console.info('KV store entry edit completed for entry ' + _key);
+      		  	}.bind(this),
+      		  
+      		  	// Handle errors
+      		  	error: function(jqXHR, textStatus, errorThrown){
+      		  		this.showWarningMessage("An entry could not be saved to the KV store lookup", true);
+      		  	}.bind(this)
+      	});
+        	
+        	
+        },
+        
+        /**
          * Render the lookup.
          */
         renderLookup: function(data){
@@ -981,39 +1022,24 @@ define([
         	
         	var handsontable = $("#lookup-table").data('handsontable');
         	
-        	/*
-        	handsontable.updateSettings({
-        		contextMenu: {
-        			items: ['row_above', 'row_below', 'hsep1', 'col_left', 'col_right', 'hsep2', 'remove_row', 'remove_col', 'hsep3', 'undo', 'redo']
-        		}
-        	});
-        	*/
+        	// Wire-up handlers for doing KV store dynamic updates
+        	if(this.lookup_type == "kv"){
+        		
+        		// For cell edits
+	        	handsontable.addHook('afterChange', function(changes, source) {
+	        		
+	        		// Iterate and change each cell
+	        		for(var c = 0; c < changes.length; c++){
+		        		var row = changes[c][0];
+		        		var col = changes[c][1];
+		        		var new_value = changes[c][3];
+		        		
+		        		this.doEditCell(row, col, new_value);
+	        		}
+
+	        	}.bind(this));
+        	}
         	
-        	/*
-        	// Update the settings
-        	handsontable.updateSettings({
-        	    contextMenu: {
-        	      items: {
-        	        "row_above": {
-        	          disabled: function () {
-        	            // if first row, disable this option
-        	            return handsontable.getSelected()[0] === 0;
-        	          }
-        	        },
-        	        "row_below": {},
-        	        "hsep1": "---------",
-        	        "remove_row": {
-        	          disabled: function () {
-        	            // if first row, disable this option
-        	            return handsontable.getSelected()[0] === 0
-        	          }
-        	        },
-        	        "hsep2": "---------",
-        	        "about": {name: 'About this menu'}
-        	      }
-        	    }
-        	  });
-        	  */
         },
         
         /**
