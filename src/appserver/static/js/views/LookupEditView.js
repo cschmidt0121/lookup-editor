@@ -19,6 +19,7 @@ define([
     "models/SplunkDBase",
     "collections/SplunkDsBase",
     "splunkjs/mvc",
+    "util/splunkd_utils",
     "jquery",
     "splunkjs/mvc/simplesplunkview",
     "splunkjs/mvc/simpleform/input/text",
@@ -36,6 +37,7 @@ define([
     SplunkDBaseModel,
     SplunkDsBaseCollection,
     mvc,
+    splunkd_utils,
     $,
     SimpleSplunkView,
     TextInput,
@@ -47,6 +49,12 @@ define([
 	    url: "apps/local",
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
+	    }
+	});
+	
+	var KVLookup = SplunkDBaseModel.extend({
+	    initialize: function() {
+	    	SplunkDBaseModel.prototype.initialize.apply(this, arguments);
 	    }
 	});
 	
@@ -79,6 +87,8 @@ define([
             this.namespace = null;
             this.owner = null;
             this.lookup_type = null;
+            this.lookup_config = null;
+            this.is_read_only = false; // We will update this to true if the lookup cannot be edited
             
         	// Get the apps
         	this.apps = new Apps();
@@ -669,10 +679,17 @@ define([
         },
         
         /**
+         * Got the lookup information
+         */
+        gotLookupInfo: function(){
+        	debugger;
+        	
+        },
+        
+        /**
          * Get the apps
          */
         gotApps: function(){
-        	console.log("Got the apps!!");
         	
         	// Update the list
         	if(mvc.Components.getInstance("lookup-app")){
@@ -1042,21 +1059,33 @@ define([
 	    				items: {
 	    					'row_above': {
 	    						disabled: function () {
-	    				            // if first row, disable this option
-	    				            return $("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    				            // If read-only or the first row, disable this option
+	    				            return this.read_only || $("#lookup-table").data('handsontable').getSelected()[0] === 0;
 	    				        }
 	    					},
-	    					'row_below': {},
+	    					'row_below': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
 	    					"hsep1": "---------",
 	    					'remove_row': {
 	    						disabled: function () {
-	    				            // if first row, disable this option
-	    				            return $("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    							// If read-only or the first row, disable this option
+	    				            return this.read_only ||$("#lookup-table").data('handsontable').getSelected()[0] === 0;
 	    				        }
 	    					},
 	    					'hsep2': "---------",
-	    					'undo': {},
-	    					'redo': {}
+	    					'undo': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'redo': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					}
 	    				}
 	    		}
         	}
@@ -1086,12 +1115,12 @@ define([
         			  var cellProperties = {};
         			  
         			  // Don't allow the _key row or the header to be editable on KV store lookups (since the schema is unchangable and the keys are auto-assigned)
-        		      if (this.lookup_type = "kv" && (row == 0 || col == 0)) {
+        		      if (this.read_only || (this.lookup_type = "kv" && (row == 0 || col == 0))) {
         		        cellProperties.readOnly = true;
         		      }
 
         		      return cellProperties;
-        		  },
+        		  }.bind(this),
         		
         		  beforeRemoveRow: function(index, amount){
         			  
@@ -1241,6 +1270,39 @@ define([
         	this.namespace = this.getParameterByName("namespace");
         	this.owner = this.getParameterByName("owner");
         	this.lookup_type = this.getParameterByName("type");
+        	
+        	// Get the info about the lookup configuration (for KV store lookups)
+        	if(this.lookup_type === "kv"){
+        		
+	        	this.lookup_config = new KVLookup();
+	        	
+	        	this.lookup_config.fetch({
+	        		// e.g. servicesNS/nobody/lookup_editor/storage/collections/config/test
+	        		url: splunkd_utils.fullpath(['/servicesNS', this.owner, this.namespace, 'storage/collections/config', this.lookup].join('/')),
+	                success: function(model, response, options) {
+	                    console.info("Successfully retrieved the information about the KV store lookup");
+	                    
+	                    // If this lookup cannot be edited, then set the editor to read-only
+	                    if(!model.entry.acl.attributes.can_write){
+	                    	this.read_only = true;
+	                    	this.showWarningMessage("You do not have permission to edit this lookup; it is being displayed read-only");
+	                    	
+	                    	// Re-render the view so that the cells show that it is read-only
+	                    	if($("#lookup-table").length > 0 && $("#lookup-table").data('handsontable')){
+		                    	var handsontable = $("#lookup-table").data('handsontable');
+		                    	
+		                    	if(handsontable){
+		                    		handsontable.render(); 
+		                    	}
+	                    	}
+	                    }
+	                    
+	                }.bind(this),
+	                error: function() {
+	                	console.warn("Unable to retrieve the information about the KV store lookup");
+	                }.bind(this)
+	        	});
+        	}
         	
         	this.is_new = false;
         	
