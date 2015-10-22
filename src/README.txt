@@ -62,4 +62,9 @@ Change History
 | 1.4.1   | Fixed issue where some lookup files could not be loaded in some cases                                            |
 |         | Fixed minor Javascript error that occurred if the server indicated that the lookup file couldn't be saved        |
 |         | Backup file times now represent the date that the file was modified (not the date it was backed up)              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.0   | Complete re-write, changes include:                                                                              |
+|         |   * Support for KV store lookups                                                                                 |
+|         |   * Refreshed UI style                                                                                           |
+|         |   * Dropped Splunk 5.0 support                                                                                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
