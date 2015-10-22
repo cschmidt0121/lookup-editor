@@ -903,11 +903,27 @@ define([
         		
       		  	// On success
       		  	success: function(data) {
-      		  		console.info('KV store entry edit completed for entry ' + _key);
+      		  		
+      		  		if(data){
+      		  			console.info('KV store entry edit completed for entry ' + _key);
+      		  		}
+      		  		
       		  	}.bind(this),
       		  
+      		  	// On complete
+      		  	complete: function(jqXHR, textStatus){
+      		  		
+      		  		if( jqXHR.status == 403){
+      		  			console.info('Inadequate permissions');
+      		  			this.showWarningMessage("You do not have permission to edit this lookup", true);
+      		  		}
+      		  	
+      		  	}.bind(this),
+      		  	
       		  	// Handle errors
       		  	error: function(jqXHR, textStatus, errorThrown){
+      		  		
+      		  		
       		  		this.showWarningMessage("An entry could not be saved to the KV store lookup", true);
       		  	}.bind(this)
         	});
@@ -932,6 +948,16 @@ define([
       		  	// On success
       		  	success: function(data) {
       		  		console.info('KV store entry removal completed for entry ' + _key);
+      		  	}.bind(this),
+      		  	
+      		  	// On complete
+      		  	complete: function(jqXHR, textStatus){
+      		  		
+      		  		if( jqXHR.status == 403){
+      		  			console.info('Inadequate permissions');
+      		  			this.showWarningMessage("You do not have permission to edit this lookup", true);
+      		  		}
+      		  	
       		  	}.bind(this),
       		  
       		  	// Handle errors
@@ -974,11 +1000,21 @@ define([
         		
       		  	// On success
       		  	success: function(data) {
-      		  		
+      		  		// Update the _key values in the cells
       		  		for(var c=0; c < data.length; c++){
       		  			handsontable.setDataAtCell(row + c, 0, data[c], "key_update")
       		  		}
       		  		
+      		  	}.bind(this),
+      		  	
+      		  	// On complete
+      		  	complete: function(jqXHR, textStatus){
+      		  		
+      		  		if( jqXHR.status == 403){
+      		  			console.info('Inadequate permissions');
+      		  			this.showWarningMessage("You do not have permission to edit this lookup", true);
+      		  		}
+      		  	
       		  	}.bind(this),
       		  
       		  	// Handle errors
