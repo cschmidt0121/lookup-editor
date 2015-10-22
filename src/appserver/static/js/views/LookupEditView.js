@@ -582,10 +582,10 @@ define([
         			  $(".table-loading-message").hide();
         			  
         			  // Start the loading of the history
-        			  if( version === undefined && this.lookup_type == "csv" ){
+        			  if( version === undefined && this.lookup_type === "csv" ){
         				  this.loadLookupBackupsList(lookup_file, namespace, user);
         			  }
-        			  else if(this.lookup_type == "csv"){
+        			  else if(this.lookup_type === "csv"){
         				  // Show a message noting that the backup was imported
         				  this.showInfoMessage("Backup file was loaded successfully");
         			  }
@@ -1054,7 +1054,7 @@ define([
     		};
     		
     		// If we are editing a KV store lookup, use these menu options
-        	if(this.lookup_type == "kv"){
+        	if(this.lookup_type === "kv"){
 	    		contextMenu = {
 	    				items: {
 	    					'row_above': {
@@ -1115,7 +1115,7 @@ define([
         			  var cellProperties = {};
         			  
         			  // Don't allow the _key row or the header to be editable on KV store lookups (since the schema is unchangable and the keys are auto-assigned)
-        		      if (this.read_only || (this.lookup_type = "kv" && (row == 0 || col == 0))) {
+        		      if (this.read_only || (this.lookup_type === "kv" && (row == 0 || col == 0))) {
         		        cellProperties.readOnly = true;
         		      }
 
@@ -1161,7 +1161,7 @@ define([
         	var handsontable = $("#lookup-table").data('handsontable');
         	
         	// Wire-up handlers for doing KV store dynamic updates
-        	if(this.lookup_type == "kv"){
+        	if(this.lookup_type === "kv"){
         		
         		// For cell edits
 	        	handsontable.addHook('afterChange', function(changes, source) {
