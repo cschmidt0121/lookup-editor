@@ -927,7 +927,15 @@ define([
       		  	// On success
       		  	success: function(data) {
       		  		
-      		  		if(data){
+      		  		this.hideWarningMessage();
+      		  		
+      		  		// If this is a new row, then populate the _key
+      		  		if(!_key){
+      		  			_key = data['_key'];
+      		  			handsontable.setDataAtCell(row, 0, _key, "key_update");
+      		  			console.info('KV store entry creation completed for entry ' + _key);
+      		  		}
+      		  		else{
       		  			console.info('KV store entry edit completed for entry ' + _key);
       		  		}
       		  		
@@ -945,9 +953,7 @@ define([
       		  	
       		  	// Handle errors
       		  	error: function(jqXHR, textStatus, errorThrown){
-      		  		
-      		  		
-      		  		this.showWarningMessage("An entry could not be saved to the KV store lookup", true);
+      		  		this.showWarningMessage("Entry could not be saved to the KV store lookup; make sure the value matches the expected type", true);
       		  	}.bind(this)
         	});
         },
@@ -971,6 +977,7 @@ define([
       		  	// On success
       		  	success: function(data) {
       		  		console.info('KV store entry removal completed for entry ' + _key);
+      		  		this.hideWarningMessage();
       		  	}.bind(this),
       		  	
       		  	// On complete
@@ -1074,6 +1081,8 @@ define([
       		  			handsontable.setDataAtCell(row + c, 0, data[c], "key_update")
       		  		}
       		  		
+      		  		this.hideWarningMessage();
+      		  		
       		  	}.bind(this),
       		  	
       		  	// On complete
@@ -1088,7 +1097,8 @@ define([
       		  
       		  	// Handle errors
       		  	error: function(jqXHR, textStatus, errorThrown){
-      		  		this.showWarningMessage("Entries could not be saved to the KV store lookup", true);
+      		  		// This error can be thrown when the lookup requires a particular type
+      		  		//this.showWarningMessage("Entries could not be saved to the KV store lookup", true);
       		  	}.bind(this)
         	});
         },
