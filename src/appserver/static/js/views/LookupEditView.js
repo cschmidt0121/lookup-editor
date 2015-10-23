@@ -907,16 +907,18 @@ define([
         	var _key = row_data[0];
         	
         	// Second, we need to get all of the data from the given row because we must re-post all of the cell data
-        	var record_data = {};
-        	var row_header = handsontable.getDataAtRow(0);
+        	var record_data = this.makeRowJSON(row);
         	
-        	for(var c=1; c < row_data.length; c++){
-        		record_data[row_header[c]] = row_data[c];
+        	// If _key doesn't exist, then we will create a new row
+        	var url = Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/" + _key);
+        	
+        	if(!_key){
+        		url = Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup);
         	}
         	
         	// Third, we need to do a post to update the row
         	$.ajax({
-        		url: Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/" + _key),
+        		url: url,
         		type: "POST",
         		dataType: "json",
         		data: JSON.stringify(record_data),
@@ -989,29 +991,75 @@ define([
         },
         
         /**
+         * Add the given field to the data with the appropriate hierarchy.
+         */
+        addFieldToJSON: function(json_data, field, value){
+        	
+        	var split_field = [];
+        	
+        	split_field = field.split(".");
+        	
+    		// If the field has a period, then this is hierarchical field
+    		// For these, we need to build the heirarchy or make sure it exists.
+    		if(split_field.length > 1){
+    			
+    			// If the top-most field doesn't exist, create it
+    			if(!(split_field[0] in json_data)){
+    				json_data[split_field[0]] = {};
+    			}
+    			
+    			// Recurse to add the children
+    			return this.addFieldToJSON(json_data[split_field[0]], split_field.slice(1).join("."), value);
+    		}
+    		
+    		// For non-hierarchical fields, we can just add them
+    		else{
+    			json_data[field] = value;
+    			
+    			// This is the base case
+    			return json_data;
+    		}
+        	
+        },
+        
+        /**
+         * Make JSON for the given row.
+         */
+        makeRowJSON: function(row){
+        	
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	// We need to get the row meta-data and the 
+        	var row_header = handsontable.getDataAtRow(0);
+        	var row_data = handsontable.getDataAtRow(row);
+        	
+        	// This is going to hold the data for the row
+        	var json_data = {};
+        	
+        	// Add each field / column
+        	for(var c=1; c < row_header.length; c++){
+        		this.addFieldToJSON(json_data, row_header[c], row_data[c] || '');
+        	}
+        	
+        	// Return the created JSON
+        	return json_data;
+        },
+        
+        /**
          * Do the creation of a row (for KV store lookups since edits are dynamic).
          */
         doCreateRows: function(row, count){
         	
         	var handsontable = $("#lookup-table").data('handsontable');
         	
-        	// First, we need to create an empty record that will be used to populate each new row
-        	var row_header = handsontable.getDataAtRow(0);
-        	
-        	var record_prototype = {};
-        	
-        	for(var c=1; c < row_header.length; c++){
-        		record_prototype[row_header[c]] = '';
-        	}
-        	
-        	// Second, we need to create entries for each row to create
+        	// Create entries for each row to create
         	var record_data = [];
         	
         	for(var c=0; c < count; c++){
-        		record_data.push(record_prototype);
+        		record_data.push(this.makeRowJSON(row + c));
         	}
         	
-        	// Third, we need to do a post to creates the rows
+        	// Third, we need to do a post to create the row
         	$.ajax({
         		url: Splunk.util.make_url("/splunkd/servicesNS/" + this.owner + "/" + this.namespace +  "/storage/collections/data/" + this.lookup + "/batch_save"),
         		type: "POST",

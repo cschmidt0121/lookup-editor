@@ -527,6 +527,37 @@ class LookupEditor(controllers.BaseController):
         else:
             return lookup_path
             
+    def append_if_not_none(self, prefix, key, separator="."):
+        
+        if prefix is not None and len(prefix) > 0:
+            return prefix + separator + key
+        else:
+            return key
+            
+    def flatten_dict(self, dict_source, output=None, prefix=''):
+        """
+        Flatten a dictionary to an array
+        """
+        
+        # Define the resulting output if it does not exist yet
+        if output is None:
+            output = {}
+        
+        # Convert each entry in the dictionary
+        for key in dict_source:
+            
+            value = dict_source[key]
+            
+            # If the value is a dictionary ...
+            if isinstance(value, dict):
+                self.flatten_dict(value, output, self.append_if_not_none(prefix, key))
+                
+            #
+            else:
+                output[self.append_if_not_none(prefix, key)] = value
+                
+        return output
+            
     def get_kv_lookup(self, lookup_file, namespace="lookup_editor", owner=None):
         """
         Get the contents of a KV store lookup.
@@ -539,7 +570,7 @@ class LookupEditor(controllers.BaseController):
         # Get the fields so that we can compose the header
         _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
         header = json.loads(content)
-
+        
         fields = ['_key']
         
         for field in header['entry'][0]['content']:
@@ -556,8 +587,11 @@ class LookupEditor(controllers.BaseController):
         for row in rows:
             new_row = []
             
+            flattened_row = self.flatten_dict(row)
+            
             for field in fields:
-                new_row.append(row[field])
+                if field in flattened_row:
+                    new_row.append(flattened_row[field])
         
             lookup_contents.append(new_row)
             
