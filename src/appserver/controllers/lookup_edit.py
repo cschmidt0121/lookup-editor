@@ -14,18 +14,14 @@ from splunk import AuthorizationFailed, ResourceNotFound
 import splunk.rest
 import splunk.appserver.mrsparkle.controllers as controllers
 import splunk.appserver.mrsparkle.lib.util as util
-import splunk.bundle as bundle
 import splunk.entity as entity
 from splunk.appserver.mrsparkle.lib import jsonresponse
 from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
-import splunk.clilib.bundle_paths as bundle_paths
-from splunk.util import normalizeBoolean as normBool
 from splunk.appserver.mrsparkle.lib.decorators import expose_page
-from splunk.appserver.mrsparkle.lib.routes import route
 
-dir = os.path.join(util.get_apps_dir(), __file__.split('.')[-2], 'bin')
+bin_dir = os.path.join(util.get_apps_dir(), __file__.split('.')[-2], 'bin')
 
-if not dir in sys.path:
+if not bin_dir in sys.path:
     sys.path.append(dir)
 
 import lookupfiles
@@ -61,6 +57,18 @@ Represents an exception when the user did not have sufficient permissions.
 """
 class PermissionDeniedException(Exception):
     pass
+
+"""
+Represents an exception when the user requested a lookup file that was too big.
+"""
+class LookupFileTooBigException(Exception):
+    def __init__(self, file_size):
+
+        # Call the base class constructor with the parameters it needs
+        super(LookupFileTooBigException, self).__init__("Lookup file is too large to be loaded")
+
+        # Remember the file-size
+        self.file_size = file_size
 
 """
 Provides a model for retrieving the list of apps from Splunk.
@@ -190,7 +198,7 @@ class LookupEditor(controllers.BaseController):
         escaped_filename = self.escapeFilename(lookup_file)
         
         # Get the backup directory and determine the path to the backups
-        backup_directory = self.getBackupDirectory(lookup_file, namespace, owner)
+        backup_directory = self.getBackupDirectory(escaped_filename, namespace, owner)
         
         # Get the backups
         backups = [ f for f in os.listdir(backup_directory) if os.path.isfile(os.path.join(backup_directory,f)) ]
@@ -311,9 +319,6 @@ class LookupEditor(controllers.BaseController):
         user = cherrypy.session['user']['name']
         session_key = cherrypy.session.get('sessionKey')
         owner = kwargs.get("owner", "nobody")
-        
-        # Get capabilities
-        capabilities = LookupEditor.getCapabilities4User(user, session_key)
         
         # Check capabilities
         LookupEditor.check_capabilities(lookup_file, user, session_key)
@@ -456,6 +461,8 @@ class LookupEditor(controllers.BaseController):
     @classmethod
     def check_capabilities(cls, lookup_file, user, session_key ):
         
+        return
+        
         # Get the user's name and session
         user = cherrypy.session['user']['name'] 
         session_key = cherrypy.session.get('sessionKey')
@@ -464,8 +471,10 @@ class LookupEditor(controllers.BaseController):
         capabilities = LookupEditor.getCapabilities4User(user, session_key)
         
         # Check capabilities
+        """
         if False:
             raise PermissionDeniedException(signature)
+        """
     
     def isLookupInUsersPath(self, lookup_file_path):
         if "etc/users/" in lookup_file_path:
@@ -528,7 +537,7 @@ class LookupEditor(controllers.BaseController):
         lookup_contents = []
         
         # Get the fields so that we can compose the header
-        response, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+        _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
         header = json.loads(content)
 
         fields = ['_key']
@@ -540,7 +549,7 @@ class LookupEditor(controllers.BaseController):
         lookup_contents.append(fields)
         
         # Get the contents        
-        response, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/data/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+        _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/data/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
             
         rows = json.loads(content)
         
@@ -554,7 +563,7 @@ class LookupEditor(controllers.BaseController):
             
         return lookup_contents
             
-    def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None):
+    def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None, throw_exception_if_too_big=False):
         """
         Get a file handle to the associated lookup file.
         """
@@ -567,8 +576,22 @@ class LookupEditor(controllers.BaseController):
         # Check capabilities
         LookupEditor.check_capabilities(lookup_file, user, session_key)
         
+        # Get the file path
+        file_path = self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv, version)
+        
+        if throw_exception_if_too_big:
+            
+            try:
+                file_size = os.path.getsize(file_path)
+                logger.debug('file_size=%s', file_size)
+                if file_size > LookupEditor.MAXIMUM_EDITABLE_SIZE:
+                    raise LookupFileTooBigException(file_size)
+            
+            except os.error:
+                logger.exception("Exception generated when attempting to determine size of requested lookup file")
+        
         # Get the file handle
-        return open(self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv, version), 'rb')
+        return open(file_path, 'rb')
 
     @expose_page(must_login=True, methods=['GET']) 
     def get_lookup_contents(self, lookup_file, namespace="lookup_editor", owner=None, header_only=False, version=None, lookup_type=None, **kwargs):
@@ -592,7 +615,7 @@ class LookupEditor(controllers.BaseController):
             # Load the CSV lookup
             elif lookup_type == "csv":
                 
-                with self.get_lookup(lookup_file, namespace, owner, version=version) as csv_file:
+                with self.get_lookup(lookup_file, namespace, owner, version=version, throw_exception_if_too_big=True) as csv_file:
                     
                     csv_reader = csv.reader(csv_file)
                 
@@ -615,6 +638,13 @@ class LookupEditor(controllers.BaseController):
         except PermissionDeniedException as e:
             cherrypy.response.status = 403
             return self.render_error_json(_(str(e)))
+        
+        except LookupFileTooBigException as e:
+            cherrypy.response.status = 420
+            return self.render_json({
+                                     'message': 'Lookup file is too large to load (file-size must be less than 10 MB to be edited)',
+                                     'file_size' : e.file_size
+                                     })
         
     @expose_page(must_login=True, methods=['GET']) 
     def get_lookup_header(self, lookup_file, namespace="lookup_editor", owner=None, **kwargs):

@@ -577,6 +577,10 @@ define([
         				  console.info('Inadequate permissions');
         				  this.showWarningMessage("You do not have permission to view this lookup file", true);
         			  }
+        			  else if( jqXHR.status == 420){
+        				  console.info('File is too large');
+        				  this.showWarningMessage("The file is too big to be edited (must be less than 10 MB)");
+        			  }
         			  
         			  // Hide the loading message
         			  $(".table-loading-message").hide();
@@ -594,7 +598,7 @@ define([
         		  
         		  // Handle errors
         		  error: function(jqXHR, textStatus, errorThrown){
-        			  if( jqXHR.status != 404 && jqXHR.status != 403 ){
+        			  if( jqXHR.status != 404 && jqXHR.status != 403 && jqXHR.status != 420 ){
         				  console.info('Lookup file could not be loaded');
         				  this.showWarningMessage("The lookup could not be loaded from the server", true);
         			  }
