@@ -757,6 +757,29 @@ define([
         },
         
         /**
+         * Pad an integer with zeroes.
+         */
+        pad: function(num, size) {
+            var s = num+"";
+            while (s.length < size) s = "0" + s;
+            return s;
+        },
+        
+        /**
+         * Update the modification time
+         */
+        updateTimeModified: function(){
+        	var today = new Date();
+        	
+        	var am_or_pm = today.getHours() > 12 ? "PM" : "AM";
+        	
+        	$("#modification-time").text("Modified: " + today.getFullYear() + "/" + this.pad(today.getMonth() + 1, 2) + "/" + today.getDate() + " " + this.pad((today.getHours() % 12),2) + ":" + this.pad(today.getMinutes(), 2) + ":" + this.pad(today.getSeconds(),2) + " " + am_or_pm);
+        	
+        	$(".modification-time-holder > i").show();
+        	$(".modification-time-holder > i").fadeOut(1000);
+        },
+        
+        /**
          * Load the selected backup.
          */
         doLoadBackup: function(evt){
@@ -979,6 +1002,8 @@ define([
       		  			console.info('KV store entry edit completed for entry ' + _key);
       		  		}
       		  		
+      		  		this.updateTimeModified();
+      		  		
       		  	}.bind(this),
       		  
       		  	// On complete
@@ -1018,6 +1043,7 @@ define([
       		  	success: function(data) {
       		  		console.info('KV store entry removal completed for entry ' + _key);
       		  		this.hideWarningMessage();
+      		  		this.updateTimeModified();
       		  	}.bind(this),
       		  	
       		  	// On complete
@@ -1122,6 +1148,7 @@ define([
       		  		}
       		  		
       		  		this.hideWarningMessage();
+      		  		this.updateTimeModified();
       		  		
       		  	}.bind(this),
       		  	
