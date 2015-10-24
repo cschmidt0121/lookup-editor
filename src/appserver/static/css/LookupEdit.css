@@ -121,6 +121,12 @@ input[type=text]{
 .modification-time-holder{
     text-align: right;
     padding-right: 16px;
+    margin-left: 
+}
+
+.modification-time-holder > i{
+	color: green;
+	padding-left: 32px;
 }
 
 /* Tell the dialogs to use an inline-block so that they fit nicely next to other elements */
