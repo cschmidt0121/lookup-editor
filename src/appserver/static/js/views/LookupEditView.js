@@ -88,6 +88,8 @@ define([
             this.owner = null;
             this.lookup_type = null;
             this.lookup_config = null;
+            this.field_types = {}; // This will store the expected types for each field
+            this.field_types_enforced = false; // This will store whether this lookup enforces types
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
             
         	// Get the apps
@@ -165,14 +167,52 @@ define([
         },
         
         /**
+         * Determine if the cell type is invalid for KV cells that have enforced data-types.
+         */
+        isCellTypeInvalid: function(row, col, value){
+        	
+        	// Stop if type enforcement is off
+        	if(!this.field_types_enforced){
+        		return false;
+        	}
+        	
+        	// Determine the type of the field
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	var row_header = handsontable.getDataAtRow(0);
+        	var field_name = row_header[col];
+        	
+        	// If we have a field type, then check it
+        	if(field_name in this.field_types){
+        		
+        		var field_type = this.field_types[field_name];
+        		
+        		// Check it if it is an number
+        		if(field_type === 'number' && !/^[-]?\d+$/.test(value)){
+        			return true;
+        		}
+        		
+        		// Check it if it is an boolean
+        		else if(field_type === 'boolean' && !/^(true)|(false)$/.test(value)){
+        			return true;
+        		}
+        	}
+        	
+        	return false;
+        },
+        
+        /**
          * Cell renderer for HandsOnTable
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
-        	Handsontable.renderers.TextRenderer.apply(this, arguments);
+        	//Handsontable.renderers.TextRenderer.apply(this, arguments);
+        	td.innerHTML = value;
 
         	if( (!value || value === '') && row === 0) {
         		td.className = 'cellEmptyHeader';
+        	}
+        	else if(row !== 0 && this.isCellTypeInvalid(row, col, value)) { // Cell type is incorrect
+        		td.className = 'cellInvalidType';
         	}
         	else if(!value || value === '') {
         		td.className = 'cellEmpty';
@@ -1108,8 +1148,6 @@ define([
          */
         renderLookup: function(data){
         	
-        	var renderer = this.lookupRenderer.bind(this);
-        	
         	// If we are editing a CSV, use these menu options
         	var contextMenu = {
       			items: ['row_above', 'row_below', '---------', 'col_left', 'col_right', '---------', 'remove_row', 'remove_col', '---------', 'undo', 'redo']
@@ -1171,8 +1209,9 @@ define([
         		  allowInsertColumn: false,
         		  allowRemoveColumn: false,
         		  
+        		  renderer: this.lookupRenderer.bind(this),
+        		  
         		  cells: function(row, col, prop) {
-        			  this.renderer = renderer;
         			  
         			  var cellProperties = {};
         			  
@@ -1343,6 +1382,27 @@ define([
 	        		url: splunkd_utils.fullpath(['/servicesNS', this.owner, this.namespace, 'storage/collections/config', this.lookup].join('/')),
 	                success: function(model, response, options) {
 	                    console.info("Successfully retrieved the information about the KV store lookup");
+	                    
+	                    // Determine the types of the fields
+	                    for (var possible_field in model.entry.associated.content.attributes) {
+	                    	// Determine if this a field
+	                    	if(possible_field.indexOf('field.') === 0){
+	                    		
+	                    		// Save the type if it is a field
+	                    		this.field_types[possible_field.substr(6)] = model.entry.associated.content.attributes[possible_field];
+	                    	}
+	                    }
+	                    
+	                    // Determine if types are enforced
+	                    if(model.entry.associated.content.attributes.hasOwnProperty('enforceTypes')){
+	                    	if(model.entry.associated.content.attributes.enforceTypes === "true"){
+	                    		this.field_types_enforced = true;
+	                    	}
+	                    	else{
+	                    		this.field_types_enforced = false;
+	                    	}
+	                    }
+	                    
 	                    
 	                    // If this lookup cannot be edited, then set the editor to read-only
 	                    if(!model.entry.acl.attributes.can_write){
