@@ -641,9 +641,29 @@ define([
         			  if( jqXHR.status != 404 && jqXHR.status != 403 && jqXHR.status != 420 ){
         				  console.info('Lookup file could not be loaded');
         				  this.showWarningMessage("The lookup could not be loaded from the server", true);
+        				  this.hideEditingControls();
         			  }
         		  }.bind(this)
         	});
+        },
+        
+        /**
+         * Hide the editing controls
+         */
+        hideEditingControls: function(hide){
+        	
+        	// Load a default for the version
+        	if( typeof hide == 'undefined' ){
+        		hide = true;
+        	}
+        	
+        	if(hide){
+        		$('.btn', this.$el).hide();
+        	}
+        	else{
+        		$('.btn', this.$el).show();
+        	}
+        	
         },
         
         /**
