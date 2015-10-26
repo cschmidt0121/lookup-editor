@@ -91,6 +91,7 @@ define([
             this.field_types = {}; // This will store the expected types for each field
             this.field_types_enforced = false; // This will store whether this lookup enforces types
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
+            this.table_header = null; // This will store the header of the table so that can recall the relative offset of the fields in the table
             
         	// Get the apps
         	this.apps = new Apps();
@@ -178,7 +179,7 @@ define([
         	
         	// Determine the type of the field
         	var handsontable = $("#lookup-table").data('handsontable');
-        	var row_header = handsontable.getDataAtRow(0);
+        	var row_header = this.table_header;
         	var field_name = row_header[col];
         	
         	// If we have a field type, then check it
@@ -229,28 +230,28 @@ define([
         	else if(row === 0) {
         		td.className = 'cellHeader';
         	}
-        	else if(value !== null && value.toLowerCase() === 'true') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'true') {
         		td.className = 'cellTrue';
         	}
-        	else if(value !== null && value.toLowerCase() ==='false') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() ==='false') {
         		td.className = 'cellFalse';
         	}
-        	else if(value !== null && value.toLowerCase() === 'unknown') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'unknown') {
         		td.className = 'cellUrgencyUnknown';
         	}
-        	else if(value !== null && value.toLowerCase() === 'informational') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'informational') {
         		td.className = 'cellUrgencyInformational';
         	}
-        	else if(value !== null && value.toLowerCase() === 'low') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'low') {
         		td.className = 'cellUrgencyLow';
         	}
-        	else if(value !== null && value.toLowerCase() === 'medium') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'medium') {
         		td.className = 'cellUrgencyMedium';
         	}
-        	else if(value !== null && value.toLowerCase() === 'high') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'high') {
         		td.className = 'cellUrgencyHigh';
         	}
-        	else if(value !== null && value.toLowerCase() === 'critical') {
+        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'critical') {
         		td.className = 'cellUrgencyCritical';
         	}
         	else {
@@ -749,14 +750,6 @@ define([
         },
         
         /**
-         * Got the lookup information
-         */
-        gotLookupInfo: function(){
-        	debugger;
-        	
-        },
-        
-        /**
          * Get the apps
          */
         gotApps: function(){
@@ -1129,7 +1122,7 @@ define([
         	var handsontable = $("#lookup-table").data('handsontable');
         	
         	// We need to get the row meta-data and the 
-        	var row_header = handsontable.getDataAtRow(0);
+        	var row_header = this.table_header;
         	var row_data = handsontable.getDataAtRow(row);
         	
         	// This is going to hold the data for the row
@@ -1137,7 +1130,7 @@ define([
         	
         	// Add each field / column
         	for(var c=1; c < row_header.length; c++){
-        		this.addFieldToJSON(json_data, row_header[c], row_data[c] || '');
+        		this.addFieldToJSON(json_data, row_header[c], (row_data[c] === undefined ? '' : row_data[c]) );
         	}
         	
         	// Return the created JSON
@@ -1197,6 +1190,60 @@ define([
         },
         
         /**
+         * Get colummn configuration data for the columns so that the table presents a UI for editing the cells appropriately. 
+         */
+        getColumnsMetadata: function(){
+        	
+        	// Stop if we don't have the required data yet
+        	if(!this.table_header){
+        		console.warn("The table header is not available yet")
+        	}
+        	
+        	if(!this.field_types){
+        		console.warn("The table field types are not available yet")
+        	}
+        	
+        	// This variable will contain the meta-data about the columns
+        	var columns = []; // This is going to have a single field by default for the _key field which is not included in the field-types
+        	var field_info = null;
+        	var column = null;
+        	
+        	for(var c = 0; c < this.table_header.length; c++){
+        		field_info = this.field_types[this.table_header[c]];
+        		
+        		column = {};
+        		
+        		if(field_info === 'boolean'){
+        			column['type'] = 'checkbox';
+        		}
+        		else if(field_info === 'time'){
+        			//column['type'] = 'checkbox';
+        		}
+        		
+        		columns.push(column);
+        		
+    		}
+    		
+        	return columns;
+        	
+        	/*
+        	// Get a reference to Hands-on-table
+        	var handsontable = $("#lookup-table").data('handsontable');
+        	
+        	if(!handsontable){
+        		console.warn("The hands-on-table instance isn't configured yet")
+        	}
+        	
+        	// Apply the settings
+        	handsontable.updateSettings({
+        		columns: columns
+        	});
+        	
+        	*/
+        	
+        },
+        
+        /**
          * Render the lookup.
          */
         renderLookup: function(data){
@@ -1205,6 +1252,9 @@ define([
         	var contextMenu = {
       			items: ['row_above', 'row_below', '---------', 'col_left', 'col_right', '---------', 'remove_row', 'remove_col', '---------', 'undo', 'redo']
     		};
+        	
+        	// Store the table header so that we can determine the relative offsets of the fields
+        	this.table_header = data[0];
     		
     		// If we are editing a KV store lookup, use these menu options
         	if(this.lookup_type === "kv"){
@@ -1225,7 +1275,7 @@ define([
 	    					'remove_row': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
-	    				            return this.read_only ||$("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
 	    				        }
 	    					},
 	    					'hsep2': "---------",
@@ -1243,14 +1293,18 @@ define([
 	    		}
         	}
         	
+        	var columns = this.getColumnsMetadata();
+        	
+        	// Make the handsontable instance
         	$("#lookup-table").handsontable({
-        		  data: data,
+        		  data: data.slice(1),
         		  startRows: 1,
         		  startCols: 1,
         		  contextMenu: contextMenu,
         		  minSpareRows: 0,
         		  minSpareCols: 0,
-        		  colHeaders: false,
+        		  colHeaders: this.table_header,
+        		  columns: columns,
         		  rowHeaders: true,
         		  fixedRowsTop: 1,
         		  
