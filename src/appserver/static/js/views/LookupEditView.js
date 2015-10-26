@@ -206,13 +206,9 @@ define([
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
-        	//Handsontable.renderers.TextRenderer.apply(this, arguments);
         	td.innerHTML = value;
 
-        	if( (!value || value === '') && row === 0) {
-        		td.className = 'cellEmptyHeader';
-        	}
-        	else if(row !== 0 && this.isCellTypeInvalid(row, col, value)) { // Cell type is incorrect
+        	if(row !== 0 && this.isCellTypeInvalid(row, col, value)) { // Cell type is incorrect
         		td.className = 'cellInvalidType';
         	}
         	else if(!value || value === '') {
@@ -1297,16 +1293,16 @@ define([
         	
         	// Make the handsontable instance
         	$("#lookup-table").handsontable({
-        		  data: data.slice(1),
+        		  data: this.lookup_type === "kv" ? data.slice(1) : data,
         		  startRows: 1,
         		  startCols: 1,
         		  contextMenu: contextMenu,
         		  minSpareRows: 0,
         		  minSpareCols: 0,
-        		  colHeaders: this.table_header,
+        		  colHeaders: this.lookup_type === "kv" ? this.table_header : false,
         		  columns: columns,
         		  rowHeaders: true,
-        		  fixedRowsTop: 1,
+        		  fixedRowsTop: this.lookup_type === "kv" ? 0 : 1,
         		  
         		  stretchH: 'all',
         		  manualColumnResize: true,

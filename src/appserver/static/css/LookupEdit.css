@@ -207,9 +207,10 @@ input[type=text]{
 	color: green;
 }
 
-.cellHeader{
-	font-weight: bold;
-	color: black;
+/* This selector needs to specific enough to override the built-in styling. */
+tr > td.cellHeader{
+	background-color: #EEE;
+	text-align: center
 }
 
 .cellTrue{
