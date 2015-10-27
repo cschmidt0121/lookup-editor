@@ -1,9 +1,4 @@
 
-#dataTable{
-	height: 400px;
-	overflow: auto;
-}
-
 #lookup-table{
 	clear: both;
 }
@@ -167,7 +162,7 @@ input[type=text]{
 }
 
 /*
- * Fix highlight color on the dropdown button
+ * Fix highlight color on the dropdown button (for reverting to previous versions)
  */
 .btn-group.open .btn-primary.dropdown-toggle {
     background-color: #65a637;
@@ -180,15 +175,6 @@ input[type=text]{
 /**
  * Cell renderers
  */
-
-#dataTable{
-	clear:both;
-}
-
-#mainControls{
-	margin-top: 24px;
-}
-
 .handsontable td.cellEmpty{
 	background: #F8F8F8;
 }
