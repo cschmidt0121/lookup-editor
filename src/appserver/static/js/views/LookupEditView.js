@@ -656,7 +656,7 @@ define([
         hideEditingControls: function(hide){
         	
         	// Load a default for the version
-        	if( typeof hide == 'undefined' ){
+        	if( typeof hide === 'undefined' ){
         		hide = true;
         	}
         	
@@ -1240,6 +1240,21 @@ define([
         },
         
         /**
+         * Re-render the Hands-on-table instance
+         */
+        reRenderHandsOnTable: function(){
+        	
+        	// Re-render the view
+        	if($("#lookup-table").length > 0 && $("#lookup-table").data('handsontable')){
+            	var handsontable = $("#lookup-table").data('handsontable');
+            	
+            	if(handsontable){
+            		handsontable.render(); 
+            	}
+        	}
+        },
+        
+        /**
          * Render the lookup.
          */
         renderLookup: function(data){
@@ -1483,68 +1498,15 @@ define([
         	this.owner = this.getParameterByName("owner");
         	this.lookup_type = this.getParameterByName("type");
         	
-        	// Get the info about the lookup configuration (for KV store lookups)
-        	if(this.lookup_type === "kv"){
-        		
-	        	this.lookup_config = new KVLookup();
-	        	
-	        	this.lookup_config.fetch({
-	        		// e.g. servicesNS/nobody/lookup_editor/storage/collections/config/test
-	        		url: splunkd_utils.fullpath(['/servicesNS', this.owner, this.namespace, 'storage/collections/config', this.lookup].join('/')),
-	                success: function(model, response, options) {
-	                    console.info("Successfully retrieved the information about the KV store lookup");
-	                    
-	                    // Determine the types of the fields
-	                    for (var possible_field in model.entry.associated.content.attributes) {
-	                    	// Determine if this a field
-	                    	if(possible_field.indexOf('field.') === 0){
-	                    		
-	                    		// Save the type if it is a field
-	                    		this.field_types[possible_field.substr(6)] = model.entry.associated.content.attributes[possible_field];
-	                    	}
-	                    }
-	                    
-	                    // Determine if types are enforced
-	                    if(model.entry.associated.content.attributes.hasOwnProperty('enforceTypes')){
-	                    	if(model.entry.associated.content.attributes.enforceTypes === "true"){
-	                    		this.field_types_enforced = true;
-	                    	}
-	                    	else{
-	                    		this.field_types_enforced = false;
-	                    	}
-	                    }
-	                    
-	                    
-	                    // If this lookup cannot be edited, then set the editor to read-only
-	                    if(!model.entry.acl.attributes.can_write){
-	                    	this.read_only = true;
-	                    	this.showWarningMessage("You do not have permission to edit this lookup; it is being displayed read-only");
-	                    	
-	                    	// Re-render the view so that the cells show that it is read-only
-	                    	if($("#lookup-table").length > 0 && $("#lookup-table").data('handsontable')){
-		                    	var handsontable = $("#lookup-table").data('handsontable');
-		                    	
-		                    	if(handsontable){
-		                    		handsontable.render(); 
-		                    	}
-	                    	}
-	                    }
-	                    
-	                }.bind(this),
-	                error: function() {
-	                	console.warn("Unable to retrieve the information about the KV store lookup");
-	                }.bind(this)
-	        	});
-        	}
-        	
+        	// Determine if we are making a new lookup
         	this.is_new = false;
         	
-        	// Determine if we are making a new lookup
         	if(this.lookup == "" && this.namespace == "" && this.owner == ""){
         		this.is_new = true;
         	}
         	
-        	// Render
+        	
+        	// Render the HTML content
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
         		'is_new' : this.is_new,
@@ -1579,16 +1541,65 @@ define([
                 	this.validateForm();
                 }.bind(this));
         	}
-
+        	
         	// Setup the handlers so that we can make the view support drag and drop
             this.setupDragDropHandlers();
             
         	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button
         	$('#lookup-table').height($(window).height() - 320);
         	
-        	// Show a default lookup if this is a new lookup
-        	if(this.is_new){
+        	// If we are editing an existing KV lookup, then get the information about the lookup and _then_ get the lookup data
+        	if(this.lookup_type === "kv" && !this.is_new){
         		
+            	// Get the info about the lookup configuration (for KV store lookups)
+	        	this.lookup_config = new KVLookup();
+	        	
+	        	this.lookup_config.fetch({
+	        		// e.g. servicesNS/nobody/lookup_editor/storage/collections/config/test
+	        		url: splunkd_utils.fullpath(['/servicesNS', this.owner, this.namespace, 'storage/collections/config', this.lookup].join('/')),
+	                success: function(model, response, options) {
+	                    console.info("Successfully retrieved the information about the KV store lookup");
+	                    
+	                    // Determine the types of the fields
+	                    for (var possible_field in model.entry.associated.content.attributes) {
+	                    	// Determine if this a field
+	                    	if(possible_field.indexOf('field.') === 0){
+	                    		
+	                    		// Save the type if it is a field
+	                    		this.field_types[possible_field.substr(6)] = model.entry.associated.content.attributes[possible_field];
+	                    	}
+	                    }
+	                    
+	                    // Determine if types are enforced
+	                    if(model.entry.associated.content.attributes.hasOwnProperty('enforceTypes')){
+	                    	if(model.entry.associated.content.attributes.enforceTypes === "true"){
+	                    		this.field_types_enforced = true;
+	                    	}
+	                    	else{
+	                    		this.field_types_enforced = false;
+	                    	}
+	                    }
+	                    
+	                    // If this lookup cannot be edited, then set the editor to read-only
+	                    if(!model.entry.acl.attributes.can_write){
+	                    	this.read_only = true;
+	                    	this.showWarningMessage("You do not have permission to edit this lookup; it is being displayed read-only");
+	                    }
+	                    
+	                }.bind(this),
+	                error: function() {
+	                	console.warn("Unable to retrieve the information about the KV store lookup");
+	                }.bind(this),
+	                complete: function(){
+	                	this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type);
+	                }.bind(this)
+	        	});
+        	}
+        	
+        	// If this is a new lookup, then show default content accordingly
+        	else if(this.is_new){
+        		
+        		// Show a default lookup if this is a new lookup
         		var data = [
         		            ["Column1", "Column2", "Column3", "Column4", "Column5", "Column6"],
         		            ["", "", "", "", "", ""],
@@ -1605,7 +1616,7 @@ define([
         		this.showWarningMessage("Not enough information to identify the lookup file to load");
         	}
         	
-        	// Load the lookup
+        	// Otherwise, load the lookup
         	else{
         		this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type);
         	}
