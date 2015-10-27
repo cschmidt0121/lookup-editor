@@ -208,7 +208,7 @@ input[type=text]{
 }
 
 /* This selector needs to specific enough to override the built-in styling. */
-tr > td.cellHeader{
+.csv-lookup tr > td.cellHeader{
 	background-color: #EEE;
 	text-align: center
 }

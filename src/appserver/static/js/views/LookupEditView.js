@@ -1291,6 +1291,14 @@ define([
         	
         	var columns = this.getColumnsMetadata();
         	
+        	// Put in a class name so that the styling can be done by the type of the lookup
+        	if(this.lookup_type === "kv"){
+        		$("#lookup-table").addClass('kv-lookup');
+        	}
+        	else{
+        		$("#lookup-table").addClass('csv-lookup');
+        	}
+        	
         	// Make the handsontable instance
         	$("#lookup-table").handsontable({
         		  data: this.lookup_type === "kv" ? data.slice(1) : data,
@@ -1309,8 +1317,8 @@ define([
         		  manualColumnMove: true,
         		  onBeforeChange: this.validate.bind(this),
         		  
-        		  allowInsertColumn: false,
-        		  allowRemoveColumn: false,
+        		  allowInsertColumn: this.lookup_type === "kv" ? false : true,
+        		  allowRemoveColumn: this.lookup_type === "kv" ? false : true,
         		  
         		  renderer: this.lookupRenderer.bind(this),
         		  
@@ -1318,8 +1326,8 @@ define([
         			  
         			  var cellProperties = {};
         			  
-        			  // Don't allow the _key row or the header to be editable on KV store lookups (since the schema is unchangable and the keys are auto-assigned)
-        		      if (this.read_only || (this.lookup_type === "kv" && (row == 0 || col == 0))) {
+        			  // Don't allow the _key row to be editable on KV store lookups since the keys are auto-assigned
+        		      if (this.read_only || (this.lookup_type === "kv" && col == 0)) {
         		        cellProperties.readOnly = true;
         		      }
 
