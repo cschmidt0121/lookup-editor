@@ -4,6 +4,10 @@
 	overflow: auto;
 }
 
+#lookup-table{
+	clear: both;
+}
+
 #item-lookup-file{
 	margin-bottom: 80px;
 	clear: both;
