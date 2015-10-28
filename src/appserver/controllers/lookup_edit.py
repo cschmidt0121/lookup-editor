@@ -563,39 +563,47 @@ class LookupEditor(controllers.BaseController):
         Get the contents of a KV store lookup.
         """
         
-        # Get the session key
-        session_key = cherrypy.session.get('sessionKey')
-        lookup_contents = []
-        
-        # Get the fields so that we can compose the header
-        _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
-        header = json.loads(content)
-        
-        fields = ['_key']
-        
-        for field in header['entry'][0]['content']:
-            if field.startswith('field.'):
-                fields.append(field[6:])
-        
-        lookup_contents.append(fields)
-        
-        # Get the contents        
-        _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/data/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+        try:
             
-        rows = json.loads(content)
+            if owner is None:
+                owner = 'nobody'
+            
+            # Get the session key
+            session_key = cherrypy.session.get('sessionKey')
+            lookup_contents = []
+            
+            # Get the fields so that we can compose the header
+            _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+            header = json.loads(content)
+            
+            fields = ['_key']
+            
+            for field in header['entry'][0]['content']:
+                if field.startswith('field.'):
+                    fields.append(field[6:])
+            
+            lookup_contents.append(fields)
+            
+            # Get the contents        
+            _, content = splunk.rest.simpleRequest('/servicesNS/' + owner + '/' + namespace + '/storage/collections/data/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
+                
+            rows = json.loads(content)
+            
+            for row in rows:
+                new_row = []
+                
+                flattened_row = self.flatten_dict(row)
+                
+                for field in fields:
+                    if field in flattened_row:
+                        new_row.append(flattened_row[field])
+            
+                lookup_contents.append(new_row)
+                
+            return lookup_contents
         
-        for row in rows:
-            new_row = []
-            
-            flattened_row = self.flatten_dict(row)
-            
-            for field in fields:
-                if field in flattened_row:
-                    new_row.append(flattened_row[field])
-        
-            lookup_contents.append(new_row)
-            
-        return lookup_contents
+        except:
+            logger.exception("KV store lookup could not be loaded")
             
     def get_lookup(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None, throw_exception_if_too_big=False):
         """
