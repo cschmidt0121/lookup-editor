@@ -759,21 +759,36 @@ define([
         	
         	this.hideWarningMessage();
         	
+        	// Make sure the lookup name is defined
         	if(this.is_new && (!mvc.Components.getInstance("lookup-name").val() || mvc.Components.getInstance("lookup-name").val().length <= 0)){
         		$('#lookup-name-control-group', this.$el).addClass('error');
         		this.showWarningMessage("Please enter a lookup name");
         		issues = issues + 1;
         	}
+        	
+        	// Make sure the lookup name is acceptable
         	else if(this.is_new && !mvc.Components.getInstance("lookup-name").val().match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi)){
         		$('#lookup-name-control-group', this.$el).addClass('error');
         		this.showWarningMessage("Lookup name is invalid");
         		issues = issues + 1;
         	}
         	
+        	// Make sure the lookup app is defined
         	if(this.is_new && (! mvc.Components.getInstance("lookup-app").val() || mvc.Components.getInstance("lookup-app").val().length <= 0)){
         		$('#lookup-app-control-group', this.$el).addClass('error');
         		this.showWarningMessage("Select the app where the lookup will reside");
         		issues = issues + 1;
+        	}
+        	
+        	// Make sure at least one field is defined (for KV store lookups only)
+        	if(this.is_new && this.lookup_type === "kv" ){
+        		
+        		var validate_response = this.kv_store_fields_editor.validate();
+        		
+        		if(validate_response !== true){
+            		this.showWarningMessage(validate_response);
+            		issues = issues + 1;
+        		}
         	}
         	
         	// Determine if the validation passed

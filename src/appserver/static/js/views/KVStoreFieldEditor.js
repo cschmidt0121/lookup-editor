@@ -49,6 +49,21 @@ define([
         },
         
         /**
+         * Make sure that the fields are valid. If this function returns a string, then the input is invalid. Otherwise, "true" will be returned.
+         */
+        validate: function(){
+        	
+        	// Make sure that a field is defined
+        	for(var c = 0; c < this.field_views.length; c++){
+        		if(this.field_views[c].hasFieldName()){
+        			return true;
+        		}
+        	}
+        	
+        	return "At least one field needs to be defined";
+        },
+        
+        /**
          * Add a new field view instance.
          */
         removeField: function(unique_identifier){
