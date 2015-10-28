@@ -4,7 +4,8 @@ require.config({
     	Handsontable: "../app/lookup_editor/js/lib/handsontable.full.min",
         text: "../app/lookup_editor/js/lib/text",
         console: '../app/lookup_editor/js/lib/console',
-        csv: '../app/lookup_editor/js/lib/csv'
+        csv: '../app/lookup_editor/js/lib/csv',
+        kv_store_field_editor: '../app/lookup_editor/js/views/KVStoreFieldEditor'
     },
     shim: {
         'Handsontable': {
@@ -25,6 +26,7 @@ define([
     "splunkjs/mvc/simpleform/input/text",
     "splunkjs/mvc/simpleform/input/dropdown",
     "text!../app/lookup_editor/js/templates/LookupEdit.html",
+    "kv_store_field_editor",
     "csv",
     "Handsontable",
     "bootstrap.dropdown",
@@ -42,7 +44,8 @@ define([
     SimpleSplunkView,
     TextInput,
     DropdownInput,
-    Template
+    Template,
+    KVStoreFieldEditor
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
@@ -92,6 +95,8 @@ define([
             this.field_types_enforced = false; // This will store whether this lookup enforces types
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
             this.table_header = null; // This will store the header of the table so that can recall the relative offset of the fields in the table
+            
+            this.kv_store_fields_editor = null;
             
         	// Get the apps
         	this.apps = new Apps();
@@ -543,6 +548,61 @@ define([
         },
         
         /**
+         * Make a new KV store lookup
+         */
+        makeKVStoreLookup: function(namespace, lookup_file, owner){
+        	
+        	// Set a default value for the owner
+        	if( typeof owner == 'undefined' ){
+        		owner = 'nobody';
+        	}
+        	
+        	// Make the data that will be posted to the server
+        	var data = {
+        		"name": lookup_file
+        	};
+        	
+        	// Perform the call
+        	$.ajax({
+        			url: splunkd_utils.fullpath(['/servicesNS', owner, namespace, 'storage/collections/config'].join('/')),
+        			data: data,
+        			type: 'POST',
+        			
+        			// On success, populate the table
+        			success: function(data) {
+        				console.info('KV store lookup file created');
+        			  
+        				// Remember the specs on the created file
+        				this.lookup = lookup_file;
+        				this.namespace = namespace;
+        				this.owner = owner;
+        				this.lookup_type = "kv";
+        				
+        				this.kv_store_fields_editor.modifyKVStoreLookupSchema(this.namespace, this.lookup);
+        			  
+        			}.bind(this),
+        		  
+        			// Handle cases where the file could not be found or the user did not have permissions
+        			complete: function(jqXHR, textStatus){
+        				if( jqXHR.status == 403){
+        					console.info('Inadequate permissions');
+        					this.showWarningMessage("You do not have permission to make a KV store collection", true);
+        				}
+        			  
+        			}.bind(this),
+        		  
+        			// Handle errors
+        			error: function(jqXHR, textStatus, errorThrown){
+        				if( jqXHR.status != 403 ){
+        					console.info('KV store collection creation failed');
+        					this.showWarningMessage("The KV store collection could not be created", true);
+        				}
+        			}.bind(this)
+        	});
+        	
+        },
+        
+        /**
          * Load the lookup file contents from the server and populate the editor.
          * 
          * @param lookup_file The name of the lookup file
@@ -822,27 +882,6 @@ define([
         	// Started recording the time so that we figure out how long it took to save the lookup file
         	var populateStart = new Date().getTime();
         	
-        	// Get a reference to the handsontable plugin
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
-        	// Get the row data
-        	row_data = handsontable.getData();
-        	
-        	// Convert the data to JSON
-        	json = JSON.stringify(row_data);
-        	
-        	// Make the arguments
-        	var data = {
-        			lookup_file : this.lookup,
-        			namespace   : this.namespace,
-        			contents    : json
-        	};
-
-        	// If a user was defined, then pass the name as a parameter
-        	if(this.owner !== null){
-        		data["owner"] = this.owner;
-        	}
-        	
         	// Hide the warnings. We will repost them if the input is still invalid
         	this.hideMessages();
         	
@@ -852,124 +891,153 @@ define([
         		return;
         	}
         	
-        	// Validate the input if it is new
-        	if(making_new_lookup){
+        	// If we are making a new KV store lookup, then make it
+        	if(making_new_lookup && this.lookup_type === "kv"){
+        		this.makeKVStoreLookup(mvc.Components.getInstance("lookup-app").val(), mvc.Components.getInstance("lookup-name").val());
+        	}
+        	
+        	// Otherwise, save the lookup
+        	else{
         		
-	        	// Get the lookup file name from the form if we are making a new lookup
-        		data["lookup_file"] = mvc.Components.getInstance("lookup-name").val();
+	        	// Get a reference to the handsontable plugin
+	        	var handsontable = $("#lookup-table").data('handsontable');
+	        	
+	        	// Get the row data
+	        	row_data = handsontable.getData();
+	        	
+	        	// Convert the data to JSON
+	        	json = JSON.stringify(row_data);
+	        	
+	        	// Make the arguments
+	        	var data = {
+	        			lookup_file : this.lookup,
+	        			namespace   : this.namespace,
+	        			contents    : json
+	        	};
 	
-	        	// Make sure that the file name was included; stop if it was not
-	        	if (data["lookup_file"] === ""){
-	        		$("#lookup_file_error").text("Please define a file name"); // TODO
-	        		$("#lookup_file_error").show();
-	        		this.setSaveButtonTitle();
+	        	// If a user was defined, then pass the name as a parameter
+	        	if(this.owner !== null){
+	        		data["owner"] = this.owner;
+	        	}
+	        	
+	        	// Validate the input if it is new
+	        	if(making_new_lookup){
+	        		
+		        	// Get the lookup file name from the form if we are making a new lookup
+	        		data["lookup_file"] = mvc.Components.getInstance("lookup-name").val();
+		
+		        	// Make sure that the file name was included; stop if it was not
+		        	if (data["lookup_file"] === ""){
+		        		$("#lookup_file_error").text("Please define a file name"); // TODO
+		        		$("#lookup_file_error").show();
+		        		this.setSaveButtonTitle();
+		        		return false;
+		        	}
+		        	
+		        	// Make sure that the file name is valid; stop if it is not
+		        	if( !data["lookup_file"].match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) ){
+		        		$("#lookup_file_error").text("The file name contains invalid characters"); // TODO
+		        		$("#lookup_file_error").show();
+		        		this.setSaveButtonTitle();
+		        		return false;
+		        	}
+		        		
+		        	// Get the namespace from the form if we are making a new lookup
+		        	data["namespace"] = mvc.Components.getInstance("lookup-app").val();
+		
+		        	// Make sure that the namespace was included; stop if it was not
+		        	if (data["namespace"] === ""){
+		        		$("#lookup_namespace_error").text("Please define a namespace");
+		        		$("#lookup_namespace_error").show();
+		        		this.setSaveButtonTitle();
+		        		return false;
+		        	}
+		        }
+	
+	        	// Make sure at least a header exists; stop if not enough content is present
+	        	if(row_data.length === 0){		
+	        		this.showWarningMessage("Lookup files must contain at least one row (the header)");
 	        		return false;
 	        	}
 	        	
-	        	// Make sure that the file name is valid; stop if it is not
-	        	if( !data["lookup_file"].match(/^[-A-Z0-9_ ]+([.][-A-Z0-9_ ]+)*$/gi) ){
-	        		$("#lookup_file_error").text("The file name contains invalid characters"); // TODO
-	        		$("#lookup_file_error").show();
-	        		this.setSaveButtonTitle();
-	        		return false;
-	        	}
+	        	// Make sure the headers are not empty.
+	        	// If the editor is allowed to add extra columns then ignore the last row since this for adding a new column thus is allowed
+	        	for( i = 0; i < row_data[0].length; i++){
 	        		
-	        	// Get the namespace from the form if we are making a new lookup
-	        	data["namespace"] = mvc.Components.getInstance("lookup-app").val();
-	
-	        	// Make sure that the namespace was included; stop if it was not
-	        	if (data["namespace"] === ""){
-	        		$("#lookup_namespace_error").text("Please define a namespace");
-	        		$("#lookup_namespace_error").show();
-	        		this.setSaveButtonTitle();
-	        		return false;
+	        		// Determine if this row has an empty header cell
+	        		if( row_data[0][i] === "" ){
+	        			this.showWarningMessage("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
+	        			return false;
+	        		}
 	        	}
-	        }
-
-        	// Make sure at least a header exists; stop if not enough content is present
-        	if(row_data.length === 0){		
-        		this.showWarningMessage("Lookup files must contain at least one row (the header)");
-        		return false;
+	        	
+	        	// Perform the request to save the lookups
+	        	$.ajax( {
+	        				url:  Splunk.util.make_url('/custom/lookup_editor/lookup_edit/save'),
+	        				type: 'POST',
+	        				data: data,
+	        				
+	        				success: function(){
+	        					console.log("Lookup file saved successfully");
+	        					this.showInfoMessage("Lookup file saved successfully");
+	        					this.setSaveButtonTitle();
+	        					
+	        					// Persist the information about the lookup
+	        					if(this.is_new){
+		        					this.lookup = data["lookup_file"];
+		        					this.namespace = data["namespace"];
+		        					this.owner = data["owner"];
+	        					}
+	        				}.bind(this),
+	        				
+	        				// Handle cases where the file could not be found or the user did not have permissions
+	        				complete: function(jqXHR, textStatus){
+	        					
+	        					var elapsed = new Date().getTime()-populateStart;
+	        					console.info("Lookup save operation completed in " + elapsed + "ms");
+	        					var success = true;
+	        					
+	        					if(jqXHR.status == 404){
+	        						console.info('Lookup file was not found');
+	        						this.showWarningMessage("This lookup file could not be found");
+	        						success = false;
+	        					}
+	        					else if(jqXHR.status == 403){
+	        						console.info('Inadequate permissions');
+	        						this.showWarningMessage("You do not have permission to edit this lookup file");
+	        						success = false;
+	        					}
+	        					else if(jqXHR.status == 400){
+	        						console.info('Invalid input');
+	        						this.showWarningMessage("This lookup file could not be saved because the input is invalid");
+	        						success = false;
+	        					}
+	        					else if(jqXHR.status == 500){
+	        						this.showWarningMessage("The lookup file could not be saved");
+	        				    	success = false;
+	        					}
+	        					
+	        					this.setSaveButtonTitle();
+	        					
+	        					// If we made a new lookup, then switch modes
+	        					if(this.is_new){
+	        						this.changeToEditMode();
+	        					}
+	        					
+	        					// Update the lookup backup list
+	        					if(success){
+	        						this.loadLookupBackupsList(this.lookup, this.namespace, this.owner);
+	        					}
+	        				}.bind(this),
+	        				
+	        				error: function(jqXHR,textStatus,errorThrown) {
+	        					console.log("Lookup file not saved");
+	        					this.showWarningMessage("Lookup file could not be saved");
+	        				}.bind(this)
+	        				
+	        			}
+	        	);
         	}
-        	
-        	// Make sure the headers are not empty.
-        	// If the editor is allowed to add extra columns then ignore the last row since this for adding a new column thus is allowed
-        	for( i = 0; i < row_data[0].length; i++){
-        		
-        		// Determine if this row has an empty header cell
-        		if( row_data[0][i] === "" ){
-        			this.showWarningMessage("Header rows cannot contain empty cells (column " + (i + 1) + " of the header is empty)");
-        			return false;
-        		}
-        	}
-        	
-        	// Perform the request to save the lookups
-        	$.ajax( {
-        				url:  Splunk.util.make_url('/custom/lookup_editor/lookup_edit/save'),
-        				type: 'POST',
-        				data: data,
-        				
-        				success: function(){
-        					console.log("Lookup file saved successfully");
-        					this.showInfoMessage("Lookup file saved successfully");
-        					this.setSaveButtonTitle();
-        					
-        					// Persist the information about the lookup
-        					if(this.is_new){
-	        					this.lookup = data["lookup_file"];
-	        					this.namespace = data["namespace"];
-	        					this.owner = data["owner"];
-        					}
-        				}.bind(this),
-        				
-        				// Handle cases where the file could not be found or the user did not have permissions
-        				complete: function(jqXHR, textStatus){
-        					
-        					var elapsed = new Date().getTime()-populateStart;
-        					console.info("Lookup save operation completed in " + elapsed + "ms");
-        					var success = true;
-        					
-        					if(jqXHR.status == 404){
-        						console.info('Lookup file was not found');
-        						this.showWarningMessage("This lookup file could not be found");
-        						success = false;
-        					}
-        					else if(jqXHR.status == 403){
-        						console.info('Inadequate permissions');
-        						this.showWarningMessage("You do not have permission to edit this lookup file");
-        						success = false;
-        					}
-        					else if(jqXHR.status == 400){
-        						console.info('Invalid input');
-        						this.showWarningMessage("This lookup file could not be saved because the input is invalid");
-        						success = false;
-        					}
-        					else if(jqXHR.status == 500){
-        						this.showWarningMessage("The lookup file could not be saved");
-        				    	success = false;
-        					}
-        					
-        					this.setSaveButtonTitle();
-        					
-        					// If we made a new lookup, then switch modes
-        					if(this.is_new){
-        						this.changeToEditMode();
-        					}
-        					
-        					// Update the lookup backup list
-        					if(success){
-        						this.loadLookupBackupsList(this.lookup, this.namespace, this.owner);
-        					}
-        				}.bind(this),
-        				
-        				error: function(jqXHR,textStatus,errorThrown) {
-        					console.log("Lookup file not saved");
-        					this.showWarningMessage("Lookup file could not be saved");
-        				}.bind(this)
-        				
-        			}
-        	);
-        	
         	return false;
         },
         
@@ -1255,6 +1323,22 @@ define([
         },
         
         /**
+         * Add some empty rows to the lookup data.
+         */
+        addEmptyRows: function(data, column_count, row_count){
+        	var row =[];
+        	
+        	for(var c = 0; c < column_count; c++){
+        		row.push([]);
+        	}
+        	
+        	for(c = 0; c < row_count; c++){
+        		data.push(row);
+        	}
+        	
+        },
+        
+        /**
          * Render the lookup.
          */
         renderLookup: function(data){
@@ -1274,7 +1358,7 @@ define([
 	    					'row_above': {
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
-	    				            return this.read_only || $("#lookup-table").data('handsontable').getSelected()[0] === 0;
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
 	    				        }
 	    					},
 	    					'row_below': {
@@ -1286,7 +1370,7 @@ define([
 	    					'remove_row': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
 	    				        }
 	    					},
 	    					'hsep2': "---------",
@@ -1314,6 +1398,11 @@ define([
         		$("#lookup-table").addClass('csv-lookup');
         	}
         	
+        	// Make sure some empty rows exist if it is empty
+        	if(data.length === 1){
+        		this.addEmptyRows(data, data[0].length, 5);
+        	}
+        	
         	// Make the handsontable instance
         	$("#lookup-table").handsontable({
         		  data: this.lookup_type === "kv" ? data.slice(1) : data,
@@ -1326,6 +1415,7 @@ define([
         		  columns: columns,
         		  rowHeaders: true,
         		  fixedRowsTop: this.lookup_type === "kv" ? 0 : 1,
+        		  height: function(){ return $(window).height() - 320; }, // Set the window height so that the user doesn't have to scroll to the bottom to set the save button
         		  
         		  stretchH: 'all',
         		  manualColumnResize: true,
@@ -1505,7 +1595,6 @@ define([
         		this.is_new = true;
         	}
         	
-        	
         	// Render the HTML content
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
@@ -1544,9 +1633,6 @@ define([
         	
         	// Setup the handlers so that we can make the view support drag and drop
             this.setupDragDropHandlers();
-            
-        	// Set the window height so that the user doesn't have to scroll to the bottom to set the save button
-        	$('#lookup-table').height($(window).height() - 320);
         	
         	// If we are editing an existing KV lookup, then get the information about the lookup and _then_ get the lookup data
         	if(this.lookup_type === "kv" && !this.is_new){
@@ -1594,6 +1680,20 @@ define([
 	                	this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type);
 	                }.bind(this)
 	        	});
+        	}
+        	
+        	// If we are making an new KV lookup, then show the form that allows the user to define the meta-data
+        	else if(this.lookup_type === "kv" && this.is_new){
+        		
+        		this.kv_store_fields_editor = new KVStoreFieldEditor({
+        			'el' : $('#lookup-kv-store-edit', this.$el)
+        		});
+        		
+        		this.kv_store_fields_editor.render();
+        		
+        		$('#lookup-kv-store-edit', this.$el).show();
+        		$('#save', this.$el).show();
+        		$('#lookup-table', this.$el).hide();
         	}
         	
         	// If this is a new lookup, then show default content accordingly

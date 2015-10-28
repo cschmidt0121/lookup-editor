@@ -97,8 +97,10 @@
 
 <div id="lookup-table" class="editing-content"></div>
 
-<% if(lookup_type === "csv"){ %>
-<button class="btn active btn-primary pull-right editing-content" id="save">Save Lookup</button>
-<% } %>
+<div id="lookup-kv-store-edit" class="hide editing-content"></div>
+
+
+<button class="btn active btn-primary pull-right editing-content" id="save" <% if(lookup_type !== "csv"){ %>hide<% } %>>Save Lookup</button>
+
 
 <% } %>

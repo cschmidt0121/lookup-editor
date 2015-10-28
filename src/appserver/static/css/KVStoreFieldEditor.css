@@ -1,0 +1,20 @@
+#kv-store-field-name{
+	display: inline-block;
+}
+
+#kv-store-fields{
+	margin-left: 16px;
+}
+
+.add-additional-field{
+	margin-left: 16px;
+}
+
+.KVStoreFieldEditor > div{
+	margin-left: 16px;
+	margin-top: 32px;
+}
+
+.KVStoreFieldEditor > h3{
+	font-weight: normal;
+}
