@@ -578,7 +578,10 @@ define([
         				this.owner = owner;
         				this.lookup_type = "kv";
         				
-        				this.kv_store_fields_editor.modifyKVStoreLookupSchema(this.namespace, this.lookup);
+        				this.kv_store_fields_editor.modifyKVStoreLookupSchema(this.namespace, this.lookup, 'nobody', function(){
+        					this.showInfoMessage("Lookup created successfully");
+        					document.location = "?lookup=" + lookup_file + "&owner=" + owner + "&type=kv&namespace=" + namespace;
+        				}.bind(this));
         			  
         			}.bind(this),
         		  
@@ -1329,11 +1332,11 @@ define([
         	var row =[];
         	
         	for(var c = 0; c < column_count; c++){
-        		row.push([]);
+        		row.push('');
         	}
         	
         	for(c = 0; c < row_count; c++){
-        		data.push(row);
+        		data.push($.extend(true, [], row));
         	}
         	
         },
@@ -1642,7 +1645,7 @@ define([
 	        	
 	        	this.lookup_config.fetch({
 	        		// e.g. servicesNS/nobody/lookup_editor/storage/collections/config/test
-	        		url: splunkd_utils.fullpath(['/servicesNS', this.owner, this.namespace, 'storage/collections/config', this.lookup].join('/')),
+	        		url: splunkd_utils.fullpath(['/servicesNS', 'nobody', this.namespace, 'storage/collections/config', this.lookup].join('/')), // For some reason using the actual owner causes this call to fail
 	                success: function(model, response, options) {
 	                    console.info("Successfully retrieved the information about the KV store lookup");
 	                    

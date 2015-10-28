@@ -92,11 +92,15 @@ define([
         /**
          * Modify the KV store collection schema
          */
-        modifyKVStoreLookupSchema: function(namespace, lookup_file, owner){
+        modifyKVStoreLookupSchema: function(namespace, lookup_file, owner, success_callback){
         	
-        	// Set a default value for the owner
+        	// Set a default value for the owner and callback
         	if( typeof owner == 'undefined' ){
         		owner = 'nobody';
+        	}
+        	
+        	if( typeof success_callback == 'undefined' ){
+        		success_callback = null;
         	}
         	
         	// Make the data that will be posted to the server
@@ -123,6 +127,12 @@ define([
         				this.namespace = namespace;
         				this.owner = owner;
         				this.lookup_type = "kv";
+        				
+        				// Run the success callback if one is defined
+        				if(success_callback){
+        					success_callback();
+        				}
+        				
         			  
         			}.bind(this),
         		  
