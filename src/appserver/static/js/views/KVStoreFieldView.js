@@ -38,7 +38,8 @@ define([
         },
         
         events: {
-        	"click .kv-store-field-remove" : "doRemoveField"
+        	"click .kv-store-field-remove" : "doRemoveField",
+        	"change #kv-store-field-name" : "doChangeField"
         },
         
         // Backbone.trigger("field_mapping:selected", this.unique_identifier);
@@ -49,6 +50,10 @@ define([
         	this.field_name = this.options.field_name;
         	this.show_remove = this.options.show_remove;
         	this.unique_identifier = this.options.unique_identifier;
+        },
+        
+        doChangeField: function(){
+        	Backbone.trigger("kv_field:changed", this.unique_identifier);
         },
         
         hasFieldName: function(){

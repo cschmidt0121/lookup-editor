@@ -116,6 +116,9 @@ define([
         	this.info_message_posted_time = null;
         	
         	setInterval(this.hideInfoMessageIfNecessary.bind(this), 1000);
+        	
+        	// Listen to changes in the KV field editor so that the validation can be refreshed
+        	this.listenTo(Backbone, "kv_field:changed", this.validateForm.bind(this));
         },
         
         events: {
