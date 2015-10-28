@@ -591,12 +591,19 @@ define([
         					console.info('Inadequate permissions');
         					this.showWarningMessage("You do not have permission to make a KV store collection", true);
         				}
+        				else if( jqXHR.status == 409){
+        					console.info('Lookup name already exists');
+        					$('#lookup-name-control-group', this.$el).addClass('error');
+        	        		this.showWarningMessage("Lookup name already exists, please select another");
+        				}
+        				
+        				this.setSaveButtonTitle();
         			  
         			}.bind(this),
         		  
         			// Handle errors
         			error: function(jqXHR, textStatus, errorThrown){
-        				if( jqXHR.status != 403 ){
+        				if( jqXHR.status != 403 && jqXHR.status != 409 ){
         					console.info('KV store collection creation failed');
         					this.showWarningMessage("The KV store collection could not be created", true);
         				}
