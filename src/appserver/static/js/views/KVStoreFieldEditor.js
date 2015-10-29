@@ -32,7 +32,7 @@ define([
         className: "KVStoreFieldEditor",
         
         defaults: {
-        	
+        	'default_field_count' : 5 // This dictates the number of default fields to show when creating a new lookup
         },
         
         events: {
@@ -44,6 +44,8 @@ define([
         	
         	this.field_views = [];
         	this.field_counter = 0;
+        	
+        	this.default_field_count = this.options.default_field_count;
         	
         	this.listenTo(Backbone, "kv_field:remove", this.removeField.bind(this));
         },
@@ -177,13 +179,18 @@ define([
         		
         	}));
         	
-        	var fields = {
-        		'' : 'string'
-        	};
+        	var fields = {};
         	
         	// Add an entry for each of the fields
-        	for(field in fields){
+        	for(var field in fields){
         		this.addFieldView(field, fields[field]);
+        	}
+        	
+        	// Add some default fields if necessary
+        	if(this.field_views.length === 0){
+        		for(var c = 0; c < this.default_field_count; c++){
+        			this.addFieldView('', 'string');
+        		}
         	}
         	
         }
