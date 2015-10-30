@@ -327,7 +327,10 @@ define([
         				
         		};
         		
-        		lookups_json.push(new_entry);
+        		// Don't include KMZ files
+        		if(!this.csv_lookups.models[c].entry.attributes.name.endsWith(".kmz")){
+        			lookups_json.push(new_entry);
+        		}
         	}
         	
         	// Add the KV store lookups
