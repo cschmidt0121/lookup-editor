@@ -1471,15 +1471,12 @@ define([
          */
         renderLookup: function(data){
         	
-        	// If we are editing a CSV, use these menu options
-        	var contextMenu = {
-      			items: ['row_above', 'row_below', '---------', 'col_left', 'col_right', '---------', 'remove_row', 'remove_col', '---------', 'undo', 'redo']
-    		};
-        	
         	// Store the table header so that we can determine the relative offsets of the fields
         	this.table_header = data[0];
     		
     		// If we are editing a KV store lookup, use these menu options
+        	var contextMenu = null;
+        		
         	if(this.lookup_type === "kv"){
 	    		contextMenu = {
 	    				items: {
@@ -1515,8 +1512,65 @@ define([
 	    				}
 	    		}
         	}
+        	else{
+	    		contextMenu = {
+	    				items: {
+	    					'row_above': {
+	    						disabled: function () {
+	    				            // If read-only or the first row, disable this option
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
+	    				        }
+	    					},
+	    					'row_below': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					"hsep1": "---------",
+	    					'col_left': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'col_right': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'hsep2': "---------",
+	    					'remove_row': {
+	    						disabled: function () {
+	    							// If read-only or the first row, disable this option
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'remove_col': {
+	    						disabled: function () {
+	    							// If read-only or the first row, disable this option
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'hsep3': "---------",
+	    					'undo': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					},
+	    					'redo': {
+	    						disabled: function () {
+	    				            return this.read_only;
+	    				        }
+	    					}
+	    				}
+	    		}
+        	}
         	
-        	var columns = this.getColumnsMetadata();
+        	// Get the columns information for KV store lookups
+        	var columns = null;
+        	
+        	if(this.lookup_type === "kv"){
+        		columns = this.getColumnsMetadata();
+        	}
         	
         	// Put in a class name so that the styling can be done by the type of the lookup
         	if(this.lookup_type === "kv"){
@@ -1598,7 +1652,6 @@ define([
         		  afterRemoveCol: function(index, amount){
         			  if(this.countCols() == 0){
         				  alert("You must have at least one cell to have a valid lookup");
-        				  //this.renderLookup( [ [""] ] );
         			  }
         		  },
         		  
