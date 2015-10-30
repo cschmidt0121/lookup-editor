@@ -442,6 +442,13 @@ define([
          */
         importFile: function(evt){
         	
+        	// Stop if this is a KV collection; importing isn't yet supported
+        	if(this.lookup_type !== "csv"){
+        		this.showWarningMessage("Drag & drop importing on KV store lookups is not currently supported");
+        		console.info("Drag and dropping on a KV store lookup being ignored");
+        		return false;
+        	}
+        	
         	// Stop if the browser doesn't support processing files in Javascript
         	if(!window.FileReader){
         		alert("Your browser doesn't support file reading in Javascript; thus, I cannot parse your uploaded file");
