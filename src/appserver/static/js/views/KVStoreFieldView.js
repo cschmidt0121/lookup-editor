@@ -68,6 +68,23 @@ define([
         	return $('#kv-store-field-type', this.$el).val();
         },
         
+        /**
+         * Show an error message
+         */
+        showErrorMessage: function(message){
+        	$('.kv-store-field', this.$el).addClass('error');
+        	$('.help-inline', this.$el).text(message);
+        },
+        
+        /**
+         * Hide the error message dialog.
+         */
+        hideErrorMessage: function(){
+        	$('.kv-store-field', this.$el).removeClass('error');
+        	$('.help-inline', this.$el).text('');
+        	
+        },
+        
         render: function () {
         	
         	this.$el.html(_.template(Template, {

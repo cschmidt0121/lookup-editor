@@ -55,14 +55,113 @@ define([
          */
         validate: function(){
         	
-        	// Make sure that a field is defined
+        	/*
+        	 * Check to make sure at least one field is defined.
+        	 */
+        	var has_field_defined = false;
+        	
+        	// Make sure that a field is defined (and clear any validation errors while your at it)
         	for(var c = 0; c < this.field_views.length; c++){
         		if(this.field_views[c].hasFieldName()){
-        			return true;
+        			has_field_defined = true;
+        		}
+        		
+        		// Let's hide the error message, we will post another one if we need to
+        		this.field_views[c].hideErrorMessage();
+        	}
+        	
+        	if(!has_field_defined){
+        		return "At least one field needs to be defined";
+        	}
+        	
+        	/* Make sure that the user doesn't attempt to use a field that is the parent of one of the other fields.
+        	 * 
+        	 * For example, the following fields could not be a valid collection:
+        	 *    
+        	 *    field.car = string
+        	 *    field.car.model = string
+        	 *    field.car.make = string
+        	 *    
+        	 * That cannot be used because there is no way to have a value for "car" since its value is it's children. The JSON will look like this:
+        	 * 
+        	 *    "car":{
+        	 * 			"model": "Focus ST",
+        	 * 			"make": "Ford"
+        	 * 	  }
+        	 * 
+        	 * We need to make sure that none of the lineages are field names.
+        	 */
+        	// 
+        	
+        	// Make a list of lineages. If any field tries to use one of these, then it is invalid.
+        	var lineages = [];
+        	var lineage = null;
+        	var lineage_partial = null;
+        	
+        	for(c = 0; c < this.field_views.length; c++){
+        		if(this.field_views[c].hasFieldName()){
+        			
+        			// Rebuild the lineage but without the final entry (e.g. make "car.model.sub_model" just "car.model"
+        			lineage = this.field_views[c].getFieldName().split(".").slice(0, -1);
+        			
+        			lineage_partial = null;
+        			
+        			for(var d = 0; d < lineage.length; d++){
+        				
+        				if(lineage_partial === null){
+        					lineage_partial = lineage[d];
+        				}
+        				else{
+        					lineage_partial = lineage_partial + "." + lineage[d];
+        				}
+        				
+        				// Add the lineage to the list
+        				lineages.push(lineage_partial);
+        			}
         		}
         	}
         	
-        	return "At least one field needs to be defined";
+        	// Now check the fields and make sure none match any of the lineages
+        	var lineages_error = false;
+        	
+        	for(c = 0; c < this.field_views.length; c++){
+        		
+        		for(var d = 0; d < lineages.length; d++){
+        			if(lineages[d] === this.field_views[c].getFieldName()){
+        				this.field_views[c].showErrorMessage("This field's name cannot co-exist with another field that has '" + lineages[d] + '" in its name');
+        				lineages_error = true;
+        				return 'The field "' + this.field_views[c].getFieldName() + '" cannot be used';
+        			}
+        		}
+        	}
+        	
+        	
+        	/*
+        	 * Make sure we don't have multiple of the same field
+        	 */
+        	var duplicate_name_error = false;
+        	
+        	for(c = 0; c < this.field_views.length; c++){
+        		
+        		for(var d = 0; d < this.field_views.length; d++){
+        			
+        			// Don't compare the item to itself, don't compare if one is blank, otherwise, compare away!
+        			if(c !== d && this.field_views[c].hasFieldName()){
+        				if( this.field_views[c].getFieldName() === this.field_views[d].getFieldName()){
+        					this.field_views[c].showErrorMessage("Another field has this name already");
+        					this.field_views[d].showErrorMessage("Another field has this name already");
+        					duplicate_name_error = true;
+        				}
+        			}
+        		}
+        	}
+        	
+        	if(duplicate_name_error){
+        		return "Fields cannot have the same name";
+        	}
+        	
+        	// No issues found, yay!
+        	return true;
         },
         
         /**
