@@ -98,6 +98,8 @@ define([
             
             this.kv_store_fields_editor = null;
             
+            this.forgiving_checkbox_editor = null;
+            
         	// Get the apps
         	this.apps = new Apps();
         	this.apps.on('reset', this.gotApps.bind(this), this);
@@ -1305,8 +1307,10 @@ define([
         		
         		column = {};
         		
+        		// Use a checkbox for the boolean
         		if(field_info === 'boolean'){
         			column['type'] = 'checkbox';
+        			column['editor'] = this.getCheckboxRenderer();
         		}
         		else if(field_info === 'time'){
         			//column['type'] = 'checkbox';
@@ -1364,6 +1368,32 @@ define([
         		data.push($.extend(true, [], row));
         	}
         	
+        },
+        
+        /**
+         * Get checkbox cell renderer that doesn't lock users out of fixing values that are invalid booleans.
+         */
+        getCheckboxRenderer: function(){
+        	
+        	// Return the existing checkbox editor
+        	if(this.forgiving_checkbox_editor !== null){
+        		return this.forgiving_checkbox_editor;
+        	}
+        	
+        	this.forgiving_checkbox_editor = Handsontable.editors.CheckboxEditor.prototype.extend();
+        	
+        	this.forgiving_checkbox_editor.prototype.prepare = function(row, col, prop, td, originalValue, cellProperties){
+        		
+        		// If the value is invalid, then set it to false and allow the user to edit it
+        		if(originalValue !== true && originalValue !== false){
+            		console.warn("This cell is not a boolean value, it will be populated with 'false', cell=(" + row + ", " + col + ")");
+            		$("#lookup-table").data('handsontable').setDataAtCell(row, col, false);
+        		}
+        		
+        		Handsontable.editors.CheckboxEditor.prototype.prepare.apply(this, arguments);
+        	};
+        	
+        	return this.forgiving_checkbox_editor;
         },
         
         /**
