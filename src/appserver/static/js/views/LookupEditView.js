@@ -178,6 +178,60 @@ define([
         },
         
         /**
+         * Get the field name for the column.
+         */
+        getFieldForColumn: function(col){
+        	
+        	var row_header = this.getTableHeader();
+        	
+        	return row_header[col];
+        },
+        
+        /**
+         * Get the table header.
+         */
+        getTableHeader: function(use_cached){
+        	
+        	// Assign a default argument to use_cached
+        	if(typeof use_cached === 'undefined'){
+        		use_cached = true;
+        	}
+        	
+        	// Use the cache if available
+        	if(use_cached && this.table_header !== null){
+        		return this.table_header;
+        	}
+        	
+        	// If the lookup is a CSV, then the first row is the header
+        	if(this.lookup_type === "csv"){
+        		this.table_header = handsontable.getDataAtRow(0);
+        	}
+        	// If the lookup is a KV store lookup, then ask handsontable for the header
+        	else{
+        		this.table_header = $("#lookup-table").data('handsontable').getColHeader();
+        	}
+        	
+        	return this.table_header;
+        },
+        
+        /**
+         * Get the column that has a given field name.
+         */
+        getColumnForField: function(field_name){
+        	
+        	var row_header = this.getTableHeader();
+        	
+        	for(var c = 0; c < row_header.length; c++){
+        		if(row_header[c] === field_name){
+        			return c;
+        		}
+        	}
+        	
+        	console.warn('Unable to find the field with the name "' + field_name + '"')
+        	return null;
+        },
+        
+        /**
          * Determine if the cell type is invalid for KV cells that have enforced data-types.
          */
         isCellTypeInvalid: function(row, col, value){
@@ -189,7 +243,7 @@ define([
         	
         	// Determine the type of the field
         	var handsontable = $("#lookup-table").data('handsontable');
-        	var row_header = this.table_header;
+        	var row_header = this.getTableHeader();
         	var field_name = row_header[col];
         	
         	// If we have a field type, then check it
@@ -223,6 +277,9 @@ define([
         	}
         	else if(!value || value === '') {
         		td.className = 'cellEmpty';
+        	}
+        	else if(this.getFieldForColumn(col) === "_key"){
+        		td.className = 'cellKey';
         	}
         	else if (parseFloat(value) < 0) { //if row contains negative number
         		td.className = 'cellNegative';
@@ -1087,7 +1144,12 @@ define([
         	
         	// First, we need to get the _key of the edited row
         	var row_data = handsontable.getDataAtRow(row);
-        	var _key = row_data[0];
+        	var _key = row_data[this.getColumnForField('_key')];
+        	
+        	if(_key === undefined){
+        		console.error("Unable to get the _key for editing the cell at (" + row + ", " + col + ")");
+        		return;
+        	}
         	
         	// Second, we need to get all of the data from the given row because we must re-post all of the cell data
         	var record_data = this.makeRowJSON(row);
@@ -1115,7 +1177,7 @@ define([
       		  		// If this is a new row, then populate the _key
       		  		if(!_key){
       		  			_key = data['_key'];
-      		  			handsontable.setDataAtCell(row, 0, _key, "key_update");
+      		  			handsontable.setDataAtCell(row, this.getColumnForField("_key"), _key, "key_update");
       		  			console.info('KV store entry creation completed for entry ' + _key);
       		  		}
       		  		else{
@@ -1223,7 +1285,7 @@ define([
         	var handsontable = $("#lookup-table").data('handsontable');
         	
         	// We need to get the row meta-data and the 
-        	var row_header = this.table_header;
+        	var row_header = this.getTableHeader();
         	var row_data = handsontable.getDataAtRow(row);
         	
         	// This is going to hold the data for the row
@@ -1264,7 +1326,7 @@ define([
       		  	success: function(data) {
       		  		// Update the _key values in the cells
       		  		for(var c=0; c < data.length; c++){
-      		  			handsontable.setDataAtCell(row + c, 0, data[c], "key_update")
+      		  			handsontable.setDataAtCell(row + c, this.getColumnForField("_key"), data[c], "key_update")
       		  		}
       		  		
       		  		this.hideWarningMessage();
@@ -1296,7 +1358,7 @@ define([
         getColumnsMetadata: function(){
         	
         	// Stop if we don't have the required data yet
-        	if(!this.table_header){
+        	if(!this.getTableHeader()){
         		console.warn("The table header is not available yet")
         	}
         	
@@ -1308,9 +1370,10 @@ define([
         	var columns = []; // This is going to have a single field by default for the _key field which is not included in the field-types
         	var field_info = null;
         	var column = null;
+        	var table_header = this.getTableHeader();
         	
-        	for(var c = 0; c < this.table_header.length; c++){
-        		field_info = this.field_types[this.table_header[c]];
+        	for(var c = 0; c < table_header.length; c++){
+        		field_info = this.field_types[table_header[c]];
         		
         		column = {};
         		
@@ -1537,7 +1600,12 @@ define([
         				  alert("You must have at least one cell to have a valid lookup");
         				  //this.renderLookup( [ [""] ] );
         			  }
-        		  }
+        		  },
+        		  
+        		  // Update the cached version of the table header
+        		  afterColumnMove: function(){
+        			  this.getTableHeader(false);
+        		  }.bind(this)
             });
         	
         	var handsontable = $("#lookup-table").data('handsontable');
