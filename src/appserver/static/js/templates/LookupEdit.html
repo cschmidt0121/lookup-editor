@@ -53,7 +53,7 @@
 				<div class="controls show-when-creating">
 					<div class="input input-text" id="lookup-name"></div>
 		        	<span class="hide help-inline"></span>
-		        	<span class="help-block">Generally ends with ".csv"</span>
+		        	<span class="help-block"><% if(lookup_type === "csv"){ %>Generally ends with ".csv"<% } else { %>Specifies the name of collection<% } %></span>
 				</div>
 			</span>
 			
@@ -64,7 +64,7 @@
 				<div class="controls show-when-creating">
 					<div class="input input-dropdown" id="lookup-app"></div>
 		        	<span class="hide help-inline"></span>
-		        	<span class="help-block">Specifies the app where the lookup file will reside</span>
+		        	<span class="help-block"><% if(lookup_type === "csv"){ %>Specifies the app where the lookup file will reside<% } else { %>Specifies the app where the collection will reside<% } %></span>
 				</div>
 			</span>
 	<% } %>
