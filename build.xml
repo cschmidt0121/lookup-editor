@@ -211,6 +211,13 @@
     </target>
     
     <!-- ================================= 
+          target: skip_bump
+         ================================= -->
+	<target name="skip_bump">
+		<property name="skip_bump">1</property>
+	</target>
+	
+    <!-- ================================= 
           target: deploy
          ================================= -->
     <target name="deploy" depends="splunk.bump_if_necessary,setup_tmp_directory_for_deployment,populate_export_dir" description="Deploys the app to an instance of Splunk" >
@@ -261,8 +268,17 @@
     <!-- ================================= 
           target: splunk.bump_if_necessary
          ================================= -->
-    <target name="splunk.bump_if_necessary" unless="appserver_up_to_date" depends="is_appserver_up_to_date">
-    	<antcall target="splunk.bump" />
+    <target name="splunk.bump_if_necessary" unless="appserver_up_to_date" depends="initialize_libraries,is_appserver_up_to_date">
+    	<if>
+    		<bool>
+    			<not>
+    				<isset property="skip_bump" />
+    			</not>
+    		</bool>
+    		<then>
+    			<antcall target="splunk.bump" />
+    		</then>
+    	</if>
     </target>
 	
     <!-- ================================= 
@@ -352,7 +368,7 @@
     <!-- ================================= 
           target: splunk.deploy_and_restart
          ================================= -->
-    <target name="splunk.deploy_and_restart" description="Deploys the application and restarts Splunk" depends="deploy,splunk.restart" />
+    <target name="splunk.deploy_and_restart" description="Deploys the application and restarts Splunk" depends="skip_bump,deploy,splunk.restart" />
 	
     <!-- ================================= 
           target: splunk.refresh
