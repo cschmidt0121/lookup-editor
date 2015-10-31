@@ -1,16 +1,38 @@
-<view template="dashboard.html" isDashboard="false">
-  
-  <label>Create New Lookup File</label>
-  
-  <module name="AccountBar" layoutPanel="appHeader"/>
-  <module name="AppBar" layoutPanel="navigationHeader"/>
-  <module name="Message" layoutPanel="messaging">
-    <param name="filter">*</param>
-    <param name="clearOnJobDispatch">False</param>
-    <param name="maxSize">2</param>
-  </module>
-  <module name="LookupFileEditor" layoutPanel="panel_row1_col1">
-    <param name="listView">lookup_list</param>
-  </module>
-
-</view>
+<dashboard stylesheet="lookup_new.css" isDashboard="false" isVisible="true" hideEdit="true">
+    <label>New Lookup</label>
+    
+    <row>
+        <html>
+			<div class="lookup-description">
+				<h2>CSV Lookup</h2>
+				<div class="description"> A lookup based upon a comma-separated file that can be edited or imported from Excel
+				<p />
+				Use a CSV lookup if:
+				<ul>
+					<li>Want to import from Excel or an existing CSV file</li>
+					<li>Want to maintain a revision history of user's edits to the file</li>
+				</ul>
+				</div>
+			</div>
+			<div class="lookup-link">
+				<a href="lookup_edit?action=new&amp;type=csv">Create CSV Lookup...</a>
+			</div>
+			
+			<div class="lookup-description">
+				<h2>Key-Value Store Lookup</h2>
+				<div class="description"> A lookup based upon the KV store; this lookup can be replicated between search-heads when using Search Head Clustering
+				<p />
+				Use a key-value store lookup if:
+				<ul>
+					<li>You are using Search Head Clustering and need the lookup to be replicated</li>
+					<li>You have a large lookup file</li>
+				</ul>
+				
+				</div>
+			</div>
+			<div class="lookup-link">
+				<a href="lookup_edit?action=new&amp;type=kv">Create KV Store Lookup...</a>
+			</div>
+        </html>
+    </row>
+</dashboard>
