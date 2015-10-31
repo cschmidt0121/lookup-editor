@@ -506,6 +506,12 @@ define([
         		return false;
         	}
         	
+        	// Stop if this is read-only
+        	if(this.read_only){
+        		console.info("Drag and dropping on a read-only lookup being ignored");
+        		return false;
+        	}
+        	
         	// Stop if the browser doesn't support processing files in Javascript
         	if(!window.FileReader){
         		alert("Your browser doesn't support file reading in Javascript; thus, I cannot parse your uploaded file");
@@ -1140,6 +1146,11 @@ define([
          */
         doEditCell: function(row, col, new_value){
         	
+        	// Stop if we are in read-only mode
+        	if(this.read_only){
+        		return;
+        	}
+        	
         	var handsontable = $("#lookup-table").data('handsontable');
         	
         	// First, we need to get the _key of the edited row
@@ -1209,6 +1220,11 @@ define([
          * Do the removal of a row (for KV store lookups since edits are dynamic).
          */
         doRemoveRow: function(row){
+        	
+        	// Stop if we are in read-only mode
+        	if(this.read_only){
+        		return;
+        	}
         	
         	var handsontable = $("#lookup-table").data('handsontable');
         	
@@ -1304,6 +1320,11 @@ define([
          * Do the creation of a row (for KV store lookups since edits are dynamic).
          */
         doCreateRows: function(row, count){
+        	
+        	// Stop if we are in read-only mode
+        	if(this.read_only){
+        		return;
+        	}
         	
         	var handsontable = $("#lookup-table").data('handsontable');
         	
@@ -1470,6 +1491,11 @@ define([
          * Render the lookup.
          */
         renderLookup: function(data){
+        	
+        	if(data === null){
+        		this.showWarningMessage("Lookup could not be loaded");
+        		return;
+        	}
         	
         	// Store the table header so that we can determine the relative offsets of the fields
         	this.table_header = data[0];
