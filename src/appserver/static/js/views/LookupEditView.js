@@ -788,9 +788,10 @@ define([
         			  if( jqXHR.status != 404 && jqXHR.status != 403 && jqXHR.status != 420 ){
         				  console.info('Lookup file could not be loaded');
         				  this.showWarningMessage("The lookup could not be loaded from the server", true);
-        				  this.read_only = true;
-        				  this.hideEditingControls();
         			  }
+        			  
+    				  this.read_only = true;
+    				  this.hideEditingControls();
         		  }.bind(this)
         	});
         },
