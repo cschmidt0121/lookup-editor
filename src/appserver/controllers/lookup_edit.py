@@ -92,6 +92,52 @@ def isEmpty( row ):
         
     return True
 
+def force_lookup_replication(app, filename, sessionKey, base_uri=None):
+    """
+    Force replication of a lookup table in a Search Head Cluster.
+    """
+
+    # Permit override of base URI in order to target a remote server.
+    endpoint = '/services/replication/configuration/lookup-update-notify'
+    
+    if base_uri:
+        repl_uri = base_uri + endpoint
+    else:
+        repl_uri = endpoint
+        
+    # Provide the data that describes the lookup
+    payload = {
+               'app': app,
+               'filename': os.path.basename(filename),
+               'user': 'nobody'
+    }
+    
+    # Perform the request
+    response, content = splunk.rest.simpleRequest(repl_uri, 
+        method='POST', 
+        postargs=payload, sessionKey=sessionKey, raiseAllErrors=False)
+
+    # Analyze the response
+    if response.status == 400:
+        if 'No local ConfRepo registered' in content:
+            # search head clustering not enabled
+            logger.info('Lookup table replication not applicable for %s: clustering not enabled', filename)
+            return (True, response.status, content)
+        elif 'Could not find lookup_table_file' in content:
+            logger.error('Lookup table replication failed for %s: status_code="%s", content="%s"', filename, response.status, content)
+            return (False, response.status, content)
+        else:
+            # Previously unforeseen 400 error.
+            logger.error('Lookup table replication failed for %s: status_code="%s", content="%s"', filename, response.status, content)
+            return (False, response.status, content)
+        
+    elif response.status != 200:
+        return (False, response.status, content)
+    
+    # Return a default response
+    logger.info('Lookup table replication forced for %s', filename)
+    return (True, response.status, content)
+
 class LookupEditor(controllers.BaseController):
     '''
     Lookup Editor Controller
@@ -399,6 +445,9 @@ class LookupEditor(controllers.BaseController):
                 return self.render_error_json(_(str(e)))
                 
             logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
+            
+        # Tell the SHC environment to replicate the tile
+        force_lookup_replication(namespace, lookup_file, session_key)
      
     def render_error_json(self, msg):
         output = jsonresponse.JsonResponse()
@@ -687,6 +736,7 @@ class LookupEditor(controllers.BaseController):
                                      'message': 'Lookup file is too large to load (file-size must be less than 10 MB to be edited)',
                                      'file_size' : e.file_size
                                      })
+            
         
     @expose_page(must_login=True, methods=['GET']) 
     def get_lookup_header(self, lookup_file, namespace="lookup_editor", owner=None, **kwargs):
