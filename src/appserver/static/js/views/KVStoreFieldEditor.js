@@ -228,6 +228,9 @@ define([
         		}
         	}
         	
+        	// Enable replication by default
+        	data['replicate'] = 'true';
+        	
         	// Perform the call
         	$.ajax({
         			url: splunkd_utils.fullpath(['/servicesNS', owner, namespace, 'storage/collections/config', lookup_file].join('/')),
