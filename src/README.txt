@@ -67,4 +67,5 @@ Change History
 |         |   * Support for KV store lookups                                                                                 |
 |         |   * Refreshed UI style                                                                                           |
 |         |   * Dropped Splunk 5.0 support                                                                                   |
+|         |   * CSV lookups are now replicated (SHC support)                                                                 |
 +---------+------------------------------------------------------------------------------------------------------------------+
