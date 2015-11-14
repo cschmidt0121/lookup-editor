@@ -271,7 +271,13 @@ define([
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
         	td.innerHTML = value;
-
+        	
+        	var is_a_string = false;
+        	
+        	if(value){
+        		is_a_string = (typeof value.toLowerCase === 'function');
+        	}
+        	
         	if(row !== 0 && this.isCellTypeInvalid(row, col, value)) { // Cell type is incorrect
         		td.className = 'cellInvalidType';
         	}
@@ -290,31 +296,31 @@ define([
         	else if (parseFloat(value) > 0) { //if row contains positive number
         		td.className = 'cellPositive';
         	}
-        	else if(row === 0) {
+        	else if(row === 0 && this.lookup_type === 'csv') {
         		td.className = 'cellHeader';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'true') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'true') {
         		td.className = 'cellTrue';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() ==='false') {
+        	else if(value !== null && is_a_string && value.toLowerCase() ==='false') {
         		td.className = 'cellFalse';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'unknown') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'unknown') {
         		td.className = 'cellUrgencyUnknown';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'informational') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'informational') {
         		td.className = 'cellUrgencyInformational';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'low') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'low') {
         		td.className = 'cellUrgencyLow';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'medium') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'medium') {
         		td.className = 'cellUrgencyMedium';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'high') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'high') {
         		td.className = 'cellUrgencyHigh';
         	}
-        	else if(value !== null && value.hasOwnProperty('toLowerCase') && value.toLowerCase() === 'critical') {
+        	else if(value !== null && is_a_string && value.toLowerCase() === 'critical') {
         		td.className = 'cellUrgencyCritical';
         	}
         	else {
