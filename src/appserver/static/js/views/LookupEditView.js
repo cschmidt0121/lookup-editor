@@ -49,7 +49,7 @@ define([
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
-	    url: "apps/local",
+	    url: "apps/local?count=-1",
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }

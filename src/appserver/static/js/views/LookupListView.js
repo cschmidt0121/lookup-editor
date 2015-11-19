@@ -38,21 +38,21 @@ define([
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
-	    url: "apps/local",
+	    url: "apps/local?count=-1",
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
 	});
 	
 	var CSVLookups = SplunkDsBaseCollection.extend({
-		url: 'data/lookup-table-files',
+		url: 'data/lookup-table-files?count=-1',
 		initialize: function() {
 			SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 		}
 	});
 	
 	var KVLookups = SplunkDsBaseCollection.extend({
-	    url: '/servicesNS/nobody/lookup_editor/storage/collections/config',
+	    url: '/servicesNS/nobody/lookup_editor/storage/collections/config?count=-1',
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
