@@ -47,7 +47,7 @@ def setup_logger(level):
     logger.addHandler(file_handler)
     return logger
 
-logger = setup_logger(logging.DEBUG)
+logger = setup_logger(logging.INFO)
 
 from splunk.models.base import SplunkAppObjModel
 from splunk.models.field import BoolField, Field
@@ -568,7 +568,7 @@ class LookupEditor(controllers.BaseController):
             #lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
             
-        logger.debug('Resolved lookup file, file=%s', lookup_path)
+        logger.info('Resolved lookup file, path=%s', lookup_path)
             
         # Get the file path
         if get_default_csv and not os.path.exists(lookup_path) and os.path.exists(lookup_path_default):
@@ -660,6 +660,7 @@ class LookupEditor(controllers.BaseController):
         """
         
         logger.debug("Version is:" + str(version))
+        
         # Get the user's name and session
         user = cherrypy.session['user']['name'] 
         session_key = cherrypy.session.get('sessionKey')
@@ -674,12 +675,14 @@ class LookupEditor(controllers.BaseController):
             
             try:
                 file_size = os.path.getsize(file_path)
-                logger.debug('file_size=%s', file_size)
+                logger.info('Size of lookup file determined, file_size=%s, path=%s', file_size, file_path)
                 if file_size > LookupEditor.MAXIMUM_EDITABLE_SIZE:
                     raise LookupFileTooBigException(file_size)
             
             except os.error:
                 logger.exception("Exception generated when attempting to determine size of requested lookup file")
+        
+        logger.info("Loading lookup file from path=%s", file_path)
         
         # Get the file handle
         return open(file_path, 'rb')
@@ -690,7 +693,11 @@ class LookupEditor(controllers.BaseController):
         Provides the contents of a lookup file as JSON.
         """
         
-        logger.debug("Retrieving lookup contents, namespace=%s, lookup=%s, type=%s, owner=%s, version=%s", namespace, lookup_file, lookup_type, owner, version)
+        logger.info("Retrieving lookup contents, namespace=%s, lookup=%s, type=%s, owner=%s, version=%s", namespace, lookup_file, lookup_type, owner, version)
+                        
+        if lookup_type is None or len(lookup_type) == '':
+            lookup_type = "csv"
+            logger.warning("No type for the lookup provided when attempting to load a lookup file, it will default to CSV")
         
         if header_only in ["1", "true", 1, True]:
             header_only = True
