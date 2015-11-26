@@ -9,6 +9,7 @@ import re
 import time
 import datetime
 import StringIO # For converting KV store array data to CSV for export
+import cgi # For escaping lookup contents
 
 from splunk import AuthorizationFailed, ResourceNotFound
 import splunk.rest
@@ -727,7 +728,8 @@ class LookupEditor(controllers.BaseController):
                         if header_only:
                             break
                     
-                    return self.render_json(lookup_contents)
+                    # Handsontable doesn't escape content correctly; escape it. http://lukemurphey.net/issues/1125
+                    return cgi.escape(self.render_json(lookup_contents))
             
         except IOError:
             cherrypy.response.status = 404
