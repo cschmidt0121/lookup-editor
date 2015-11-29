@@ -728,8 +728,7 @@ class LookupEditor(controllers.BaseController):
                         if header_only:
                             break
                     
-                    # Handsontable doesn't escape content correctly; escape it. http://lukemurphey.net/issues/1125
-                    return cgi.escape(self.render_json(lookup_contents))
+                    return self.render_json(lookup_contents)
             
         except IOError:
             cherrypy.response.status = 404

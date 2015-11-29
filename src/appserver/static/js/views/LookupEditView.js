@@ -500,6 +500,15 @@ define([
             this.importFile(evt);
         },
         
+	     /* 
+	      * Use the browser's built-in functionality to quickly and safely escape a string of HTML.
+	      */
+	     escapeHtml: function(str) {
+	         var div = document.createElement('div');
+	         div.appendChild(document.createTextNode(str));
+	         return div.innerHTML;
+	     },
+        
         /**
          * Import the given file into the lookup.
          */
@@ -1390,15 +1399,29 @@ define([
         		console.warn("The table header is not available yet")
         	}
         	
+        	// IF this is a CSV lookup, then add a column renderer to excape the content
+        	var table_header = this.getTableHeader();
+        	var column = null;
+        	var columns = []; 
+        	
+        	if(this.lookup_type === "csv"){
+        		for(var c = 0; c < table_header.length; c++){
+        			columns.push({
+        				'renderer': this.escapeHtmlRenderer.bind(this)
+        			});
+        		}
+        		
+        		return columns;
+        	}
+        	
+        	// Stop if we didn't get the types necessary
         	if(!this.field_types){
         		console.warn("The table field types are not available yet")
         	}
         	
         	// This variable will contain the meta-data about the columns
-        	var columns = []; // This is going to have a single field by default for the _key field which is not included in the field-types
+        	// Columns is going to have a single field by default for the _key field which is not included in the field-types
         	var field_info = null;
-        	var column = null;
-        	var table_header = this.getTableHeader();
         	
         	for(var c = 0; c < table_header.length; c++){
         		field_info = this.field_types[table_header[c]];
@@ -1412,6 +1435,10 @@ define([
         		}
         		else if(field_info === 'time'){
         			//column['type'] = 'checkbox';
+        			column['renderer'] = this.escapeHtmlRenderer.bind(this);
+        		}
+        		else{
+        			column['renderer'] = this.escapeHtmlRenderer.bind(this);
         		}
         		
         		columns.push(column);
@@ -1492,6 +1519,17 @@ define([
         	};
         	
         	return this.forgiving_checkbox_editor;
+        },
+        
+        /**
+         * Escape HTML content
+         */
+        escapeHtmlRenderer: function(instance, td, row, col, prop, value, cellProperties) {
+        	//console.warn("Here");
+            //escaped = strip_tags(escaped, '<em><b><strong><a><big>'); //be sure you only allow certain HTML tags to avoid XSS threats (you should also remove unwanted HTML attributes)
+            td.innerHTML = this.escapeHtml(Handsontable.helper.stringify(value));
+
+            return td;
         },
         
         /**
@@ -1600,10 +1638,7 @@ define([
         	
         	// Get the columns information for KV store lookups
         	var columns = null;
-        	
-        	if(this.lookup_type === "kv"){
-        		columns = this.getColumnsMetadata();
-        	}
+        	columns = this.getColumnsMetadata();
         	
         	// Put in a class name so that the styling can be done by the type of the lookup
         	if(this.lookup_type === "kv"){
