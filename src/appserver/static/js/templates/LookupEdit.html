@@ -87,7 +87,7 @@
 			<% } else { %>
 			<div class="modification-time-holder">
 				<i class="icon-circle-filled hide"></i>
-				<span id="modification-time"></span>
+				<span id="modification-time">(changes automatically saved in real-time)</span>
 			</div>
 			<% } %>
 		</div>
@@ -101,6 +101,5 @@
 
 
 <button class="btn active btn-primary pull-right editing-content <% if(lookup_type === "kv" && !is_new ){ %>hide<% } %>" id="save">Save Lookup</button>
-
 
 <% } %>
