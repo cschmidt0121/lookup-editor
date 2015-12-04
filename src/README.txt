@@ -72,4 +72,8 @@ Change History
 | 2.0.1   | Workaround for XSS issue in Handsontable plugin                                                                  |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 2.0.2   | Eliminating XSS issue on file import                                                                             |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.0.3   | Fixing compatibility issue with IE 11                                                                            |
+|         | Adding text to make it clear that KV store lookups will be automatically saved                                   |
+|         | Fixing issue where the renderer was not styling the cells correctly                                              |
 +---------+------------------------------------------------------------------------------------------------------------------+
