@@ -270,7 +270,7 @@ define([
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
-        	td.innerHTML = value;
+        	td.innerHTML = this.escapeHtml(value);
         	
         	var is_a_string = false;
         	
@@ -1404,16 +1404,6 @@ define([
         	var column = null;
         	var columns = []; 
         	
-        	if(this.lookup_type === "csv"){
-        		for(var c = 0; c < table_header.length; c++){
-        			columns.push({
-        				'renderer': this.escapeHtmlRenderer.bind(this)
-        			});
-        		}
-        		
-        		return columns;
-        	}
-        	
         	// Stop if we didn't get the types necessary
         	if(!this.field_types){
         		console.warn("The table field types are not available yet")
@@ -1435,10 +1425,6 @@ define([
         		}
         		else if(field_info === 'time'){
         			//column['type'] = 'checkbox';
-        			column['renderer'] = this.escapeHtmlRenderer.bind(this);
-        		}
-        		else{
-        			column['renderer'] = this.escapeHtmlRenderer.bind(this);
         		}
         		
         		columns.push(column);
@@ -1638,11 +1624,11 @@ define([
         	
         	// Get the columns information for KV store lookups
         	var columns = null;
-        	columns = this.getColumnsMetadata();
         	
         	// Put in a class name so that the styling can be done by the type of the lookup
         	if(this.lookup_type === "kv"){
         		$("#lookup-table").addClass('kv-lookup');
+        		columns = this.getColumnsMetadata();
         	}
         	else{
         		$("#lookup-table").addClass('csv-lookup');
