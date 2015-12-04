@@ -328,7 +328,7 @@ define([
         		};
         		
         		// Don't include KMZ files
-        		if(!this.csv_lookups.models[c].entry.attributes.name.endsWith(".kmz")){
+        		if(!this.endsWith(this.csv_lookups.models[c].entry.attributes.name, ".kmz")){
         			lookups_json.push(new_entry);
         		}
         	}
