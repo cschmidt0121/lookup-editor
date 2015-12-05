@@ -130,12 +130,8 @@ define([
         	"click #choose-import-file" : "chooseImportFile",
         	"click #import-file" : "openFileImportModal",
         	"change #import-file-input" : "importFile",
-        	//"dragover #drop-zone" : "onDragFile",
         	"dragenter #lookup-table" : "onDragFileEnter",
-        	"dragleave #lookup-table": "onDragFileEnd",
-        	//"dragenter #drop-zone" : "onDragFileEnter",
-        	//"dragenter #drop-zone" : "onDragFileEnd",
-        	//"drop #drop-zone" : "onDropFile"
+        	"dragleave #lookup-table": "onDragFileEnd"
         },
         
         /**
