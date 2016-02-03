@@ -45,7 +45,8 @@ define([
 	});
 	
 	var CSVLookups = SplunkDsBaseCollection.extend({
-		url: 'data/lookup-table-files?count=-1',
+		//url: 'data/lookup-table-files?count=-1',
+		url: '/servicesNS/' + Splunk.util.getConfigValue("USERNAME") + '/lookup_editor/data/lookup-table-files?count=-1',
 		initialize: function() {
 			SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 		}
