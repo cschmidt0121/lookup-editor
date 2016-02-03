@@ -481,14 +481,15 @@ class LookupEditor(controllers.BaseController):
         """
         
         lookup_type = kwargs.get("type", "csv")
+        owner = kwargs.get("owner", None)
         
-        logger.info("Exporting lookup, namespace=%s, lookup=%s, type=%s, owner=%s", namespace, lookup_file, lookup_type, None)
+        logger.info("Exporting lookup, namespace=%s, lookup=%s, type=%s, owner=%s", namespace, lookup_file, lookup_type, owner)
         
         try:
             
             # If we are getting the CSV, then just pipe the file to the user
             if lookup_type == "csv":
-                with self.get_lookup(lookup_file, namespace, None) as f:
+                with self.get_lookup(lookup_file, namespace, owner) as f:
                     csvData = f.read()
                 
             # If we are getting a KV store lookup, then convert it to a CSV file
