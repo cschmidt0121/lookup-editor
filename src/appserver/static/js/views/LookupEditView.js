@@ -25,6 +25,7 @@ define([
     "splunkjs/mvc/simplesplunkview",
     "splunkjs/mvc/simpleform/input/text",
     "splunkjs/mvc/simpleform/input/dropdown",
+    "splunkjs/mvc/simpleform/input/checkboxgroup",
     "text!../app/lookup_editor/js/templates/LookupEdit.html",
     "kv_store_field_editor",
     "csv",
@@ -44,6 +45,7 @@ define([
     SimpleSplunkView,
     TextInput,
     DropdownInput,
+    CheckboxGroupInput,
     Template,
     KVStoreFieldEditor
 ){
@@ -1026,7 +1028,7 @@ define([
 	        			namespace   : this.namespace,
 	        			contents    : json
 	        	};
-	
+	        	
 	        	// If a user was defined, then pass the name as a parameter
 	        	if(this.owner !== null){
 	        		data["owner"] = this.owner;
@@ -1063,6 +1065,11 @@ define([
 		        		$("#lookup_namespace_error").show();
 		        		this.setSaveButtonTitle();
 		        		return false;
+		        	}
+		        	
+		        	// Set the owner if the user wants a user-specific lookup
+		        	if($.inArray('user_only', mvc.Components.getInstance("lookup-user-only").val()) >= 0){
+		        		data["owner"] = Splunk.util.getConfigValue("USERNAME");
 		        	}
 		        }
 	
@@ -1865,6 +1872,19 @@ define([
                 app_dropdown.on("change", function(newValue) {
                 	this.validateForm();
                 }.bind(this));
+                
+                
+                // Make the user-only lookup checkbox
+                var user_only_checkbox = new CheckboxGroupInput({
+		            "id": "lookup-user-only",
+		            "choices": [{label:"User-only", value: "user_only"}],
+		            "el": $('#lookup-user-only')
+		        }, {tokens: true}).render();
+		
+		        user_only_checkbox.on("change", function(newValue) {
+		        	this.validateForm();
+		        }.bind(this));
+
         	}
         	
         	// Setup the handlers so that we can make the view support drag and drop

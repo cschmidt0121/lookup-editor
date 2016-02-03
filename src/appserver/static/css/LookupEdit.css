@@ -98,6 +98,13 @@ input[type=text]{
 	padding-left: 32px;
 }
 
+/* Make the check-box fit with the other inputs */
+#lookup-user-only{
+	display: inline-block;
+    vertical-align: top;
+    margin-top: 2px;
+}
+
 /* Tell the dialogs to use an inline-block so that they fit nicely next to other elements */
 #info-message, #warning-message{
 	display: inline-block;

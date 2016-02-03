@@ -9,7 +9,6 @@ import re
 import time
 import datetime
 import StringIO # For converting KV store array data to CSV for export
-import cgi # For escaping lookup contents
 
 from splunk import AuthorizationFailed, ResourceNotFound
 import splunk.rest
@@ -199,7 +198,8 @@ class LookupEditor(controllers.BaseController):
         # Ensure that the file name is valid
         if not self.is_file_name_valid(lookup_file):
             cherrypy.response.status = 400
-            return self.render_error_json(_("The lookup filename contains disallowed characters"))
+            logger.info("The lookup filename contains disallowed characters, lookup_name=%s", lookup_file)
+            return self.render_error_json("The lookup filename contains disallowed characters")
         
         # Get a reference to the file
         full_lookup_filename = self.resolve_lookup_filename(lookup_file, namespace, owner, get_default_csv=True, version=version)
@@ -218,7 +218,7 @@ class LookupEditor(controllers.BaseController):
             
         except os.error:
             cherrypy.response.status = 400
-            return self.render_error_json(_("The lookup file could not be opened"))
+            return self.render_error_json("The lookup file could not be opened")
         
         # Return the information
         return self.render_json(desc)
@@ -356,99 +356,105 @@ class LookupEditor(controllers.BaseController):
             return None
         
     @expose_page(must_login=True, methods=['POST']) 
-    def save(self, lookup_file, contents, namespace, **kwargs):
+    def save(self, lookup_file, contents, namespace=None, owner=None, **kwargs):
         """
         Save the contents of a lookup file
         """
 
         logger.info("Saving lookup contents...")
+        
+        try:
 
-        user = cherrypy.session['user']['name']
-        session_key = cherrypy.session.get('sessionKey')
-        owner = kwargs.get("owner", "nobody")
-        
-        # Check capabilities
-        LookupEditor.check_capabilities(lookup_file, user, session_key)
-        
-        # Ensure that the file name is valid
-        if not self.is_file_name_valid(lookup_file):
-            cherrypy.response.status = 400
-            return self.render_error_json(_("The lookup filename contains disallowed characters"))
-        
-        # Determine the final path of the file
-        resolved_file_path = self.resolve_lookup_filename(lookup_file, namespace, owner, throw_not_found=False)
-        
-        # Make a backup
-        self.backupLookupFile(lookup_file, namespace, owner)
-        
-        # Parse the JSON
-        parsed_contents = json.loads(contents)
-        
-        # Create the temporary file
-        temp_file_handle = lookupfiles.get_temporary_lookup_file()
-        
-        # This is a full path already; no need to call make_splunkhome_path().
-        temp_file_name = temp_file_handle.name
-        
-        # Note that this path will only be used if the lookup file doesn't already exist
-        destination_full_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups', lookup_file])
-        
-        # Make the lookups directory if it does not exist
-        destination_lookups_path = make_splunkhome_path(['etc', 'apps', namespace, 'lookups'])
-        
-        try:
-            os.umask(0) # http://bytes.com/topic/python/answers/572176-os-mkdir-mode
-            os.mkdir(destination_lookups_path, 0755)
-        except OSError:
-            # The directory already existed, no need to create it
-            pass
-        
-        # Write out the new file to a temporary location
-        try:
-            if temp_file_handle is not None and os.path.isfile(temp_file_name):
-                
-                csv_writer = csv.writer(temp_file_handle, lineterminator='\n')
-                
-                for row in parsed_contents:
-                    
-                    if not isEmpty(row): # Prune empty rows
-                        csv_writer.writerow( row )
-        
-        finally:
-            if temp_file_handle is not None:
-                temp_file_handle.close()
-        
-        # Determine if the lookup file exists, create it if it doesn't
-        if resolved_file_path is None: #and not os.path.exists(destination_full_path):
-            shutil.move(temp_file_name, destination_full_path)
-            logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
+            user = cherrypy.session['user']['name']
+            session_key = cherrypy.session.get('sessionKey')
             
-            # If the file is new, then make sure that the list is reloaded so that the editors notice the change
-            lookupfiles.SplunkLookupTableFile.reload(session_key=session_key)
-            
-        # Edit the existing lookup otherwise
-        else:
-            
-            if "owner" in kwargs:
-                owner = kwargs["owner"]
-            else:
+            if owner is None:
                 owner = "nobody"
+                
+            if namespace is None:
+                namespace = "lookup_editor"
+            
+            # Check capabilities
+            LookupEditor.check_capabilities(lookup_file, user, session_key)
+            
+            # Ensure that the file name is valid
+            if not self.is_file_name_valid(lookup_file):
+                cherrypy.response.status = 400
+                return self.render_error_json("The lookup filename contains disallowed characters")
+            
+            # Determine the final path of the file
+            resolved_file_path = self.resolve_lookup_filename(lookup_file, namespace, owner, throw_not_found=False)
+            
+            # Make a backup
+            self.backupLookupFile(lookup_file, namespace, owner)
+            
+            # Parse the JSON
+            parsed_contents = json.loads(contents)
+            
+            # Create the temporary file
+            temp_file_handle = lookupfiles.get_temporary_lookup_file()
+            
+            # This is a full path already; no need to call make_splunkhome_path().
+            temp_file_name = temp_file_handle.name
+            
+            # Make the lookups directory if it does not exist
+            destination_lookup_full_path = self.makeLookupFilename(lookup_file, namespace, owner)
+            logger.debug("destination_lookup_full_path=%s", destination_lookup_full_path)
+            destination_lookup_path_only, _ = os.path.split(destination_lookup_full_path)
             
             try:
-                
-                if not self.isLookupInUsersPath(resolved_file_path) or owner == 'nobody':
-                    lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner="nobody", key=session_key)
-                else:
-                    lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner=owner, key=session_key)
-                
-            except AuthorizationFailed as e:
-                cherrypy.response.status = 403
-                return self.render_error_json(_(str(e)))
-                
-            logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
+                os.umask(0) # http://bytes.com/topic/python/answers/572176-os-mkdir-mode
+                os.mkdir(destination_lookup_path_only, 0755)
+            except OSError:
+                # The directory already existed, no need to create it
+                pass
             
-        # Tell the SHC environment to replicate the tile
-        force_lookup_replication(namespace, lookup_file, session_key)
+            # Write out the new file to a temporary location
+            try:
+                if temp_file_handle is not None and os.path.isfile(temp_file_name):
+                    
+                    csv_writer = csv.writer(temp_file_handle, lineterminator='\n')
+                    
+                    for row in parsed_contents:
+                        
+                        if not isEmpty(row): # Prune empty rows
+                            csv_writer.writerow( row )
+            
+            finally:
+                if temp_file_handle is not None:
+                    temp_file_handle.close()
+            
+            # Determine if the lookup file exists, create it if it doesn't
+            if resolved_file_path is None:
+                shutil.move(temp_file_name, destination_lookup_full_path)
+                logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s, full_path="%s"', user, namespace, lookup_file, destination_lookup_full_path)
+                
+                # If the file is new, then make sure that the list is reloaded so that the editors notice the change
+                lookupfiles.SplunkLookupTableFile.reload(session_key=session_key)
+                
+            # Edit the existing lookup otherwise
+            else:
+                
+                try:
+                    
+                    if not self.isLookupInUsersPath(resolved_file_path) or owner == 'nobody':
+                        lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner="nobody", key=session_key)
+                    else:
+                        lookupfiles.update_lookup_table(filename=temp_file_name, lookup_file=lookup_file, namespace=namespace, owner=owner, key=session_key)
+                    
+                except AuthorizationFailed as e:
+                    cherrypy.response.status = 403
+                    return self.render_error_json(str(e))
+                    
+                logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
+                
+            # Tell the SHC environment to replicate the tile
+            force_lookup_replication(namespace, lookup_file, session_key)
+            
+        except:
+            logger.exception("Unable to save the lookup")
+            cherrypy.response.status = 500
+            return self.render_error_json("Unable to save the lookup")
      
     def render_error_json(self, msg):
         output = jsonresponse.JsonResponse()
@@ -506,7 +512,7 @@ class LookupEditor(controllers.BaseController):
         
         except PermissionDeniedException as e:
             cherrypy.response.status = 403
-            return self.render_error_json(_(str(e)))
+            return self.render_error_json(str(e))
     
     @classmethod
     def check_capabilities(cls, lookup_file, user, session_key ):
@@ -531,10 +537,35 @@ class LookupEditor(controllers.BaseController):
             return True
         else:
             return False
+        
+    def makeLookupFilename(self, lookup_file, namespace="lookup_editor", owner=None):
+        """
+        Create the file name of a lookup file. That is, device a path for where the file should exist.
+        """
+        
+        # Strip out invalid characters like ".." so that this cannot be used to conduct an directory traversal
+        lookup_file = os.path.basename(lookup_file)
+        namespace = os.path.basename(namespace)
+        
+        if owner is not None:
+            owner = os.path.basename(owner)
+        
+        # Get the user lookup
+        if owner is not None and owner != 'nobody' and owner.strip() != '':
+            return make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
+        
+        
+        # Get the non-user lookup
+        else:
+            return make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
     
     def resolve_lookup_filename(self, lookup_file, namespace="lookup_editor", owner=None, get_default_csv=True, version=None, throw_not_found=True):
         """
-        Resolve the lookup filename.
+        Resolve the lookup filename. This function will handle things such as:
+         * Returning the default lookup file if requested
+         * Returning the path to a particular version of a file
+
+        Note that the lookup file must have an existing lookup file entry for this to return correctly; this shouldn't be used for determining the path of a new file.
         """
         
         # Strip out invalid characters like ".." so that this cannot be used to conduct an directory traversal
@@ -553,24 +584,31 @@ class LookupEditor(controllers.BaseController):
             else:
                 return None
         
+        # Get the backup file for one without an owner
         if version is not None and owner is not None:
             lookup_path = make_splunkhome_path([self.getBackupDirectory(lookup_file, namespace, owner, resolved_lookup_path=resolved_lookup_path), version])
             lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
+        
+        # Get the backup file for one with an owner
         elif version is not None:
             lookup_path = make_splunkhome_path([self.getBackupDirectory(lookup_file, namespace, owner, resolved_lookup_path=resolved_lookup_path), version])
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
-        elif owner is not None:
+        
+        # Get the user lookup
+        elif owner is not None and owner != 'nobody':
             # e.g. $SPLUNK_HOME/etc/users/luke/SA-NetworkProtection/lookups/test.csv
             lookup_path = resolved_lookup_path
             #lookup_path = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "users", owner, namespace, "lookups", lookup_file + ".default"])
+        
+        # Get the non-user lookup
         else:
             lookup_path = resolved_lookup_path
             #lookup_path = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file])
             lookup_path_default = make_splunkhome_path(["etc", "apps", namespace, "lookups", lookup_file + ".default"])
             
         logger.info('Resolved lookup file, path=%s', lookup_path)
-            
+        
         # Get the file path
         if get_default_csv and not os.path.exists(lookup_path) and os.path.exists(lookup_path_default):
             return lookup_path_default
@@ -736,7 +774,7 @@ class LookupEditor(controllers.BaseController):
         
         except PermissionDeniedException as e:
             cherrypy.response.status = 403
-            return self.render_error_json(_(str(e)))
+            return self.render_error_json(str(e))
         
         except LookupFileTooBigException as e:
             cherrypy.response.status = 420

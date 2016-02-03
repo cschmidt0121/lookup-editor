@@ -57,6 +57,12 @@
 				</div>
 			</span>
 			
+			<% if(lookup_type === "csv"){ %>
+			<span id="user-control-group" class="control-group show-when-creating">
+				<div class="input input-checkbox" id="lookup-user-only"></div>
+			</span>
+			<% } %>
+			
 			<span id="lookup-app-control-group" class="control-group">
 				<div class="top-label show-when-creating">
 					<label class="control-label" for="lookup-app">App:</label>
