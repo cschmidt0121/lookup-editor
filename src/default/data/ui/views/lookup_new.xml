@@ -20,11 +20,10 @@
 			
 			<div class="lookup-description">
 				<h2>Key-Value Store Lookup</h2>
-				<div class="description"> A lookup based upon the KV store; this lookup can be replicated between search-heads when using Search Head Clustering
+				<div class="description"> A lookup based upon the KV store; this is useful for very large lookups that need to be edited in the user-interface
 				<p />
 				Use a key-value store lookup if:
 				<ul>
-					<li>You are using Search Head Clustering and need the lookup to be replicated</li>
 					<li>You have a large lookup file</li>
 				</ul>
 				
