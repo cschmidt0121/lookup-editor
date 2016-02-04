@@ -734,8 +734,8 @@ class LookupEditor(controllers.BaseController):
         """
         
         logger.info("Retrieving lookup contents, namespace=%s, lookup=%s, type=%s, owner=%s, version=%s", namespace, lookup_file, lookup_type, owner, version)
-                        
-        if lookup_type is None or len(lookup_type) == '':
+                     
+        if lookup_type is None or len(lookup_type) == 0:
             lookup_type = "csv"
             logger.warning("No type for the lookup provided when attempting to load a lookup file, it will default to CSV")
         
@@ -754,7 +754,6 @@ class LookupEditor(controllers.BaseController):
             elif lookup_type == "csv":
                 
                 with self.get_lookup(lookup_file, namespace, owner, version=version, throw_exception_if_too_big=True) as csv_file:
-                    
                     csv_reader = csv.reader(csv_file)
                 
                     # Convert the content to JSON
@@ -769,20 +768,32 @@ class LookupEditor(controllers.BaseController):
                     
                     return self.render_json(lookup_contents)
             
+            else:
+                cherrypy.response.status = 421
+                logger.warning('Lookup file type is not recognized, lookup_type=' + lookup_type)
+                return self.render_error_json('Lookup file type is not recognized')
+            
         except IOError:
+            logger.warning("Unable to find the requested lookup")
             cherrypy.response.status = 404
-            return self.render_json([])
+            return self.render_error_json("Unable to find the lookup")
         
         except PermissionDeniedException as e:
+            logger.warning("Access to lookup denied")
             cherrypy.response.status = 403
             return self.render_error_json(str(e))
         
         except LookupFileTooBigException as e:
+            logger.warning("Lookup file is too large to load")
             cherrypy.response.status = 420
             return self.render_json({
                                      'message': 'Lookup file is too large to load (file-size must be less than 10 MB to be edited)',
                                      'file_size' : e.file_size
                                      })
+        except:
+            logger.exception('Lookup file could not be loaded')
+            cherrypy.response.status = 500
+            return self.render_error_json('Lookup file could not be loaded')
             
         
     @expose_page(must_login=True, methods=['GET']) 

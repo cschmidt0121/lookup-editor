@@ -753,17 +753,29 @@ define([
         		  
         		  // On success, populate the table
         		  success: function(data) {
-        			  console.info('JSON of lookup table was successfully loaded');
-        			  this.renderLookup(data);
         			  
-        			  var elapsed = new Date().getTime()-populateStart;
-        			  console.info("Lookup loaded and rendered in " + elapsed + "ms");
+        			  // Data could not be loaded
+        			  if(data == null || data.length === 0){
+        				  console.error('JSON of lookup table could not be loaded (got an empty value)');
+        				  this.showWarningMessage("The requested lookup file could not be loaded", true);
+        				  $('.show-when-editing', this.$el).hide();
+        			  }
         			  
-        			  // Remember the specs on the loaded file
-        			  this.lookup = lookup_file;
-        	          this.namespace = namespace;
-        	          this.owner = user;
-        	          this.lookup_type = lookup_type;
+        			  // Data can be loaded
+        			  else{
+        				  
+	        			  console.info('JSON of lookup table was successfully loaded');
+	        			  this.renderLookup(data);
+	        			  
+	        			  var elapsed = new Date().getTime()-populateStart;
+	        			  console.info("Lookup loaded and rendered in " + elapsed + "ms");
+	        			  
+	        			  // Remember the specs on the loaded file
+	        			  this.lookup = lookup_file;
+	        	          this.namespace = namespace;
+	        	          this.owner = user;
+	        	          this.lookup_type = lookup_type;
+        			  }
         			  
         		  }.bind(this),
         		  
