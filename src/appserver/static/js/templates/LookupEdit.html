@@ -90,7 +90,7 @@
 			<% if(lookup_type === "csv"){ %>
 			<div id="load-backup" class="btn-group create-content pull-right"></div>
 			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
-			<% } else { %>
+			<% } else if(lookup_type === "kv") { %>
 			<div class="modification-time-holder">
 				<i class="icon-circle-filled hide"></i>
 				<span id="modification-time">(changes automatically saved in real-time)</span>

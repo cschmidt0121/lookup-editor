@@ -1118,6 +1118,7 @@ define([
 		        					this.lookup = data["lookup_file"];
 		        					this.namespace = data["namespace"];
 		        					this.owner = data["owner"];
+		        					this.lookup_type = "csv";
 	        					}
 	        				}.bind(this),
 	        				
@@ -1820,7 +1821,7 @@ define([
 			this.is_new = false;
 			
 			// Change the URL
-			var url = "?lookup=" + this.lookup + "&namespace=" + this.namespace;
+			var url = "?lookup=" + this.lookup + "&namespace=" + this.namespace + "&type=" + this.lookup_type;
 			
 			if(this.owner){
 				url += "&owner=" + this.owner;
