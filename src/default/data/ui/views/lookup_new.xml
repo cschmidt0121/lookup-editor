@@ -1,4 +1,4 @@
-<dashboard stylesheet="lookup_new.css" isDashboard="false" isVisible="true" hideEdit="true">
+<dashboard stylesheet="lookup_new.css" script="lookup_new.js" isDashboard="false" isVisible="true" hideEdit="true">
     <label>New Lookup</label>
     
     <row>
@@ -26,12 +26,19 @@
 				Use a key-value store lookup if:
 				<ul>
 					<li>You have a large lookup file</li>
+					<li>You are using Splunk 6.2 or later</li>
 				</ul>
 				
 				</div>
 			</div>
 			<div class="lookup-link">
-				<a href="lookup_edit?action=new&amp;type=kv">Create KV Store Lookup...</a>
+				<a class="show-kv-supported-only" href="lookup_edit?action=new&amp;type=kv">Create KV Store Lookup...</a>
+				<span class="show-kv-unsupported-only hide">
+					<div id="warning-message" class="alert alert-warning">
+						<i class="icon-alert"></i>
+						<div class="message">KV store is not supported on this version of Splunk; upgrade to Splunk 6.2 or later for KV store support</div>
+					</div>
+				</span>
 			</div>
         </html>
     </row>

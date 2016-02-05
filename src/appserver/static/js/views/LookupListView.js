@@ -38,7 +38,7 @@ define([
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
-	    url: "apps/local?count=-1",
+	    url: "apps/local?count=-1", //&search=disabled%3D0
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
@@ -100,6 +100,7 @@ define([
             });
         	
         	// Get the KV store lookups
+        	this.kv_lookups_supported = true;
         	this.kv_lookups = new KVLookups();
         	this.kv_lookups.on('reset', this.gotKVLookups.bind(this), this);
         	
@@ -109,7 +110,16 @@ define([
                 },
                 error: function() {
                   console.error("Unable to fetch the KV store lookup files");
-                }
+                },
+                complete: function(jqXHR, textStatus){
+                	if( jqXHR.status == 404){
+                		
+                		// The endpoint for KV store lookups doesn't exist; that's because this is a host that is too old to have KV store support
+                		this.hideKVStoreOptions();
+                		
+                		this.kv_lookups_supported = false;
+                	}
+                }.bind(this)
             });
         	
         	// Get the apps
@@ -134,6 +144,14 @@ define([
         	"change #free-text-filter" : "applyFilter",
         	"keyup #free-text-filter" : "goFilter",
         	"keypress #free-text-filter" : "goFilter",
+        },
+        
+        /**
+         * Hide options for systems that do not support KV store (Splunk 6.2 and earlier)
+         */
+        hideKVStoreOptions: function(){
+        	$(".show-kv-supported-only", this.$el).hide();
+        	$(".show-kv-unsupported-only", this.$el).show();
         },
         
         /**
@@ -200,7 +218,7 @@ define([
         	
         	// Remove the "active" class from any existing entries
         	$('.scope-filter > .btn.active').removeClass('active');
-        	  
+        	
         	// Set the "active" class on this entry
         	$(ev.currentTarget).addClass('active');
         	
@@ -416,10 +434,20 @@ define([
         		
         		// Filter out the items that are not for an app that exposes a lookup
         		if(only_include_those_with_lookups){
-	        		// Find out of the item is for an app that publishes a lookup
+        			
+	        		// Find out of the item is for an app that publishes a CSV lookup
 	        		for(var d = 0; d < this.csv_lookups.models.length; d++){
 	        			
 	        			if(this.csv_lookups.models[d].entry.acl.attributes.app === this.apps.models[c].entry.attributes.name){
+	        				apps_json.push(new_entry);
+	        				break;
+	        			}
+	        		}
+	        		
+	        		// Find out of the item is for an app that publishes a KV lookup
+	        		for(var d = 0; d < this.kv_lookups.models.length; d++){
+	        			
+	        			if(this.kv_lookups.models[d].entry.acl.attributes.app === this.apps.models[c].entry.attributes.name){
 	        				apps_json.push(new_entry);
 	        				break;
 	        			}
@@ -448,6 +476,7 @@ define([
         	$('#content', this.$el).html(_.template(lookup_list_template, {
         		'lookups' : this.getLookupsJSON(),
         		'apps' : this.getAppsJSON(),
+        		'kv_lookups_supported' : this.kv_lookups_supported,
         		'getAppDescriptionFromName' : this.getAppDescriptionFromName.bind(this)
         	}));
         	

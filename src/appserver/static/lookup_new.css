@@ -28,3 +28,7 @@
 .lookup-link > a{
     margin-left: 8px;
 }
+
+#warning-message{
+	margin-bottom: 0px;	
+}
