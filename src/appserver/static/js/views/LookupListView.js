@@ -191,7 +191,7 @@ define([
         	if(filter === "All"){
         		this.filter_scope = null;
         	}
-        	else if( filter === "Global scope" ){
+        	else if( filter.indexOf("Global") >= 0 ){
         		this.filter_scope = "nobody";
         	}
         	else{
