@@ -76,4 +76,8 @@ Change History
 | 2.0.3   | Fixing compatibility issue with IE 11                                                                            |
 |         | Adding text to make it clear that KV store lookups will be automatically saved                                   |
 |         | Fixing issue where the renderer was not styling the cells correctly                                              |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.1     | Fixed issue where lookup would fail to load in some cases                                                        |
+|         | Added ability to make a user-specific lookup                                                                     |
+|         | Updated the description of CSV lookups to note that CSV lookups do support SHC                                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
