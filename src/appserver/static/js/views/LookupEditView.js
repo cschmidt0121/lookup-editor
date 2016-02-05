@@ -268,14 +268,22 @@ define([
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
-        	td.innerHTML = this.escapeHtml(value);
+        	// Don't render a null value
+        	if(value === null){
+        		td.innerHTML = this.escapeHtml("");
+        	}
+        	else{
+        		td.innerHTML = this.escapeHtml(value);
+        	}
         	
+        	// Determine if the value is a string so that we can know if we can perform string-related operations on it later
         	var is_a_string = false;
         	
         	if(value){
         		is_a_string = (typeof value.toLowerCase === 'function');
         	}
         	
+        	// Execute the renderer
         	if(row !== 0 && this.isCellTypeInvalid(row, col, value)) { // Cell type is incorrect
         		td.className = 'cellInvalidType';
         	}
