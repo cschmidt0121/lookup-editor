@@ -404,10 +404,10 @@ class LookupEditor(controllers.BaseController):
             
             try:
                 os.umask(0) # http://bytes.com/topic/python/answers/572176-os-mkdir-mode
-                os.mkdir(destination_lookup_path_only, 0755)
+                os.makedirs(destination_lookup_path_only, 0755)
             except OSError:
                 # The directory already existed, no need to create it
-                pass
+                logger.debug("Destination path of lookup already existed, no need to create it; destination_lookup_path=%s", destination_lookup_path_only)
             
             # Write out the new file to a temporary location
             try:
@@ -427,7 +427,7 @@ class LookupEditor(controllers.BaseController):
             # Determine if the lookup file exists, create it if it doesn't
             if resolved_file_path is None:
                 shutil.move(temp_file_name, destination_lookup_full_path)
-                logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s, full_path="%s"', user, namespace, lookup_file, destination_lookup_full_path)
+                logger.info('Lookup created successfully, user=%s, namespace=%s, lookup_file=%s, path="%s"', user, namespace, lookup_file, destination_lookup_full_path)
                 
                 # If the file is new, then make sure that the list is reloaded so that the editors notice the change
                 lookupfiles.SplunkLookupTableFile.reload(session_key=session_key)
@@ -448,8 +448,11 @@ class LookupEditor(controllers.BaseController):
                     
                 logger.info('Lookup edited successfully, user=%s, namespace=%s, lookup_file=%s', user, namespace, lookup_file)
                 
-            # Tell the SHC environment to replicate the tile
-            force_lookup_replication(namespace, lookup_file, session_key)
+            # Tell the SHC environment to replicate the file
+            try:
+                force_lookup_replication(namespace, lookup_file, session_key)
+            except ResourceNotFound:
+                logger.info("Unable to force replication of the lookup file to other search heads; upgrade Splunk in order to support CSV file replication")
             
         except:
             logger.exception("Unable to save the lookup")
