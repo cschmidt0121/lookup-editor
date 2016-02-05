@@ -80,4 +80,5 @@ Change History
 | 2.1     | Fixed issue where lookup would fail to load in some cases                                                        |
 |         | Added ability to make a user-specific lookup                                                                     |
 |         | Updated the description of CSV lookups to note that CSV lookups do support SHC                                   |
+|         | Fixed an issue where a value of "null" would appear in the editor sometimes                                      |
 +---------+------------------------------------------------------------------------------------------------------------------+
