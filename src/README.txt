@@ -81,4 +81,9 @@ Change History
 |         | Added ability to make a user-specific lookup                                                                     |
 |         | Updated the description of CSV lookups to note that CSV lookups do support SHC                                   |
 |         | Fixed an issue where a value of "null" would appear in the editor sometimes                                      |
+|         | Fixed an issue where the UI would not let you change the lookup name if new lookup creation failed               |
+|         | Added sourcetyping of the lookup editor controller logs                                                          |
+|         | App now detects if you are using an older version of Splunk that doesn't support KV store and hides KV options   |
+|         | The editor no longer allows you to select a disabled app                                                         |
+|         | The lookups list now includes the ability to filter on apps that only include KV lookups                         |
 +---------+------------------------------------------------------------------------------------------------------------------+
