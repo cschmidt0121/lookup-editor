@@ -51,7 +51,7 @@ define([
 ){
 	
 	var Apps = SplunkDsBaseCollection.extend({
-	    url: "apps/local?count=-1",
+	    url: "apps/local?count=-1&search=disabled%3D0",
 	    initialize: function() {
 	      SplunkDsBaseCollection.prototype.initialize.apply(this, arguments);
 	    }
