@@ -1160,7 +1160,7 @@ define([
 	        					this.setSaveButtonTitle();
 	        					
 	        					// If we made a new lookup, then switch modes
-	        					if(this.is_new){
+	        					if(this.is_new && success){
 	        						this.changeToEditMode();
 	        					}
 	        					
