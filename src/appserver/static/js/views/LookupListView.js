@@ -79,6 +79,8 @@ define([
             // Filtering options
             this.filter_app = null;
             this.filter_type = null;
+            this.filter_scope = null;
+            
             this.apps = null;
             
             // The reference to the data-table
@@ -128,6 +130,7 @@ define([
         	// Filtering
         	"click .type-filter > .dropdown-menu > li > a" : "setTypeFilter",
         	"click .app-filter > .dropdown-menu > li > a" : "setAppFilter",
+        	"click .scope-filter > .btn" : "setScopeFilter",
         	"change #free-text-filter" : "applyFilter",
         	"keyup #free-text-filter" : "goFilter",
         	"keypress #free-text-filter" : "goFilter",
@@ -174,6 +177,32 @@ define([
         	  
         	// Show the checked icon on this entry
         	$('i', ev.currentTarget).removeClass('hide');
+        	
+        	this.applyFilter();
+        	
+        },
+        
+        /**
+         * Set the scope filter
+         */
+        setScopeFilter: function(ev){
+        	var filter = $(ev.target).text();
+        	
+        	if(filter === "All"){
+        		this.filter_scope = null;
+        	}
+        	else if( filter === "Global scope" ){
+        		this.filter_scope = "nobody";
+        	}
+        	else{
+        		this.filter_scope = Splunk.util.getConfigValue("USERNAME");
+        	}
+        	
+        	// Remove the "active" class from any existing entries
+        	$('.scope-filter > .btn.active').removeClass('active');
+        	  
+        	// Set the "active" class on this entry
+        	$(ev.currentTarget).addClass('active');
         	
         	this.applyFilter();
         	
@@ -237,6 +266,14 @@ define([
         	}
         	else{
         		this.data_table.columns(2).search( "" );
+        	}
+        	
+        	// Get the scope filter
+        	if( this.filter_scope !== null ){
+        		this.data_table.columns(3).search( "^" + this.filter_scope + "$", true );
+        	}
+        	else{
+        		this.data_table.columns(3).search( "" );
         	}
         	
         	// Apply the filter
