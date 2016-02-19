@@ -86,4 +86,6 @@ Change History
 |         | App now detects if you are using an older version of Splunk that doesn't support KV store and hides KV options   |
 |         | The editor no longer allows you to select a disabled app                                                         |
 |         | The lookups list now includes the ability to filter on apps that only include KV lookups                         |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.1.1   | Fixed issue where local lookups would not appear in the list if the app did not have read permissions            |
 +---------+------------------------------------------------------------------------------------------------------------------+
