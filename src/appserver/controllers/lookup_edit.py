@@ -665,6 +665,7 @@ class LookupEditor(controllers.BaseController):
             lookup_contents = []
             
             # Get the fields so that we can compose the header
+            # Note: this call must be done with the user context of "nobody".
             _, content = splunk.rest.simpleRequest('/servicesNS/nobody/' + namespace + '/storage/collections/config/' + lookup_file, sessionKey=session_key, getargs={'output_mode': 'json'})
             header = json.loads(content)
             
