@@ -88,4 +88,6 @@ Change History
 |         | The lookups list now includes the ability to filter on apps that only include KV lookups                         |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 2.1.1   | Fixed issue where local lookups would not appear in the list if the app did not have read permissions            |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.1.2   | Press CTRL + E on the lookup edit page for a blast from the past!                                                |
 +---------+------------------------------------------------------------------------------------------------------------------+
