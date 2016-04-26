@@ -5,11 +5,16 @@ require.config({
         text: "../app/lookup_editor/js/lib/text",
         console: '../app/lookup_editor/js/lib/console',
         csv: '../app/lookup_editor/js/lib/csv',
-        kv_store_field_editor: '../app/lookup_editor/js/views/KVStoreFieldEditor'
+        kv_store_field_editor: '../app/lookup_editor/js/views/KVStoreFieldEditor',
+        clippy: '../app/lookup_editor/js/lib/clippy',
     },
     shim: {
         'Handsontable': {
             deps: ['jquery']
+        },
+        'clippy': {
+            deps: ['jquery'],
+            exports: 'clippy'
         }
     }
 });
@@ -28,12 +33,14 @@ define([
     "splunkjs/mvc/simpleform/input/checkboxgroup",
     "text!../app/lookup_editor/js/templates/LookupEdit.html",
     "kv_store_field_editor",
+    "clippy",
     "csv",
     "Handsontable",
     "bootstrap.dropdown",
     "splunk.util",
     "css!../app/lookup_editor/css/LookupEdit.css",
-    "css!../app/lookup_editor/css/lib/handsontable.full.min.css"
+    "css!../app/lookup_editor/css/lib/handsontable.full.min.css",
+    "css!../app/lookup_editor/css/lib/clippy.css",
 ], function(
     _,
     Backbone,
@@ -97,6 +104,8 @@ define([
             this.field_types_enforced = false; // This will store whether this lookup enforces types
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
             this.table_header = null; // This will store the header of the table so that can recall the relative offset of the fields in the table
+            
+            this.agent = null; // This is for Clippy
             
             this.kv_store_fields_editor = null;
             
@@ -602,6 +611,10 @@ define([
         	    
         	    // Start the process of processing file
         	    reader.readAsText(files[0]);
+        	    
+            	if(this.agent){
+            		this.agent.play("Thinking");
+            	}
             }
             else{
             	// Hide the loading message
@@ -996,6 +1009,10 @@ define([
         	
         	if(version){
         		this.loadBackupFile(version);
+        		
+        		if(this.agent){
+            		this.agent.play("Processing");
+            	}
         	}
         	
         },
@@ -1012,6 +1029,10 @@ define([
         	
         	// Change the title
         	this.setSaveButtonTitle("Saving...");
+        	
+        	if(this.agent){
+        		this.agent.play("Save");
+        	}
         	
         	// Started recording the time so that we figure out how long it took to save the lookup file
         	var populateStart = new Date().getTime();
@@ -1842,6 +1863,39 @@ define([
         },
         
         /**
+         * Handle shortcut key-presses.
+         */
+        handleShortcuts: function(e){
+        	if (e.keyCode == 69 && e.ctrlKey) {
+                this.toggleClippy();
+            }
+        },
+        
+        /**
+         * Turn clippy on or off.
+         */
+        toggleClippy: function(){
+        	
+        	// Make the clippy instance if necessary
+        	if(this.agent === null){
+            	clippy.load('Clippy', function(agent) {
+                    this.agent = agent;
+                    this.agent.show();
+                }.bind(this));
+        	}
+        	
+        	// Show clippy if he was made but is hidden
+        	else if($(".clippy").length == 0 || !$(".clippy").is(":visible")){
+        		this.agent.show();
+        	}
+        	
+        	// Hide clippy if he was made and is shown
+        	else if($(".clippy").length > 0 && $(".clippy").is(":visible")){
+        		this.agent.hide();
+        	}
+        },
+        
+        /**
          * Render the page.
          */
         render: function () {
@@ -1866,6 +1920,10 @@ define([
         		'lookup_name': this.lookup,
         		'lookup_type' : this.lookup_type
         	}));
+        	
+        	// Setup a handler for the shortcuts
+        	$(document).keydown(this.handleShortcuts.bind(this));
+        	console.info("Press CTRL + E to see something interesting");
         	
             // Show the content that is specific to making new lookups
         	if(this.is_new){
