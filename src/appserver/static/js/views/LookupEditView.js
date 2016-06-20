@@ -2049,12 +2049,11 @@ define([
             	});
             	
             	// Add myself
-            	/*
             	users.push({
-            		'name' : 'nobody',
-            		'readable_name' : 'nobody'
+            		'name' : $C.USERNAME,
+            		'readable_name' : $C.USERNAME,
+            		'description' : ''
             	});
-            	*/
         	}
         	
         	// Add nobody
