@@ -103,7 +103,7 @@ define([
             
             this.field_types = {}; // This will store the expected types for each field
             this.field_types_enforced = false; // This will store whether this lookup enforces types
-            this.is_read_only = false; // We will update this to true if the lookup cannot be edited
+            this.read_only = false; // We will update this to true if the lookup cannot be edited
             this.table_header = null; // This will store the header of the table so that can recall the relative offset of the fields in the table
             
             this.users = null; // This is where loaded users list will be stored
@@ -763,7 +763,7 @@ define([
         loadLookupContents: function(lookup_file, namespace, user, lookup_type, header_only, version){
         	
         	// Set a default value for header_only
-        	if( typeof header_only == 'undefined' ){
+        	if( typeof header_only === 'undefined' ){
         		header_only = false;
         	}
         	
@@ -1626,6 +1626,8 @@ define([
     		
     		// If we are editing a KV store lookup, use these menu options
         	var contextMenu = null;
+        
+        	var read_only = this.read_only;
         		
         	if(this.lookup_type === "kv"){
 	    		contextMenu = {
@@ -1633,31 +1635,31 @@ define([
 	    					'row_above': {
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
-	    				        }
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() === undefined);
+	    				        }.bind(this)
 	    					},
 	    					'row_below': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					"hsep1": "---------",
 	    					'remove_row': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
-	    				        }
+	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() === undefined);
+	    				        }.bind(this)
 	    					},
 	    					'hsep2': "---------",
 	    					'undo': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'redo': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					}
 	    				}
 	    		}
@@ -1669,47 +1671,47 @@ define([
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
 	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'row_below': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					"hsep1": "---------",
 	    					'col_left': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'col_right': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'hsep2': "---------",
 	    					'remove_row': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'remove_col': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'hsep3': "---------",
 	    					'undo': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					},
 	    					'redo': {
 	    						disabled: function () {
 	    				            return this.read_only;
-	    				        }
+	    				        }.bind(this)
 	    					}
 	    				}
 	    		}
