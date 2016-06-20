@@ -426,6 +426,16 @@ define([
         	}
         	
         	this.loadLookupContents(this.lookup, this.namespace, user, this.lookup_type, false);
+        	
+        	// Make a dict with arguments
+        	var d = {
+        		'owner' : user,
+        		'namespace' : this.namespace,
+        		'type' : this.lookup_type,
+        		'lookup' : this.lookup,
+        	};
+        	
+        	history.pushState(d, "Lookup Edit", "?" + $.param(d, true));
         },
         
         /**
