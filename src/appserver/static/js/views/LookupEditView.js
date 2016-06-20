@@ -100,6 +100,7 @@ define([
             this.owner = null;
             this.lookup_type = null;
             this.lookup_config = null;
+            
             this.field_types = {}; // This will store the expected types for each field
             this.field_types_enforced = false; // This will store whether this lookup enforces types
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
@@ -111,6 +112,7 @@ define([
             this.kv_store_fields_editor = null;
             
             this.forgiving_checkbox_editor = null;
+            this.handsontable_handlers_registered = false;
             
         	// Get the apps
         	this.apps = new Apps();
@@ -1811,43 +1813,49 @@ define([
         	// Wire-up handlers for doing KV store dynamic updates
         	if(this.lookup_type === "kv"){
         		
-        		// For cell edits
-	        	handsontable.addHook('afterChange', function(changes, source) {
-	        		
-	        		// Ignore changes caused by the script updating the _key for newly added rows
-	        		if(source === "key_update"){
-	        			return;
-	        		}
-	        		
-	        		// If there are no changes, then stop
-	        		if(!changes){
-	        			return;
-	        		}
-	        		
-	        		// Iterate and change each cell
-	        		for(var c = 0; c < changes.length; c++){
-		        		var row = changes[c][0];
-		        		var col = changes[c][1];
-		        		var new_value = changes[c][3];
+        		if(!this.handsontable_handlers_registered){
+        		
+	        		// For cell edits
+		        	handsontable.addHook('afterChange', function(changes, source) {
 		        		
-		        		this.doEditCell(row, col, new_value);
-	        		}
-
-	        	}.bind(this));
-	        	
-	        	// For row removal
-	        	handsontable.addHook('beforeRemoveRow', function(index, amount) {
-	        		
-	        		// Iterate and remove each row
-	        		for(var c = 0; c < amount; c++){
-		        		var row = index + c;		        		
-		        		this.doRemoveRow(row);
-	        		}
-
-	        	}.bind(this));
-	        	
-	        	// For row creation
-	        	handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
+		        		// Ignore changes caused by the script updating the _key for newly added rows
+		        		if(source === "key_update"){
+		        			return;
+		        		}
+		        		
+		        		// If there are no changes, then stop
+		        		if(!changes){
+		        			return;
+		        		}
+		        		
+		        		// Iterate and change each cell
+		        		for(var c = 0; c < changes.length; c++){
+			        		var row = changes[c][0];
+			        		var col = changes[c][1];
+			        		var new_value = changes[c][3];
+			        		
+			        		this.doEditCell(row, col, new_value);
+		        		}
+	
+		        	}.bind(this));
+		        	
+		        	// For row removal
+		        	handsontable.addHook('beforeRemoveRow', function(index, amount) {
+		        		
+		        		// Iterate and remove each row
+		        		for(var c = 0; c < amount; c++){
+			        		var row = index + c;		        		
+			        		this.doRemoveRow(row);
+		        		}
+	
+		        	}.bind(this));
+		        	
+		        	// For row creation
+		        	handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
+		        	
+		        	// Remember that we registered the handlers
+		        	this.handsontable_handlers_registered = true;
+        		}
         	}
         	
         },
