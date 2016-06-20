@@ -137,14 +137,14 @@ define([
         
         events: {
         	// Filtering
-        	"click #save" : "doSaveLookup",
-        	"click .backup-version" : "doLoadBackup",
-        	"click .user-context" : "doLoadUserContext",
+        	"click #save"               : "doSaveLookup",
+        	"click .backup-version"     : "doLoadBackup",
+        	"click .user-context"       : "doLoadUserContext",
         	"click #choose-import-file" : "chooseImportFile",
-        	"click #import-file" : "openFileImportModal",
+        	"click #import-file"        : "openFileImportModal",
         	"change #import-file-input" : "importFile",
-        	"dragenter #lookup-table" : "onDragFileEnter",
-        	"dragleave #lookup-table": "onDragFileEnd"
+        	"dragenter #lookup-table"   : "onDragFileEnter",
+        	"dragleave #lookup-table"   : "onDragFileEnd"
         },
         
         /**
