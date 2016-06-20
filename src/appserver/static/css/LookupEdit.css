@@ -60,7 +60,7 @@ input[type=text]{
 }
 
 /* Make sure the load backup button aligns with the other buttons (such as a the same button) */
-#load-backup{
+#load-backup, #load-user-context{
 	margin-right: 16px;
 }
 
@@ -90,7 +90,8 @@ input[type=text]{
 .modification-time-holder{
     text-align: right;
     padding-right: 16px;
-    margin-left: 
+    display: inline-block;
+    padding-top: 6px;
 }
 
 .modification-time-holder > i{

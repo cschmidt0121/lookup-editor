@@ -138,6 +138,7 @@ define([
         	// Filtering
         	"click #save" : "doSaveLookup",
         	"click .backup-version" : "doLoadBackup",
+        	"click .user-context" : "doLoadUserContext",
         	"click #choose-import-file" : "chooseImportFile",
         	"click #import-file" : "openFileImportModal",
         	"change #import-file-input" : "importFile",
@@ -389,7 +390,7 @@ define([
         },
         
         /**
-         * Load the selected lookup from from the history.
+         * Load the selected lookup from the history.
          * 
          * @param version The version of the lookup file to load (a value of null will load the latest version)
          */
@@ -409,6 +410,21 @@ define([
         	else{
         		return false;
         	}
+        },
+        
+        /**
+         * Load the selected lookup from the given user's context.
+         * 
+         * @param user The user context from which to load the lookup
+         */
+        loadUserKVEntries: function(user){
+        	
+        	// Stop if user wasn't provided
+        	if( typeof user == 'undefined' ){
+        		return;
+        	}
+        	
+        	this.loadLookupContents(this.lookup, this.namespace, user, this.lookup_type, false);
         },
         
         /**
@@ -796,6 +812,9 @@ define([
 	        	          this.namespace = namespace;
 	        	          this.owner = user;
 	        	          this.lookup_type = lookup_type;
+	        	          
+	        	          // Update the UI to note which user context is loaded
+	        	          $('#loaded-user-context').text(this.owner);
         			  }
         			  
         		  }.bind(this),
@@ -1009,6 +1028,22 @@ define([
         	
         	if(version){
         		this.loadBackupFile(version);
+        		
+        		if(this.agent){
+            		this.agent.play("Processing");
+            	}
+        	}
+        	
+        },
+        
+        /**
+         * Load the lookup from the selected user context.
+         */
+        doLoadUserContext: function(evt){
+        	var user = evt.currentTarget.dataset.user;
+        	
+        	if(user){
+        		this.loadUserKVEntries(user);
         		
         		if(this.agent){
             		this.agent.play("Processing");
@@ -1773,6 +1808,11 @@ define([
 	        			return;
 	        		}
 	        		
+	        		// If there are no changes, then stop
+	        		if(!changes){
+	        			return;
+	        		}
+	        		
 	        		// Iterate and change each cell
 	        		for(var c = 0; c < changes.length; c++){
 		        		var row = changes[c][0];
@@ -1896,6 +1936,41 @@ define([
         },
         
         /**
+         * Create a list of users for the lookup context dialog
+         */
+        makeUsersList: function(owner){
+        	
+        	// Make a list of users to show from which to load the context
+        	var users = [];
+        	
+        	// Add the owner
+        	users.push({
+        		'name' : owner,
+        		'readable_name' : owner,
+        		'description' : 'owner of the lookup'
+        	});
+        	
+        	// Add nobody
+        	users.push({
+        		'name' : 'nobody',
+        		'readable_name' : 'nobody',
+        		'description' : 'entries visible from search'
+        	});
+        	
+        	// Add myself
+        	/*
+        	users.push({
+        		'name' : 'nobody',
+        		'readable_name' : 'nobody'
+        	});
+        	*/
+        	
+        	return _.uniq(users, function(item, key, a) { 
+        	    return item.name;
+        	});
+        },
+        
+        /**
          * Render the page.
          */
         render: function () {
@@ -1913,12 +1988,16 @@ define([
         		this.is_new = true;
         	}
         	
+        	// Get a list of users to show from which to load the context
+        	var users = this.makeUsersList(this.owner);
+        	
         	// Render the HTML content
         	this.$el.html(_.template(Template, {
         		'insufficient_permissions' : false,
         		'is_new' : this.is_new,
         		'lookup_name': this.lookup,
-        		'lookup_type' : this.lookup_type
+        		'lookup_type' : this.lookup_type,
+        		'users' : users
         	}));
         	
         	// Setup a handler for the shortcuts

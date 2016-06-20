@@ -43,7 +43,7 @@
 	<% } else { %>
 	
 	<div class="row-fluid">
-		<div class="span9">
+		<div class="span6">
 	<% if(is_new) { %>
 			
 			<span id="lookup-name-control-group" class="control-group">
@@ -86,15 +86,36 @@
 				<div class="message">Ok!</div>
 			</div>
 		</div>
-		<div class="span3 show-when-editing">
+		<div class="span6 show-when-editing">
 			<% if(lookup_type === "csv"){ %>
 			<div id="load-backup" class="btn-group create-content pull-right"></div>
 			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
 			<% } else if(lookup_type === "kv") { %>
-			<div class="modification-time-holder">
-				<i class="icon-circle-filled hide"></i>
-				<span id="modification-time">(changes automatically saved in real-time)</span>
-			</div>
+			<div class="pull-right">
+				<div class="modification-time-holder">
+					<i class="icon-circle-filled hide"></i>
+					<span id="modification-time">(changes automatically saved in real-time)</span>
+				</div>
+				<div id="load-user-context" class="btn-group pull-right">
+					<a class="btn active btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+		        		Showing entries for: <span id="loaded-user-context"></span>
+		        		<span class="caret"></span>
+		        	</a>
+		        	<ul class="dropdown-menu">
+		        		<% for(var c = 0; c < users.length; c++){ %>
+		        			<li>
+		        				<a class="user-context" href="#" data-user="<%- users[c].name %>">
+		        				<%- users[c].readable_name %>
+		        				
+		        				<% if(users[c].description){ %>
+		        					(<%- users[c].description %>)
+		        				<% } %>
+		        				</a>
+		        			</li>
+		        		<% } %>
+		        	</ul>
+	        	</div>
+        	</div>
 			<% } %>
 		</div>
 	</div>
