@@ -105,6 +105,7 @@ define([
             this.is_read_only = false; // We will update this to true if the lookup cannot be edited
             this.table_header = null; // This will store the header of the table so that can recall the relative offset of the fields in the table
             
+            this.users = null; // This is where loaded users list will be stored
             this.agent = null; // This is for Clippy
             
             this.kv_store_fields_editor = null;
@@ -1936,19 +1937,125 @@ define([
         },
         
         /**
+         * Get a list of users.
+         */
+        getUsers: function(owner){
+        	
+        	// Get a promise ready
+        	var promise = jQuery.Deferred();
+        	
+        	// Make the URL to get the list of users
+        	var uri = Splunk.util.make_url("/splunkd/__raw/services/admin/users?output_mode=json");
+
+        	// Let's do this
+        	jQuery.ajax({
+            	url:     uri,
+                type:    'GET',
+                async:   false,
+                success: function(result) {
+                	promise.resolve(this.makeUsersList(owner, result.entry));
+                }.bind(this),
+                error: function() {
+                	// This typlically happens when the user doesn't have access to the list of users (a non-admin account)
+                	promise.resolve(this.makeUsersList(owner));
+                }.bind(this)
+            });
+        	
+        	return promise;
+        	
+        },
+        
+        /**
+         * Update the 
+         */
+        renderUserList: function(users){
+        	
+        	// Create the list
+        	
+        	
+        	
+        	// Update the current user info
+        	
+        	// Purge the existing list
+        	//$('#load-user-context > ul').remove();
+        	
+        	// Make the list
+        	var userTemplate = 	'<% for(var c = 0; c < users.length; c++){ %> \
+									<li> \
+										<a class="user-context" href="#" data-user="<%- users[c].name %>"> \
+										<%- users[c].readable_name %> \
+										<% if(users[c].description){ %> \
+											(<%- users[c].description %>) \
+										<% } %> \
+										</a> \
+									</li> \
+								<% } %>';
+        	
+        	$('#load-user-context > ul', this.$el).html(_.template(userTemplate, {
+        		'users' : users
+        	}));
+        	
+        	//$('#load-user-context > ul').append("<li></li>");
+        	
+	        // Update the UI to note which user context is loaded
+	        //$('#loaded-user-context').text(this.owner);
+        	
+        	
+        },
+        
+        /**
          * Create a list of users for the lookup context dialog
          */
-        makeUsersList: function(owner){
+        makeUsersList: function(owner, users_list_from_splunk){
+        	
+        	// Set a default value for version
+        	if( typeof users_list_from_splunk == 'undefined' ){
+        		users_list_from_splunk = [];
+        	}
         	
         	// Make a list of users to show from which to load the context
         	var users = [];
+        	var user = null;
         	
-        	// Add the owner
-        	users.push({
-        		'name' : owner,
-        		'readable_name' : owner,
-        		'description' : 'owner of the lookup'
-        	});
+        	for(var c = 0; c < users_list_from_splunk.length; c++){
+        		user = users_list_from_splunk[c];
+        		
+        		// Populate the description
+        		var description = '';
+        		
+        		if(user.name === owner){
+        			description = 'owner of the lookup';
+        		}
+        		
+        		if(user.name === 'nobody'){
+        			description = 'entries visible from search';
+        		}
+        		
+        		// Add the user
+            	users.push({
+            		'name' : user.name,
+            		'readable_name' : user.content.realname.length > 0 ? user.content.realname : user.name,
+            		'description' : description
+            	});
+        	}
+        	
+        	// If we didn't get users, then populate it manually
+        	if(users_list_from_splunk.length === 0){
+            	// Add the owner
+            	users.push({
+            		'name' : owner,
+            		'readable_name' : owner,
+            		'description' : 'owner of the lookup'
+            	});
+            	
+            	// Add myself
+            	/*
+            	users.push({
+            		'name' : 'nobody',
+            		'readable_name' : 'nobody'
+            	});
+            	*/
+        	}
         	
         	// Add nobody
         	users.push({
@@ -1956,14 +2063,6 @@ define([
         		'readable_name' : 'nobody',
         		'description' : 'entries visible from search'
         	});
-        	
-        	// Add myself
-        	/*
-        	users.push({
-        		'name' : 'nobody',
-        		'readable_name' : 'nobody'
-        	});
-        	*/
         	
         	return _.uniq(users, function(item, key, a) { 
         	    return item.name;
@@ -2134,6 +2233,13 @@ define([
         	else{
         		this.loadLookupContents(this.lookup, this.namespace, this.owner, this.lookup_type);
         	}
+        	
+        	
+        	// Get a list of users to show from which to load the context
+            $.when(this.getUsers(this.owner)).done(function(users){
+            	console.info("Rendering users list");
+            	this.renderUserList(users);
+      		}.bind(this));
         	
         }
     });
