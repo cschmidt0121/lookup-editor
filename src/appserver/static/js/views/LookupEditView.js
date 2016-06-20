@@ -2060,8 +2060,8 @@ define([
             	
             	// Add myself
             	users.push({
-            		'name' : $C.USERNAME,
-            		'readable_name' : $C.USERNAME,
+            		'name' : Splunk.util.getConfigValue("USERNAME"),
+            		'readable_name' : Splunk.util.getConfigValue("USERNAME"),
             		'description' : ''
             	});
         	}
