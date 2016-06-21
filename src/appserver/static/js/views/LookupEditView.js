@@ -1,7 +1,7 @@
 
 require.config({
     paths: {
-    	Handsontable: "../app/lookup_editor/js/lib/handsontable.full.min",
+    	handsontable: "../app/lookup_editor/js/lib/handsontable.full.min",
         text: "../app/lookup_editor/js/lib/text",
         console: '../app/lookup_editor/js/lib/console',
         csv: '../app/lookup_editor/js/lib/csv',
@@ -9,8 +9,9 @@ require.config({
         clippy: '../app/lookup_editor/js/lib/clippy',
     },
     shim: {
-        'Handsontable': {
-            deps: ['jquery']
+        'handsontable': {
+        	deps: ['jquery'],
+            exports: 'Handsontable'                                                     
         },
         'clippy': {
             deps: ['jquery'],
@@ -27,6 +28,7 @@ define([
     "splunkjs/mvc",
     "util/splunkd_utils",
     "jquery",
+    "handsontable",
     "splunkjs/mvc/simplesplunkview",
     "splunkjs/mvc/simpleform/input/text",
     "splunkjs/mvc/simpleform/input/dropdown",
@@ -35,7 +37,6 @@ define([
     "kv_store_field_editor",
     "clippy",
     "csv",
-    "Handsontable",
     "bootstrap.dropdown",
     "splunk.util",
     "css!../app/lookup_editor/css/LookupEdit.css",
@@ -49,6 +50,7 @@ define([
     mvc,
     splunkd_utils,
     $,
+    Handsontable,
     SimpleSplunkView,
     TextInput,
     DropdownInput,
@@ -112,7 +114,8 @@ define([
             this.kv_store_fields_editor = null;
             
             this.forgiving_checkbox_editor = null;
-            this.handsontable_handlers_registered = false;
+            this.handsontable_handlers_registered = false; // Indicates if the handlers for handsontable are registered so that they don't get registered twice
+            this.handsontable = null; // A reference to the handsontable
             
         	// Get the apps
         	this.apps = new Apps();
@@ -215,11 +218,11 @@ define([
         	
         	// If the lookup is a CSV, then the first row is the header
         	if(this.lookup_type === "csv"){
-        		this.table_header = handsontable.getDataAtRow(0);
+        		this.table_header = this.handsontable.getDataAtRow(0);
         	}
         	// If the lookup is a KV store lookup, then ask handsontable for the header
         	else{
-        		this.table_header = $("#lookup-table").data('handsontable').getColHeader();
+        		this.table_header = this.handsontable.getColHeader();
         	}
         	
         	return this.table_header;
@@ -253,7 +256,6 @@ define([
         	}
         	
         	// Determine the type of the field
-        	var handsontable = $("#lookup-table").data('handsontable');
         	var row_header = this.getTableHeader();
         	var field_name = row_header[col];
         	
@@ -1101,12 +1103,9 @@ define([
         	
         	// Otherwise, save the lookup
         	else{
-        		
-	        	// Get a reference to the handsontable plugin
-	        	var handsontable = $("#lookup-table").data('handsontable');
 	        	
 	        	// Get the row data
-	        	row_data = handsontable.getData();
+	        	row_data = this.handsontable.getData();
 	        	
 	        	// Convert the data to JSON
 	        	json = JSON.stringify(row_data);
@@ -1260,10 +1259,8 @@ define([
         		return;
         	}
         	
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
         	// First, we need to get the _key of the edited row
-        	var row_data = handsontable.getDataAtRow(row);
+        	var row_data = this.handsontable.getDataAtRow(row);
         	var _key = row_data[this.getColumnForField('_key')];
         	
         	if(_key === undefined){
@@ -1297,7 +1294,7 @@ define([
       		  		// If this is a new row, then populate the _key
       		  		if(!_key){
       		  			_key = data['_key'];
-      		  			handsontable.setDataAtCell(row, this.getColumnForField("_key"), _key, "key_update");
+      		  			this.handsontable.setDataAtCell(row, this.getColumnForField("_key"), _key, "key_update");
       		  			console.info('KV store entry creation completed for entry ' + _key);
       		  		}
       		  		else{
@@ -1335,10 +1332,8 @@ define([
         		return;
         	}
         	
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
         	// First, we need to get the _key of the edited row
-        	var row_data = handsontable.getDataAtRow(row);
+        	var row_data = this.handsontable.getDataAtRow(row);
         	var _key = row_data[0];
         	
         	// Second, we need to do a post to remove the row
@@ -1407,11 +1402,9 @@ define([
          */
         makeRowJSON: function(row){
         	
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
         	// We need to get the row meta-data and the 
         	var row_header = this.getTableHeader();
-        	var row_data = handsontable.getDataAtRow(row);
+        	var row_data = this.handsontable.getDataAtRow(row);
         	
         	// This is going to hold the data for the row
         	var json_data = {};
@@ -1435,8 +1428,6 @@ define([
         		return;
         	}
         	
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
         	// Create entries for each row to create
         	var record_data = [];
         	
@@ -1456,7 +1447,7 @@ define([
       		  	success: function(data) {
       		  		// Update the _key values in the cells
       		  		for(var c=0; c < data.length; c++){
-      		  			handsontable.setDataAtCell(row + c, this.getColumnForField("_key"), data[c], "key_update")
+      		  			this.handsontable.setDataAtCell(row + c, this.getColumnForField("_key"), data[c], "key_update")
       		  		}
       		  		
       		  		this.hideWarningMessage();
@@ -1549,11 +1540,9 @@ define([
         reRenderHandsOnTable: function(){
         	
         	// Re-render the view
-        	if($("#lookup-table").length > 0 && $("#lookup-table").data('handsontable')){
-            	var handsontable = $("#lookup-table").data('handsontable');
-            	
-            	if(handsontable){
-            		handsontable.render(); 
+        	if($("#lookup-table").length > 0 && this.handsontable){
+            	if(this.handsontable){
+            		this.handsontable.render(); 
             	}
         	}
         },
@@ -1591,7 +1580,7 @@ define([
         		// If the value is invalid, then set it to false and allow the user to edit it
         		if(originalValue !== true && originalValue !== false){
             		console.warn("This cell is not a boolean value, it will be populated with 'false', cell=(" + row + ", " + col + ")");
-            		$("#lookup-table").data('handsontable').setDataAtCell(row, col, false);
+            		this.handsontable.setDataAtCell(row, col, false);
         		}
         		
         		Handsontable.editors.CheckboxEditor.prototype.prepare.apply(this, arguments);
@@ -1635,7 +1624,7 @@ define([
 	    					'row_above': {
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() === undefined);
+	    				            return this.read_only || (this.handsontable.getSelected() === undefined);
 	    				        }.bind(this)
 	    					},
 	    					'row_below': {
@@ -1647,7 +1636,7 @@ define([
 	    					'remove_row': {
 	    						disabled: function () {
 	    							// If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() === undefined);
+	    				            return this.read_only || (this.handsontable.getSelected() === undefined);
 	    				        }.bind(this)
 	    					},
 	    					'hsep2': "---------",
@@ -1670,7 +1659,7 @@ define([
 	    					'row_above': {
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
-	    				            return this.read_only || ($("#lookup-table").data('handsontable').getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
+	    				            return this.read_only || (this.handsontable.getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
 	    				        }.bind(this)
 	    					},
 	    					'row_below': {
@@ -1735,7 +1724,7 @@ define([
         	}
         	
         	// Make the handsontable instance
-        	$("#lookup-table").handsontable({
+        	this.handsontable = new Handsontable($("#lookup-table")[0], {
         		  data: this.lookup_type === "kv" ? data.slice(1) : data,
         		  startRows: 1,
         		  startCols: 1,
@@ -1810,15 +1799,13 @@ define([
         		  }.bind(this)
             });
         	
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
         	// Wire-up handlers for doing KV store dynamic updates
         	if(this.lookup_type === "kv"){
         		
         		if(!this.handsontable_handlers_registered){
         		
 	        		// For cell edits
-		        	handsontable.addHook('afterChange', function(changes, source) {
+        			this.handsontable.addHook('afterChange', function(changes, source) {
 		        		
 		        		// Ignore changes caused by the script updating the _key for newly added rows
 		        		if(source === "key_update"){
@@ -1842,7 +1829,7 @@ define([
 		        	}.bind(this));
 		        	
 		        	// For row removal
-		        	handsontable.addHook('beforeRemoveRow', function(index, amount) {
+        			this.handsontable.addHook('beforeRemoveRow', function(index, amount) {
 		        		
 		        		// Iterate and remove each row
 		        		for(var c = 0; c < amount; c++){
@@ -1853,7 +1840,7 @@ define([
 		        	}.bind(this));
 		        	
 		        	// For row creation
-		        	handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
+        			this.handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
 		        	
 		        	// Remember that we registered the handlers
 		        	this.handsontable_handlers_registered = true;
