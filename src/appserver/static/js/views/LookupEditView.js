@@ -11,7 +11,7 @@ require.config({
     shim: {
         'handsontable': {
         	deps: ['jquery'],
-            exports: 'Handsontable'                                                     
+            exports: 'Handsontable'
         },
         'clippy': {
             deps: ['jquery'],
@@ -1507,8 +1507,17 @@ define([
         			column['type'] = 'checkbox';
         			column['editor'] = this.getCheckboxRenderer();
         		}
+        		
+        		// Use format.js for the time fields
         		else if(field_info === 'time'){
-        			//column['type'] = 'checkbox';
+        			column['type'] = 'time';
+        			column['timeFormat'] = 'YYYY/MM/DD hh:mm:ss';
+        			column['correctFormat'] = true;
+        		}
+        		
+        		// Handle number fields
+        		else if(field_info === 'number'){
+        			column['type'] = 'numeric';
         		}
         		
         		columns.push(column);
@@ -1580,7 +1589,7 @@ define([
         		// If the value is invalid, then set it to false and allow the user to edit it
         		if(originalValue !== true && originalValue !== false){
             		console.warn("This cell is not a boolean value, it will be populated with 'false', cell=(" + row + ", " + col + ")");
-            		this.handsontable.setDataAtCell(row, col, false);
+            		this.instance.setDataAtCell(row, col, false);
         		}
         		
         		Handsontable.editors.CheckboxEditor.prototype.prepare.apply(this, arguments);
@@ -1659,7 +1668,7 @@ define([
 	    					'row_above': {
 	    						disabled: function () {
 	    				            // If read-only or the first row, disable this option
-	    				            return this.read_only || (this.handsontable.getSelected() !== undefined && $("#lookup-table").data('handsontable').getSelected()[0] === 0);
+	    				            return this.read_only || (this.handsontable.getSelected() !== undefined && this.handsontable.getSelected()[0] === 0);
 	    				        }.bind(this)
 	    					},
 	    					'row_below': {
