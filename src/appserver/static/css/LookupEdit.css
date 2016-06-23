@@ -125,6 +125,10 @@ input[type=text]{
     padding-left: 16px;
 }
 
+.right-click-help-message .icon-info-circle{
+	margin-right: 4px;
+}
+
 /* This styles the name of the lookup (when editing an existing lookup file) */
 .lookup-name{
 	margin-left: 16px;
