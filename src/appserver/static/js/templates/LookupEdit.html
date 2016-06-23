@@ -85,6 +85,9 @@
 				<i class="icon-alert"></i>
 				<div class="message">Ok!</div>
 			</div>
+			<% if(lookup_type === "csv" || !is_new) { %>
+			<div class="right-click-help-message show-when-editing"><i class="icon-info-circle" />Right-click the table for editing options</div>
+			<% } %>
 		</div>
 		<div class="span6 show-when-editing">
 			<% if(lookup_type === "csv"){ %>

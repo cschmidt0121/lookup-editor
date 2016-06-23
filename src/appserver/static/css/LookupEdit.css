@@ -119,6 +119,12 @@ input[type=text]{
 	display: none;
 }
 
+/* Style the message telling users to right-click for editing options */
+.right-click-help-message{
+	padding-bottom: 5px;
+    padding-left: 16px;
+}
+
 /* This styles the name of the lookup (when editing an existing lookup file) */
 .lookup-name{
 	margin-left: 16px;
