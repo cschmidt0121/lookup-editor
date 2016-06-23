@@ -9,6 +9,7 @@ import re
 import time
 import datetime
 import StringIO # For converting KV store array data to CSV for export
+import collections
 
 from splunk import AuthorizationFailed, ResourceNotFound
 import splunk.rest
@@ -633,7 +634,7 @@ class LookupEditor(controllers.BaseController):
         
         # Define the resulting output if it does not exist yet
         if output is None:
-            output = {}
+            output = collections.OrderedDict()
         
         # Convert each entry in the dictionary
         for key in dict_source:
@@ -641,7 +642,7 @@ class LookupEditor(controllers.BaseController):
             value = dict_source[key]
             
             # If the value is a dictionary ...
-            if isinstance(value, dict):
+            if isinstance(value, dict) or isinstance(value, collections.OrderedDict):
                 self.flatten_dict(value, output, self.append_if_not_none(prefix, key))
                 
             #
