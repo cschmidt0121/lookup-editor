@@ -94,4 +94,6 @@ Change History
 | 2.2     | Added ability to load KV store collections entries from other users                                              |
 |         | Updated icon                                                                                                     |
 |         | Fixed issue where the first row of KV store lookups could not be removed                                         |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.3     | Updated the table editor (various bug fixes)                                                                     |
 +---------+------------------------------------------------------------------------------------------------------------------+
