@@ -1511,7 +1511,7 @@ define([
         		// Use format.js for the time fields
         		else if(field_info === 'time'){
         			column['type'] = 'time';
-        			column['timeFormat'] = 'YYYY/MM/DD hh:mm:ss';
+        			column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
         			column['correctFormat'] = true;
         		}
         		
