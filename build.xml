@@ -131,11 +131,11 @@
             </fileset>
         </copy>
     	
-    	<!-- Deploy the CSS and JS (and optionally optimize it) -->
+    	<!-- Deploy the CSS and JS (and optionally minimize it) -->
     	<if>
     		<or>
-    			<equals arg1="${value.build.optimize}" arg2="true" />
-    			<equals arg1="${value.build.optimize}" arg2="1" />
+    			<equals arg1="${minimize}" arg2="true" />
+    			<equals arg1="${minimize}" arg2="1" />
     		</or>
     		<then>
 				<!-- The mapper to map the original source files to the minified versions with the same name, but different path -->
@@ -171,9 +171,16 @@
     </target>
         
     <!-- ================================= 
+          target: set_minimize_for_package
+         ================================= -->
+	<target name="set_minimize_for_package">
+		<property name="minimize" value="${value.build.minimize}"/>
+	</target>
+	
+    <!-- ================================= 
           target: package
          ================================= -->
-    <target name="package" depends="setup_tmp_directory_for_export,populate_export_dir" description="Create the Splunk package of the app">
+    <target name="package" depends="setup_tmp_directory_for_export,set_minimize_for_package,populate_export_dir" description="Create the Splunk package of the app">
         
         <!-- Make the directory where we will store the files -->
         <mkdir dir="${value.build.packageoutput.directory}" />
@@ -217,10 +224,17 @@
 		<property name="skip_bump">1</property>
 	</target>
 	
+    <!-- =================================
+          target: set_minimize_for_deploy
+         ================================= -->
+	<target name="set_minimize_for_deploy">
+		<property name="minimize" value="${value.deploy.minimize}"/>
+	</target>
+	
     <!-- ================================= 
           target: deploy
          ================================= -->
-    <target name="deploy" depends="splunk.bump_if_necessary,setup_tmp_directory_for_deployment,populate_export_dir" description="Deploys the app to an instance of Splunk" >
+    <target name="deploy" depends="splunk.bump_if_necessary,setup_tmp_directory_for_deployment,set_minimize_for_deploy,populate_export_dir" description="Deploys the app to an instance of Splunk" >
         <echo>App ${value.build.appname} build ${value.build.number} deployed to ${export_dir}</echo>
     </target>
     
