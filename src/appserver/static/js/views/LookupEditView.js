@@ -1553,6 +1553,7 @@ define([
         			column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
         			column['correctFormat'] = true;
         			column['renderer'] = this.timeRenderer.bind(this); // Convert epoch times to a readable string
+        			column['editor'] = this.getTimeRenderer();
         		}
         		
         		// Handle number fields
@@ -1624,6 +1625,28 @@ define([
         },
         
         /**
+         * Get time renderer that handles conversion from epoch to a string so that the user doesn't have to edit a number.
+         */
+        getTimeRenderer: function(){
+        	
+        	// Return the existing editor
+        	if(this.time_editor !== null){
+        		return this.time_editor;
+        	}
+        	
+        	this.time_editor = Handsontable.editors.TextEditor.prototype.extend();
+        	
+        	var formatTime = this.formatTime;
+        	
+        	this.time_editor.prototype.prepare = function(row, col, prop, td, originalValue, cellProperties){
+        		// Convert the seconds-since-epoch to a nice string.
+        		Handsontable.editors.TextEditor.prototype.prepare.apply(this, [row, col, prop, td, formatTime(originalValue), cellProperties]);
+        	};
+        	
+        	return this.time_editor;
+        },
+        
+        /**
          * Escape HTML content
          */
         escapeHtmlRenderer: function(instance, td, row, col, prop, value, cellProperties) {
@@ -1633,17 +1656,24 @@ define([
         },
         
         /**
+         * Format the time into the standard format.
+         */
+        formatTime: function(value){
+        	if(/^\d+$/.test(value)){
+        		return moment(parseInt(value, 10)).format('YYYY/MM/DD HH:mm:ss');
+        	}
+        	else{
+        		return value;
+        	}
+        },
+        
+        /**
          * Render time content (converts the epochs to times)
          */
         timeRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	value = this.escapeHtml(Handsontable.helper.stringify(value));
             
-        	if(/^\d+$/.test(value)){
-        		td.innerHTML = moment(parseInt(value, 10)).format('YYYY/MM/DD HH:mm:ss');
-        	}
-        	else{
-        		td.innerHTML = value;
-        	}
+        	td.innerHTML = this.formatTime(value);
 
             return td;
         },
