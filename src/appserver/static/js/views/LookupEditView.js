@@ -114,8 +114,11 @@ define([
             this.kv_store_fields_editor = null;
             
             this.forgiving_checkbox_editor = null;
+            this.time_editor = null;
+            
             this.handsontable_handlers_registered = false; // Indicates if the handlers for handsontable are registered so that they don't get registered twice
             this.handsontable = null; // A reference to the handsontable
+            this.columns = null; // This will store meta-data about the columns
             
         	// Get the apps
         	this.apps = new Apps();
@@ -256,26 +259,45 @@ define([
         	}
         	
         	// Determine the type of the field
-        	var row_header = this.getTableHeader();
-        	var field_name = row_header[col];
+        	var field_type = this.getFieldType(col);
         	
-        	// If we have a field type, then check it
-        	if(field_name in this.field_types){
-        		
-        		var field_type = this.field_types[field_name];
-        		
-        		// Check it if it is an number
-        		if(field_type === 'number' && !/^[-]?\d+$/.test(value)){
-        			return true;
-        		}
-        		
-        		// Check it if it is an boolean
-        		else if(field_type === 'boolean' && !/^(true)|(false)$/.test(value)){
-        			return true;
-        		}
-        	}
+        	// Check it if it is an number
+        	if(field_type === 'number' && !/^[-]?\d+$/.test(value)){
+    			return true;
+    		}
+    		
+    		// Check it if it is an boolean
+    		else if(field_type === 'boolean' && !/^(true)|(false)$/.test(value)){
+    			return true;
+    		}
         	
         	return false;
+        },
+        
+        /**
+         * Get the type associated with the given field.
+         */
+        getFieldType: function(column){
+        	
+        	// Stop if we didn't get the types necessary
+        	if(!this.field_types){
+        		return null;
+        	}
+        	
+        	var table_header = this.getTableHeader();
+        	
+        	// Stop if we didn't get the header
+        	if(!table_header){
+        		return null;
+        	}
+        	
+        	if(column < this.table_header.length){
+        		return this.field_types[table_header[column]];
+        	}
+        	
+        	// Return null if we didn't find the entry
+        	return null;
+        	
         },
         
         /**
@@ -283,9 +305,16 @@ define([
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
+        	// Determine the column type
+        	var column_type = this.getFieldType(col);
+        	
         	// Don't render a null value
         	if(value === null){
         		td.innerHTML = this.escapeHtml("");
+        	}
+        	// Render time values as an actual time if it the seconds since epoch
+        	else if(column_type === 'time' &&  /^\d+$/.test(value)){
+        		td.innerHTML = new Date(parseInt(value, 10)).toString();
         	}
         	else{
         		td.innerHTML = this.escapeHtml(value);
@@ -1411,7 +1440,24 @@ define([
         	
         	// Add each field / column
         	for(var c=1; c < row_header.length; c++){
-        		this.addFieldToJSON(json_data, row_header[c], (row_data[c] === undefined ? '' : row_data[c]) );
+        		
+        		// Determine the column type if we can
+        		var column_type = this.getFieldType(c);
+        		
+        		// This will store the transformed value (by default, it is the original)
+        		var value = row_data[c];
+        		
+        		// If this is a datetime, then convert it to epoch integer
+        		if(column_type === "time"){
+        			value = new Date(value).valueOf();
+        		}
+        		
+        		// Don't allow undefined through
+        		if(value === undefined){
+        			value = '';
+        		}
+        		
+        		this.addFieldToJSON(json_data, row_header[c], value);
         	}
         	
         	// Return the created JSON
@@ -1483,7 +1529,7 @@ define([
         		console.warn("The table header is not available yet")
         	}
         	
-        	// IF this is a CSV lookup, then add a column renderer to excape the content
+        	// If this is a CSV lookup, then add a column renderer to excape the content
         	var table_header = this.getTableHeader();
         	var column = null;
         	var columns = []; 
@@ -1510,9 +1556,10 @@ define([
         		
         		// Use format.js for the time fields
         		else if(field_info === 'time'){
-        			column['type'] = 'time';
-        			column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
-        			column['correctFormat'] = true;
+        			//column['type'] = 'time';
+        			//column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
+        			//column['correctFormat'] = true;
+        			//column['editor'] = this.getTimeRenderer();
         		}
         		
         		// Handle number fields
@@ -1596,6 +1643,34 @@ define([
         	};
         	
         	return this.forgiving_checkbox_editor;
+        },
+        
+        /**
+         * Get time cell renderer that converts the epochs to times.
+         */
+        getTimeRenderer: function(){
+        	
+        	// Return the existing checkbox editor
+        	if(this.forgiving_checkbox_editor !== null){
+        		return this.time_editor;
+        	}
+        	
+        	this.time_editor = Handsontable.editors.TextEditor.prototype.extend();
+        	
+        	this.time_editor.prototype.prepare = function(row, col, prop, td, originalValue, cellProperties){
+        		
+        		/*
+        		// If the value is invalid, then set it to false and allow the user to edit it
+        		if(originalValue !== true && originalValue !== false){
+            		console.warn("This cell is not a boolean value, it will be populated with 'false', cell=(" + row + ", " + col + ")");
+            		this.instance.setDataAtCell(row, col, false);
+        		}
+        		*/
+        		this.instance.setDataAtCell(row, col, "TIME!");
+        		Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
+        	};
+        	
+        	return this.time_editor;
         },
         
         /**
@@ -1715,13 +1790,10 @@ define([
 	    		}
         	}
         	
-        	// Get the columns information for KV store lookups
-        	var columns = null;
-        	
         	// Put in a class name so that the styling can be done by the type of the lookup
         	if(this.lookup_type === "kv"){
         		$("#lookup-table").addClass('kv-lookup');
-        		columns = this.getColumnsMetadata();
+        		this.columns = this.getColumnsMetadata();
         	}
         	else{
         		$("#lookup-table").addClass('csv-lookup');
@@ -1741,7 +1813,7 @@ define([
         		  minSpareRows: 0,
         		  minSpareCols: 0,
         		  colHeaders: this.lookup_type === "kv" ? this.table_header : false,
-        		  columns: columns,
+        		  columns: this.columns,
         		  rowHeaders: true,
         		  fixedRowsTop: this.lookup_type === "kv" ? 0 : 1,
         		  height: function(){ return $(window).height() - 320; }, // Set the window height so that the user doesn't have to scroll to the bottom to set the save button
