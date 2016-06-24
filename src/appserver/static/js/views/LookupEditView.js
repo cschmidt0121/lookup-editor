@@ -305,16 +305,9 @@ define([
          */
         lookupRenderer: function(instance, td, row, col, prop, value, cellProperties) {
         	
-        	// Determine the column type
-        	var column_type = this.getFieldType(col);
-        	
         	// Don't render a null value
         	if(value === null){
         		td.innerHTML = this.escapeHtml("");
-        	}
-        	// Render time values as an actual time if it the seconds since epoch
-        	else if(column_type === 'time' &&  /^\d+$/.test(value)){
-        		td.innerHTML = new Date(parseInt(value, 10)).toString();
         	}
         	else{
         		td.innerHTML = this.escapeHtml(value);
@@ -1556,10 +1549,10 @@ define([
         		
         		// Use format.js for the time fields
         		else if(field_info === 'time'){
-        			//column['type'] = 'time';
-        			//column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
-        			//column['correctFormat'] = true;
-        			//column['editor'] = this.getTimeRenderer();
+        			column['type'] = 'time';
+        			column['timeFormat'] = 'YYYY/MM/DD HH:mm:ss';
+        			column['correctFormat'] = true;
+        			column['renderer'] = this.timeRenderer.bind(this); // Convert epoch times to a readable string
         		}
         		
         		// Handle number fields
@@ -1572,21 +1565,6 @@ define([
     		}
     		
         	return columns;
-        	
-        	/*
-        	// Get a reference to Hands-on-table
-        	var handsontable = $("#lookup-table").data('handsontable');
-        	
-        	if(!handsontable){
-        		console.warn("The hands-on-table instance isn't configured yet")
-        	}
-        	
-        	// Apply the settings
-        	handsontable.updateSettings({
-        		columns: columns
-        	});
-        	
-        	*/
         	
         },
         
@@ -1646,40 +1624,26 @@ define([
         },
         
         /**
-         * Get time cell renderer that converts the epochs to times.
-         */
-        getTimeRenderer: function(){
-        	
-        	// Return the existing checkbox editor
-        	if(this.forgiving_checkbox_editor !== null){
-        		return this.time_editor;
-        	}
-        	
-        	this.time_editor = Handsontable.editors.TextEditor.prototype.extend();
-        	
-        	this.time_editor.prototype.prepare = function(row, col, prop, td, originalValue, cellProperties){
-        		
-        		/*
-        		// If the value is invalid, then set it to false and allow the user to edit it
-        		if(originalValue !== true && originalValue !== false){
-            		console.warn("This cell is not a boolean value, it will be populated with 'false', cell=(" + row + ", " + col + ")");
-            		this.instance.setDataAtCell(row, col, false);
-        		}
-        		*/
-        		this.instance.setDataAtCell(row, col, "TIME!");
-        		Handsontable.editors.TextEditor.prototype.prepare.apply(this, arguments);
-        	};
-        	
-        	return this.time_editor;
-        },
-        
-        /**
          * Escape HTML content
          */
         escapeHtmlRenderer: function(instance, td, row, col, prop, value, cellProperties) {
-        	//console.warn("Here");
-            //escaped = strip_tags(escaped, '<em><b><strong><a><big>'); //be sure you only allow certain HTML tags to avoid XSS threats (you should also remove unwanted HTML attributes)
-            td.innerHTML = this.escapeHtml(Handsontable.helper.stringify(value));
+        	td.innerHTML = this.escapeHtml(Handsontable.helper.stringify(value));
+
+            return td;
+        },
+        
+        /**
+         * Render time content (converts the epochs to times)
+         */
+        timeRenderer: function(instance, td, row, col, prop, value, cellProperties) {
+        	value = this.escapeHtml(Handsontable.helper.stringify(value));
+            
+        	if(/^\d+$/.test(value)){
+        		td.innerHTML = moment(parseInt(value, 10)).format('YYYY/MM/DD HH:mm:ss');
+        	}
+        	else{
+        		td.innerHTML = value;
+        	}
 
             return td;
         },
