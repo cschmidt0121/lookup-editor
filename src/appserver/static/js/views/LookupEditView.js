@@ -113,10 +113,10 @@ define([
             
             this.kv_store_fields_editor = null;
             
+            // These are copies of editor classes used with the handsontable
             this.forgiving_checkbox_editor = null;
             this.time_editor = null;
             
-            this.handsontable_handlers_registered = false; // Indicates if the handlers for handsontable are registered so that they don't get registered twice
             this.handsontable = null; // A reference to the handsontable
             this.columns = null; // This will store meta-data about the columns
             
@@ -1690,6 +1690,12 @@ define([
         	
         	// Store the table header so that we can determine the relative offsets of the fields
         	this.table_header = data[0];
+        	
+        	// If the handsontable has already rendered, then re-render the existing one.
+        	if(this.handsontable !== null){
+        		this.handsontable.destroy();
+        		this.handsontable = null;
+        	}
     		
     		// If we are editing a KV store lookup, use these menu options
         	var contextMenu = null;
@@ -1876,50 +1882,45 @@ define([
         	
         	// Wire-up handlers for doing KV store dynamic updates
         	if(this.lookup_type === "kv"){
-        		
-        		if(!this.handsontable_handlers_registered){
-        		
-	        		// For cell edits
-        			this.handsontable.addHook('afterChange', function(changes, source) {
-		        		
-		        		// Ignore changes caused by the script updating the _key for newly added rows
-		        		if(source === "key_update"){
-		        			return;
-		        		}
-		        		
-		        		// If there are no changes, then stop
-		        		if(!changes){
-		        			return;
-		        		}
-		        		
-		        		// Iterate and change each cell
-		        		for(var c = 0; c < changes.length; c++){
-			        		var row = changes[c][0];
-			        		var col = changes[c][1];
-			        		var new_value = changes[c][3];
-			        		
-			        		this.doEditCell(row, col, new_value);
-		        		}
-	
-		        	}.bind(this));
-		        	
-		        	// For row removal
-        			this.handsontable.addHook('beforeRemoveRow', function(index, amount) {
-		        		
-		        		// Iterate and remove each row
-		        		for(var c = 0; c < amount; c++){
-			        		var row = index + c;		        		
-			        		this.doRemoveRow(row);
-		        		}
-	
-		        	}.bind(this));
-		        	
-		        	// For row creation
-        			this.handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
-		        	
-		        	// Remember that we registered the handlers
-		        	this.handsontable_handlers_registered = true;
-        		}
+
+        		// For cell edits
+        		this.handsontable.addHook('afterChange', function(changes, source) {
+
+        			// Ignore changes caused by the script updating the _key for newly added rows
+        			if(source === "key_update"){
+        				return;
+        			}
+
+        			// If there are no changes, then stop
+        			if(!changes){
+        				return;
+        			}
+
+        			// Iterate and change each cell
+        			for(var c = 0; c < changes.length; c++){
+        				var row = changes[c][0];
+        				var col = changes[c][1];
+        				var new_value = changes[c][3];
+
+        				this.doEditCell(row, col, new_value);
+        			}
+
+        		}.bind(this));
+
+        		// For row removal
+        		this.handsontable.addHook('beforeRemoveRow', function(index, amount) {
+
+        			// Iterate and remove each row
+        			for(var c = 0; c < amount; c++){
+        				var row = index + c;		        		
+        				this.doRemoveRow(row);
+        			}
+
+        		}.bind(this));
+
+        		// For row creation
+        		this.handsontable.addHook('afterCreateRow', this.doCreateRows.bind(this));
+
         	}
         	
         },
