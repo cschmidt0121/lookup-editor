@@ -96,4 +96,8 @@ Change History
 |         | Fixed issue where the first row of KV store lookups could not be removed                                         |
 |---------|------------------------------------------------------------------------------------------------------------------|
 | 2.3     | Updated the table editor (various bug fixes)                                                                     |
+|         | Adding validation of numeric cells in KV lookups                                                                 |
+|         | Adding validation of time cells in KV lookups                                                                    |
+|         | Time values are now properly converted to epoch-seconds (a number) when being saved                              |
+|         | Table is now re-rendered properly when switching user contexts                                                   |
 +---------+------------------------------------------------------------------------------------------------------------------+
