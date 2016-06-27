@@ -681,21 +681,16 @@ define([
          */
         renderBackupsList: function(){
         	
-        	var backup_list_template = '<a class="btn active btn-primary dropdown-toggle" data-toggle="dropdown" href="#"> \
-        			Revert to previous version \
-        			<span class="caret"></span> \
-        		</a> \
-        		<ul class="dropdown-menu"> \
+        	var backup_list_template = ' \
         		<% for(var c = 0; c < backups.length; c++){ %> \
         			<li><a class="backup-version" href="#" data-backup-time="<%- backups[c].time %>"><%- backups[c].time_readable %></a></li> \
         		<% } %> \
         		<% if(backups.length == 0){ %> \
         			<li><a class="backup-version" href="#">No backup versions available</a></li> \
-        		<% } %> \
-        	</ul>';
+        		<% } %>';
         	
         	// Render the list of backups
-        	$('#load-backup', this.$el).html(_.template(backup_list_template, {
+        	$('#backup-versions', this.$el).html(_.template(backup_list_template, {
         		'backups' : this.backups.toJSON()
         	}));
         	

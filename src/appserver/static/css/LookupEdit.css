@@ -60,7 +60,7 @@ input[type=text]{
 }
 
 /* Make sure the load backup button aligns with the other buttons (such as a the same button) */
-#load-backup, #load-user-context{
+.right-offset-button{
 	margin-right: 16px;
 }
 

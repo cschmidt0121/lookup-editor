@@ -91,16 +91,19 @@
 		</div>
 		<div class="span6 show-when-editing">
 			<% if(lookup_type === "csv"){ %>
-			<div id="load-backup" class="btn-group create-content pull-right"></div>
-			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
+			<div class="btn-group pull-right">
+				<button class="btn" id="import-file">Import</button>
+				<a class="btn dropdown-toggle right-offset-button" data-toggle="dropdown" href="#">
+        			Revert to previous version
+        			<span class="caret"></span>
+        		</a>
+        		<ul id="backup-versions" class="dropdown-menu">
+        			<li><a class="backup-version" href="#">No backup versions available</a></li>
+        		</ul>
+			</div>
 			<% } else if(lookup_type === "kv" && !is_new) { %>
-			<div class="pull-right">
-				<div class="modification-time-holder">
-					<i class="icon-circle-filled hide"></i>
-					<span id="modification-time">(changes automatically saved in real-time)</span>
-				</div>
-				<div id="load-user-context" class="btn-group pull-right">
-					<a class="btn active btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+				<div id="load-user-context" class="btn-group pull-right right-offset-button">
+					<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 		        		Showing entries for: <span id="loaded-user-context"></span>
 		        		<span class="caret"></span>
 		        	</a>
@@ -118,6 +121,10 @@
 		        		<% } %>
 		        	</ul>
 	        	</div>
+	        	<div class="modification-time-holder pull-right">
+					<i class="icon-circle-filled hide"></i>
+					<span id="modification-time">(changes automatically saved in real-time)</span>
+				</div>
         	</div>
 			<% } %>
 		</div>
@@ -130,6 +137,6 @@
 <div id="lookup-kv-store-edit" class="hide editing-content"></div>
 
 
-<button class="btn active btn-primary pull-right editing-content <% if(lookup_type === "kv" && !is_new ){ %>hide<% } %>" id="save">Save Lookup</button>
+<button class="btn btn-primary pull-right editing-content <% if(lookup_type === "kv" && !is_new ){ %>hide<% } %>" id="save">Save Lookup</button>
 
 <% } %>

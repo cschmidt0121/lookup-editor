@@ -100,4 +100,5 @@ Change History
 |         | Adding validation of time cells in KV lookups                                                                    |
 |         | Time values are now properly converted to epoch-seconds (a number) when being saved                              |
 |         | Table is now re-rendered properly when switching user contexts                                                   |
+|         | User interface improvements to the editor                                                                        |
 +---------+------------------------------------------------------------------------------------------------------------------+
