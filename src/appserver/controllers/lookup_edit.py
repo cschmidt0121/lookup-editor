@@ -498,7 +498,7 @@ class LookupEditor(controllers.BaseController):
                 
             # If we are getting a KV store lookup, then convert it to a CSV file
             else:
-                rows = self.get_kv_lookup(lookup_file, namespace, None)
+                rows = self.get_kv_lookup(lookup_file, namespace, owner)
                 
                 csvData = self.convert_array_to_csv(rows)
                 

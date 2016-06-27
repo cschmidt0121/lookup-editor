@@ -148,6 +148,7 @@ define([
         	"click #save"               : "doSaveLookup",
         	"click .backup-version"     : "doLoadBackup",
         	"click .user-context"       : "doLoadUserContext",
+        	"click #export-file"        : "doExport",
         	"click #choose-import-file" : "chooseImportFile",
         	"click #import-file"        : "openFileImportModal",
         	"change #import-file-input" : "importFile",
@@ -1082,6 +1083,14 @@ define([
             	}
         	}
         	
+        },
+        
+        /**
+         * Perform an export of the given file.
+         */
+        doExport: function(){
+        	var href= "../../../custom/lookup_editor/lookup_edit/get_original_lookup_file?namespace=" + this.namespace + "&owner=" + this.owner + "&lookup_file=" + this.lookup + "&type=" + this.lookup_type;
+        	document.location = href;
         },
         
         /**
