@@ -93,6 +93,7 @@
 			<% if(lookup_type === "csv"){ %>
 			<div class="btn-group pull-right">
 				<button class="btn" id="import-file">Import</button>
+				<% if(!is_new) { %>
 				<button class="btn" id="export-file">Export</button>
 				<a class="btn dropdown-toggle right-offset-button" data-toggle="dropdown" href="#">
         			Revert to previous version
@@ -101,6 +102,7 @@
         		<ul id="backup-versions" class="dropdown-menu">
         			<li><a class="backup-version" href="#">No backup versions available</a></li>
         		</ul>
+        		<% } %>
 			</div>
 			<% } else if(lookup_type === "kv" && !is_new) { %>
 				<div id="load-user-context" class="btn-group pull-right right-offset-button">
