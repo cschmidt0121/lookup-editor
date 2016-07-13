@@ -43,7 +43,7 @@
 	<% } else { %>
 	
 	<div class="row-fluid">
-		<div class="span8">
+		<div class="span9">
 	<% if(is_new) { %>
 			
 			<span id="lookup-name-control-group" class="control-group">
@@ -85,51 +85,16 @@
 				<i class="icon-alert"></i>
 				<div class="message">Ok!</div>
 			</div>
-			<% if(lookup_type === "csv" || !is_new) { %>
-			<div class="right-click-help-message show-when-editing"><i class="icon-info-circle" />Right-click the table for editing options</div>
-			<% } %>
 		</div>
-		<div class="span4 show-when-editing">
+		<div class="span3 show-when-editing">
 			<% if(lookup_type === "csv"){ %>
-			<div class="btn-group pull-right">
-				<button class="btn" id="import-file">Import</button>
-				<% if(!is_new) { %>
-				<button class="btn" id="export-file">Export</button>
-				<a class="btn dropdown-toggle right-offset-button" data-toggle="dropdown" href="#">
-        			Revert to previous version
-        			<span class="caret"></span>
-        		</a>
-        		<ul id="backup-versions" class="dropdown-menu">
-        			<li><a class="backup-version" href="#">No backup versions available</a></li>
-        		</ul>
-        		<% } %>
+			<div id="load-backup" class="btn-group create-content pull-right"></div>
+			<button class="btn active btn-primary pull-right" id="import-file">Import</button>
+			<% } else if(lookup_type === "kv") { %>
+			<div class="modification-time-holder">
+				<i class="icon-circle-filled hide"></i>
+				<span id="modification-time">(changes automatically saved in real-time)</span>
 			</div>
-			<% } else if(lookup_type === "kv" && !is_new) { %>
-				<div id="load-user-context" class="btn-group pull-right right-offset-button">
-					<button class="btn" id="export-file">Export</button>
-					<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
-		        		Showing entries for: <span id="loaded-user-context"></span>
-		        		<span class="caret"></span>
-		        	</a>
-		        	<ul class="dropdown-menu">
-		        		<% for(var c = 0; c < users.length; c++){ %>
-		        			<li>
-		        				<a class="user-context" href="#" data-user="<%- users[c].name %>">
-		        				<%- users[c].readable_name %>
-		        				
-		        				<% if(users[c].description){ %>
-		        					(<%- users[c].description %>)
-		        				<% } %>
-		        				</a>
-		        			</li>
-		        		<% } %>
-		        	</ul>
-	        	</div>
-	        	<div class="modification-time-holder pull-right">
-					<i class="icon-circle-filled hide"></i>
-					<span id="modification-time">(changes automatically saved in real-time)</span>
-				</div>
-        	</div>
 			<% } %>
 		</div>
 	</div>
@@ -141,6 +106,6 @@
 <div id="lookup-kv-store-edit" class="hide editing-content"></div>
 
 
-<button class="btn btn-primary pull-right editing-content <% if(lookup_type === "kv" && !is_new ){ %>hide<% } %>" id="save">Save Lookup</button>
+<button class="btn active btn-primary pull-right editing-content <% if(lookup_type === "kv" && !is_new ){ %>hide<% } %>" id="save">Save Lookup</button>
 
 <% } %>
