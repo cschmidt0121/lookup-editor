@@ -102,4 +102,6 @@ Change History
 |         | Table is now re-rendered properly when switching user contexts                                                   |
 |         | User interface improvements to the editor                                                                        |
 |         | Added export option to the editor                                                                                |
+|---------|------------------------------------------------------------------------------------------------------------------|
+| 2.3.1   | Fixed some issues on the lookup creation page                                                                    |
 +---------+------------------------------------------------------------------------------------------------------------------+
